@@ -1,42 +1,11 @@
-import type { SDKMessage, PermissionResult } from "@anthropic-ai/claude-agent-sdk";
+/**
+ * UI 渲染进程类型定义
+ * 重新导出共享类型，供 UI 使用
+ *
+ * @author Claude Code
+ * @created 2025-01-23
+ * @copyright AGPL-3.0
+ */
 
-export type UserPromptMessage = {
-  type: "user_prompt";
-  prompt: string;
-};
-
-export type StreamMessage = SDKMessage | UserPromptMessage;
-
-export type SessionStatus = "idle" | "running" | "completed" | "error";
-
-export type SessionInfo = {
-  id: string;
-  title: string;
-  status: SessionStatus;
-  claudeSessionId?: string;
-  cwd?: string;
-  createdAt: number;
-  updatedAt: number;
-};
-
-// Server -> Client events
-export type ServerEvent =
-  | { type: "stream.message"; payload: { sessionId: string; message: StreamMessage } }
-  | { type: "stream.user_prompt"; payload: { sessionId: string; prompt: string } }
-  | { type: "session.status"; payload: { sessionId: string; status: SessionStatus; title?: string; cwd?: string; error?: string } }
-  | { type: "session.list"; payload: { sessions: SessionInfo[] } }
-  | { type: "session.history"; payload: { sessionId: string; status: SessionStatus; messages: StreamMessage[] } }
-  | { type: "session.deleted"; payload: { sessionId: string } }
-  | { type: "permission.request"; payload: { sessionId: string; toolUseId: string; toolName: string; input: unknown } }
-  | { type: "runner.error"; payload: { sessionId?: string; message: string } }
-  | { type: "memory.status"; payload: { sessionId: string; stored: boolean; title?: string; message?: string } };
-
-// Client -> Server events
-export type ClientEvent =
-  | { type: "session.start"; payload: { title: string; prompt: string; cwd?: string; allowedTools?: string } }
-  | { type: "session.continue"; payload: { sessionId: string; prompt: string } }
-  | { type: "session.stop"; payload: { sessionId: string } }
-  | { type: "session.delete"; payload: { sessionId: string } }
-  | { type: "session.list" }
-  | { type: "session.history"; payload: { sessionId: string } }
-  | { type: "permission.response"; payload: { sessionId: string; toolUseId: string; result: PermissionResult } };
+// 从共享类型库重新导出所有类型
+export * from "../shared/types/index.js";
