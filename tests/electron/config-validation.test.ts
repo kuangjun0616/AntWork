@@ -9,7 +9,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { validateApiConfig, type ApiConfig } from '../../src/electron/libs/config-store.js';
+import { validateApiConfig, type ApiConfig } from '../../src/electron/storage/config-store.js';
 import type { ApiProvider } from '../../src/electron/config/constants.js';
 
 describe('API 配置验证', () => {

@@ -4,7 +4,6 @@
  */
 
 import type { PermissionResult } from "@anthropic-ai/claude-agent-sdk";
-import type { PermissionRequest } from "./types.js";
 import { checkIfDeletionOperation } from "../../../shared/deletion-detection.js";
 import { RUNNER_TIMEOUT } from "../../config/constants.js";
 import type { Session } from "../../storage/session-store.js";

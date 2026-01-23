@@ -8,6 +8,127 @@ import { log } from "../logger.js";
 import { PROXY_CHECK_TIMEOUT, PROXY_CACHE_TTL } from "../config/network-constants.js";
 
 /**
+ * 已知不需要代理的厂商白名单
+ * 这些厂商原生支持 /count_tokens 端点，可以跳过代理检测
+ * @author Claude
+ * @copyright AGCPA v3.0
+ */
+const PROXY_SKIP_PROVIDERS: Set<string> = new Set([
+  'anthropic',     // 官方 API
+  'zhipu',         // 智谱 AI
+  'deepseek',      // DeepSeek
+  'alibaba',       // 阿里云通义千问
+  'qiniu',         // 七牛云
+  'moonshot',      // 月之暗面
+]);
+
+/**
+ * 获取代理检测配置（支持环境变量覆盖）
+ * @author Claude
+ * @copyright AGCPA v3.0
+ */
+function getProxyCheckConfig(): {
+  skipWhitelist: boolean;
+  forceCheck: boolean;
+} {
+  return {
+    // 环境变量强制跳过白名单，执行完整检测
+    skipWhitelist: process.env.AICOWORK_PROXY_CHECK_ALL === '1',
+    // 环境变量强制检测所有 API
+    forceCheck: process.env.AICOWORK_FORCE_PROXY_CHECK === '1',
+  };
+}
+
+/**
+ * 测试直接连接是否可用（降级检测）
+ * 用于白名单厂商的连接验证
+ *
+ * @param config API 配置
+ * @returns true 表示可以直接连接，false 表示需要代理
+ * @author Claude
+ * @copyright AGCPA v3.0
+ */
+async function testDirectConnection(config: ApiConfig): Promise<boolean> {
+  try {
+    const cleanBaseURL = getCleanBaseURL(config.baseURL);
+    const testUrl = `${cleanBaseURL}/v1/messages`;
+
+    log.info(`[claude-settings] 降级检测：测试直接连接 ${testUrl}`);
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 秒超时
+
+    const response = await fetch(testUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': config.apiKey,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: config.model,
+        messages: [{ role: 'user', content: 'test' }],
+        max_tokens: 10,
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    // 200 OK 表示直接连接可用
+    // 400 Bad Request 也说明连接可达（只是参数问题）
+    // 401 Unauthorized 也说明连接可达（只是密钥问题）
+    const canConnectDirectly = response.ok || response.status === 400 || response.status === 401;
+
+    if (canConnectDirectly) {
+      log.info(`[claude-settings] ✓ 直接连接验证成功 (status: ${response.status})`);
+    } else {
+      log.warn(`[claude-settings] ✗ 直接连接失败 (status: ${response.status})`);
+    }
+
+    return canConnectDirectly;
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    log.warn(`[claude-settings] 直接连接测试失败:`, errorMsg);
+    return false;
+  }
+}
+
+/**
+ * 获取清理后的 BaseURL
+ */
+function getCleanBaseURL(baseURL: string): string {
+  try {
+    const url = new URL(baseURL);
+    url.pathname = '';
+    return url.toString().replace(/\/$/, '');
+  } catch {
+    return baseURL;
+  }
+}
+
+/**
+ * 保存代理检测结果到配置文件
+ */
+async function saveProxyResult(configId: string, needsProxy: boolean): Promise<void> {
+  try {
+    const { saveApiConfig, loadAllApiConfigs } = await import('../storage/config-store.js');
+    const store = loadAllApiConfigs();
+    if (store) {
+      const existingConfig = store.configs.find(c => c.id === configId);
+      if (existingConfig) {
+        existingConfig.needsProxy = needsProxy;
+        existingConfig.needsProxyCheckedAt = Date.now();
+        saveApiConfig(existingConfig);
+        log.debug(`[claude-settings] 代理检测结果已保存: ${needsProxy}`);
+      }
+    }
+  } catch (error) {
+    log.warn(`[claude-settings] 保存检测结果失败（不影响使用）:`, error);
+  }
+}
+
+/**
  * 获取 AI Agent SDK CLI 路径
  *
  * 重要说明：
@@ -234,13 +355,16 @@ export async function precheckProxyNeeds(): Promise<void> {
 }
 
 /**
- * 检测 API 是否需要代理模式
+ * 检测 API 是否需要代理模式（增强版本）
  *
  * 背景：部分第三方 API 不支持 Anthropic 的 /count_tokens 端点
  * 策略：测试 /v1/messages/count_tokens 端点是否可用
  *
  * 优化特性：
- * - 5 秒超时（从 10 秒缩短）
+ * - 用户配置覆盖（forceProxy/skipProxyCheck）
+ * - 环境变量控制（AICOWORK_PROXY_CHECK_ALL/AICOWORK_FORCE_PROXY_CHECK）
+ * - 厂商白名单跳过检测（0ms 延迟）+ 降级检测验证
+ * - 2 秒超时（从 5 秒缩短）
  * - 失败快速降级到代理模式
  * - 配置文件缓存（24 小时有效）
  * - 内存缓存（会话期间复用）
@@ -248,30 +372,68 @@ export async function precheckProxyNeeds(): Promise<void> {
  * @param config API 配置
  * @returns true 表示需要启动代理服务器拦截 count_tokens 请求
  *          false 表示 API 原生支持该端点，可直接连接
+ * @author Claude
+ * @copyright AGCPA v3.0
  */
 export async function checkProxyNeeded(config: ApiConfig): Promise<boolean> {
-  // 使用 URL API 安全地清理 baseURL，只清理路径部分
-  let cleanBaseURL: string;
-  try {
-    const url = new URL(config.baseURL);
-    // 清空路径，保留协议、域名、端口
-    url.pathname = '';
-    // 移除末尾斜杠
-    cleanBaseURL = url.toString().replace(/\/$/, '');
-  } catch {
-    // 如果 URL 无效，使用原始值
-    cleanBaseURL = config.baseURL;
-  }
+  const cleanBaseURL = getCleanBaseURL(config.baseURL);
   const cacheKey = cleanBaseURL;
+  const proxyCheckConfig = getProxyCheckConfig();
 
   log.info('[claude-settings] 检查 API 代理需求:', {
     originalBaseURL: config.baseURL,
     cleanBaseURL,
     apiType: config.apiType,
     model: config.model,
+    forceProxy: config.forceProxy,
+    skipProxyCheck: config.skipProxyCheck,
   });
 
-  // 优先级 1: 检查配置文件中是否已有检测结果（24小时内有效）
+  // 优先级 0: 用户配置覆盖 - 强制启用代理
+  if (config.forceProxy) {
+    log.info('[claude-settings] 用户配置覆盖：强制启用代理模式');
+    proxyNeededApis.set(cacheKey, true);
+    await saveProxyResult(config.id, true);
+    return true;
+  }
+
+  // 优先级 0: 用户配置覆盖 - 跳过检测
+  if (config.skipProxyCheck) {
+    log.info('[claude-settings] 用户配置覆盖：跳过代理检测，直接连接');
+    proxyNeededApis.set(cacheKey, false);
+    await saveProxyResult(config.id, false);
+    return false;
+  }
+
+  // 优先级 0: 环境变量控制
+  if (proxyCheckConfig.forceCheck) {
+    log.info('[claude-settings] 环境变量 AICOWORK_FORCE_PROXY_CHECK=1，强制执行检测');
+    // 继续执行检测（不使用白名单）
+  } else if (proxyCheckConfig.skipWhitelist) {
+    log.info('[claude-settings] 环境变量 AICOWORK_PROXY_CHECK_ALL=1，跳过白名单执行检测');
+    // 继续执行检测（不使用白名单）
+  } else {
+    // 优先级 1: 厂商白名单 + 降级检测
+    if (PROXY_SKIP_PROVIDERS.has(config.apiType)) {
+      log.info(`[claude-settings] 厂商 ${config.apiType} 在白名单中，执行降级检测验证`);
+
+      // 降级检测：验证直接连接是否可用
+      const canConnectDirectly = await testDirectConnection(config);
+      if (canConnectDirectly) {
+        log.info(`[claude-settings] ✓ 白名单厂商直接连接验证成功`);
+        proxyNeededApis.set(cacheKey, false);
+        await saveProxyResult(config.id, false);
+        return false;
+      } else {
+        log.warn(`[claude-settings] ✗ 白名单厂商直接连接失败，切换到代理模式`);
+        proxyNeededApis.set(cacheKey, true);
+        await saveProxyResult(config.id, true);
+        return true;
+      }
+    }
+  }
+
+  // 优先级 2: 检查配置文件中是否已有检测结果（24小时内有效）
   if (config.needsProxy !== undefined && config.needsProxyCheckedAt) {
     const age = Date.now() - config.needsProxyCheckedAt;
     if (age < PROXY_CACHE_TTL) {
@@ -281,12 +443,14 @@ export async function checkProxyNeeded(config: ApiConfig): Promise<boolean> {
     }
   }
 
-  // 优先级 2: 检查内存缓存
+  // 优先级 3: 检查内存缓存
   if (proxyNeededApis.has(cacheKey)) {
     const cached = proxyNeededApis.get(cacheKey)!;
     log.info(`[claude-settings] 使用内存缓存结果: ${cached} for ${cacheKey}`);
     return cached;
   }
+
+  // 优先级 4: 执行完整的端点检测
 
   // 尝试测试 /count_tokens 端点（使用 Anthropic 标准路径）
   try {

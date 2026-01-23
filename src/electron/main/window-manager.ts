@@ -1,11 +1,6 @@
 /**
  * 窗口管理器
  * 负责创建和配置应用主窗口
- *
- * @author Claude Code
- * @created 2025-01-23
- * @Email noreply@anthropic.com
- * @copyright AGPL-3.0
  */
 
 import { BrowserWindow, globalShortcut } from "electron";
@@ -33,7 +28,15 @@ export function createMainWindow(): BrowserWindow {
         minHeight: 600,
         webPreferences: {
             preload: getPreloadPath(),
-            devTools: true,
+            // 安全配置
+            contextIsolation: true,     // 启用上下文隔离
+            sandbox: true,               // 启用沙箱模式
+            nodeIntegration: false,      // 禁用 node 集成
+            nodeIntegrationInWorker: false,
+            webSecurity: true,           // 启用 web 安全
+            allowRunningInsecureContent: false,
+            // 开发者工具仅在生产环境禁用
+            devTools: isDev(),
         },
         icon: getIconPath(),
         titleBarStyle: "hiddenInset",
@@ -72,10 +75,10 @@ function setupSecurityHeaders(): void {
     if (!mainWindow) return;
 
     mainWindow.webContents.session.webRequest.onHeadersReceived((details, callback) => {
-        // 开发环境：允许本地开发服务器和内联脚本
-        // 生产环境：严格限制资源来源
+        // CSP 策略：移除 unsafe-inline 和 unsafe-eval（安全性提升）
+        // 注意：由于启用 sandbox，需要使用 nonce 或 hash 来允许内联脚本
         const csp = isDev()
-            ? "default-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:* ws://localhost:*; script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:*; style-src 'self' 'unsafe-inline' http://localhost:*;"
+            ? "default-src 'self' http://localhost:* ws://localhost:*; script-src 'self' http://localhost:*; style-src 'self' 'unsafe-inline' http://localhost:*; img-src 'self' data: https: http://localhost:*; font-src 'self' data:; connect-src 'self' http://localhost:* ws://localhost:* https://api.anthropic.com https://*.anthropic.com;"
             : "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://api.anthropic.com https://*.anthropic.com;";
 
         callback({

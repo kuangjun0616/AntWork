@@ -11,6 +11,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { promises as fs } from 'fs';
+import * as fsModule from 'fs';
 import { join } from 'path';
 import { app } from 'electron';
 import {
@@ -22,13 +23,18 @@ import {
   validateApiConfig,
   getSupportedProviders,
   getProviderConfig,
-} from '../../src/electron/libs/config-store';
+} from '../../src/electron/storage/config-store';
 
 // Mock electron app
 vi.mock('electron', () => ({
   app: {
     getPath: vi.fn((name: string) => `/mock/path/${name}`),
     isPackaged: false,
+  },
+  safeStorage: {
+    isEncryptionAvailable: vi.fn(() => false),
+    encryptString: vi.fn((plaintext: string) => Buffer.from(plaintext)),
+    decryptString: vi.fn((buffer: Buffer) => buffer.toString()),
   },
 }));
 
@@ -40,6 +46,19 @@ vi.mock('fs', () => ({
     access: vi.fn(),
     mkdir: vi.fn(),
   },
+  existsSync: vi.fn(() => true),
+  readFileSync: vi.fn(() => JSON.stringify({
+    activeConfigId: 'cfg-1',
+    configs: [{
+      id: 'cfg-1',
+      name: 'Test Config',
+      apiKey: 'sk-ant-test',
+      baseURL: 'https://api.anthropic.com',
+      model: 'claude-3-5-sonnet-20241022',
+      apiType: 'anthropic' as const,
+    }],
+  })),
+  writeFileSync: vi.fn(),
 }));
 
 describe('config-store', () => {
@@ -137,7 +156,7 @@ describe('config-store', () => {
 
   describe('loadApiConfig', () => {
     it('应该在文件不存在时返回 null', async () => {
-      vi.mocked(fs.access).mockRejectedValue({ code: 'ENOENT' } as never);
+      vi.mocked(fsModule.existsSync).mockReturnValue(false);
 
       const result = loadApiConfig();
       expect(result).toBe(null);
@@ -149,14 +168,15 @@ describe('config-store', () => {
         configs: [{
           id: 'cfg-1',
           name: 'Test Config',
-          apiKey: 'sk-ant-test',
+          apiKey: 'sk-ant-api123-1234567890' + 'a'.repeat(70),
           baseURL: 'https://api.anthropic.com',
           model: 'claude-3-5-sonnet-20241022',
           apiType: 'anthropic' as const,
         }],
       };
 
-      vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify(mockConfig));
+      vi.mocked(fsModule.existsSync).mockReturnValue(true);
+      vi.mocked(fsModule.readFileSync).mockReturnValue(JSON.stringify(mockConfig));
 
       const result = loadApiConfig();
       expect(result).not.toBe(null);
@@ -165,23 +185,24 @@ describe('config-store', () => {
 
     it('应该迁移旧格式配置', async () => {
       const oldConfig = {
-        apiKey: 'sk-ant-test',
+        apiKey: 'sk-ant-api123-1234567890' + 'a'.repeat(70),
         baseURL: 'https://api.anthropic.com',
         model: 'claude-3-5-sonnet-20241022',
         apiType: 'anthropic',
       };
 
-      vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify(oldConfig));
-      vi.mocked(fs.writeFile).mockResolvedValue(undefined);
+      vi.mocked(fsModule.existsSync).mockReturnValue(true);
+      vi.mocked(fsModule.readFileSync).mockReturnValue(JSON.stringify(oldConfig));
 
       const result = loadApiConfig();
       expect(result).not.toBe(null);
       expect(result?.apiType).toBe('anthropic');
-      expect(fs.writeFile).toHaveBeenCalled();
+      expect(fsModule.writeFileSync).toHaveBeenCalled();
     });
 
     it('应该处理 JSON 解析错误', async () => {
-      vi.mocked(fs.readFile).mockResolvedValue('invalid json');
+      vi.mocked(fsModule.existsSync).mockReturnValue(true);
+      vi.mocked(fsModule.readFileSync).mockReturnValue('invalid json');
 
       const result = loadApiConfig();
       expect(result).toBe(null);
@@ -203,7 +224,7 @@ describe('config-store', () => {
           {
             id: 'cfg-1',
             name: 'Config 1',
-            apiKey: 'key1',
+            apiKey: 'sk-ant-api123-1234567890' + 'a'.repeat(70),
             baseURL: 'https://api1.com',
             model: 'model1',
             apiType: 'anthropic' as const,
@@ -211,7 +232,7 @@ describe('config-store', () => {
           {
             id: 'cfg-2',
             name: 'Config 2',
-            apiKey: 'key2',
+            apiKey: 'sk-ant-api123-9876543210' + 'b'.repeat(70),
             baseURL: 'https://api2.com',
             model: 'model2',
             apiType: 'openai' as const,
@@ -219,7 +240,8 @@ describe('config-store', () => {
         ],
       };
 
-      vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify(mockStore));
+      vi.mocked(fsModule.existsSync).mockReturnValue(true);
+      vi.mocked(fsModule.readFileSync).mockReturnValue(JSON.stringify(mockStore));
 
       const result = loadAllApiConfigs();
       expect(result?.configs).toHaveLength(2);
@@ -232,19 +254,19 @@ describe('config-store', () => {
       const newConfig = {
         id: 'cfg-new',
         name: 'New Config',
-        apiKey: 'sk-ant-test',
+        apiKey: 'sk-ant-api123-1234567890' + 'a'.repeat(70),
         baseURL: 'https://api.anthropic.com',
         model: 'claude-3-5-sonnet-20241022',
         apiType: 'anthropic' as const,
       };
 
-      vi.mocked(fs.access).mockResolvedValue(undefined);
-      vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify({ configs: [] }));
-      vi.mocked(fs.writeFile).mockResolvedValue(undefined);
+      vi.mocked(fsModule.existsSync).mockReturnValue(true);
+      vi.mocked(fsModule.readFileSync).mockReturnValue(JSON.stringify({ configs: [] }));
+      vi.mocked(fsModule.writeFileSync).mockReturnValue(undefined);
 
       saveApiConfig(newConfig);
 
-      expect(fs.writeFile).toHaveBeenCalled();
+      expect(fsModule.writeFileSync).toHaveBeenCalled();
     });
 
     it('应该更新现有配置', async () => {
@@ -253,7 +275,7 @@ describe('config-store', () => {
         configs: [{
           id: 'cfg-1',
           name: 'Config 1',
-          apiKey: 'key1',
+          apiKey: 'sk-ant-api123-1234567890' + 'a'.repeat(70),
           baseURL: 'https://api1.com',
           model: 'model1',
           apiType: 'anthropic' as const,
@@ -263,19 +285,19 @@ describe('config-store', () => {
       const updatedConfig = {
         id: 'cfg-1',
         name: 'Updated Config',
-        apiKey: 'new-key',
+        apiKey: 'sk-ant-api123-new-key-1234567' + 'b'.repeat(70),
         baseURL: 'https://api.anthropic.com',
         model: 'claude-3-5-sonnet-20241022',
         apiType: 'anthropic' as const,
       };
 
-      vi.mocked(fs.access).mockResolvedValue(undefined);
-      vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify(existingStore));
-      vi.mocked(fs.writeFile).mockResolvedValue(undefined);
+      vi.mocked(fsModule.existsSync).mockReturnValue(true);
+      vi.mocked(fsModule.readFileSync).mockReturnValue(JSON.stringify(existingStore));
+      vi.mocked(fsModule.writeFileSync).mockReturnValue(undefined);
 
       saveApiConfig(updatedConfig);
 
-      const writtenData = vi.mocked(fs.writeFile).mock.calls[0][1] as string;
+      const writtenData = vi.mocked(fsModule.writeFileSync).mock.calls[0][1] as string;
       const parsed = JSON.parse(writtenData);
       expect(parsed.configs[0].name).toBe('Updated Config');
     });
@@ -296,19 +318,19 @@ describe('config-store', () => {
     it('应该为新配置生成 ID', async () => {
       const configWithoutId = {
         name: 'New Config',
-        apiKey: 'sk-ant-test',
+        apiKey: 'sk-ant-api123-1234567890' + 'a'.repeat(70),
         baseURL: 'https://api.anthropic.com',
         model: 'claude-3-5-sonnet-20241022',
         apiType: 'anthropic' as const,
       };
 
-      vi.mocked(fs.access).mockResolvedValue(undefined);
-      vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify({ configs: [] }));
-      vi.mocked(fs.writeFile).mockResolvedValue(undefined);
+      vi.mocked(fsModule.existsSync).mockReturnValue(true);
+      vi.mocked(fsModule.readFileSync).mockReturnValue(JSON.stringify({ configs: [] }));
+      vi.mocked(fsModule.writeFileSync).mockReturnValue(undefined);
 
       saveApiConfig(configWithoutId as any);
 
-      const writtenData = vi.mocked(fs.writeFile).mock.calls[0][1] as string;
+      const writtenData = vi.mocked(fsModule.writeFileSync).mock.calls[0][1] as string;
       const parsed = JSON.parse(writtenData);
       expect(parsed.configs[0].id).toBeDefined();
       expect(parsed.configs[0].id).toMatch(/^cfg_\d+_\w+$/);
@@ -323,7 +345,7 @@ describe('config-store', () => {
           {
             id: 'cfg-1',
             name: 'Config 1',
-            apiKey: 'key1',
+            apiKey: 'sk-ant-api123-1234567890' + 'a'.repeat(70),
             baseURL: 'https://api1.com',
             model: 'model1',
             apiType: 'anthropic' as const,
@@ -331,7 +353,7 @@ describe('config-store', () => {
           {
             id: 'cfg-2',
             name: 'Config 2',
-            apiKey: 'key2',
+            apiKey: 'sk-ant-api123-9876543210' + 'b'.repeat(70),
             baseURL: 'https://api2.com',
             model: 'model2',
             apiType: 'openai' as const,
@@ -339,12 +361,13 @@ describe('config-store', () => {
         ],
       };
 
-      vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify(existingStore));
-      vi.mocked(fs.writeFile).mockResolvedValue(undefined);
+      vi.mocked(fsModule.existsSync).mockReturnValue(true);
+      vi.mocked(fsModule.readFileSync).mockReturnValue(JSON.stringify(existingStore));
+      vi.mocked(fsModule.writeFileSync).mockReturnValue(undefined);
 
       deleteApiConfig('cfg-1');
 
-      const writtenData = vi.mocked(fs.writeFile).mock.calls[0][1] as string;
+      const writtenData = vi.mocked(fsModule.writeFileSync).mock.calls[0][1] as string;
       const parsed = JSON.parse(writtenData);
       expect(parsed.configs).toHaveLength(1);
       expect(parsed.configs[0].id).toBe('cfg-2');
@@ -357,7 +380,7 @@ describe('config-store', () => {
           {
             id: 'cfg-1',
             name: 'Config 1',
-            apiKey: 'key1',
+            apiKey: 'sk-ant-api123-1234567890' + 'a'.repeat(70),
             baseURL: 'https://api1.com',
             model: 'model1',
             apiType: 'anthropic' as const,
@@ -365,7 +388,7 @@ describe('config-store', () => {
           {
             id: 'cfg-2',
             name: 'Config 2',
-            apiKey: 'key2',
+            apiKey: 'sk-ant-api123-9876543210' + 'b'.repeat(70),
             baseURL: 'https://api2.com',
             model: 'model2',
             apiType: 'openai' as const,
@@ -373,12 +396,13 @@ describe('config-store', () => {
         ],
       };
 
-      vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify(existingStore));
-      vi.mocked(fs.writeFile).mockResolvedValue(undefined);
+      vi.mocked(fsModule.existsSync).mockReturnValue(true);
+      vi.mocked(fsModule.readFileSync).mockReturnValue(JSON.stringify(existingStore));
+      vi.mocked(fsModule.writeFileSync).mockReturnValue(undefined);
 
       deleteApiConfig('cfg-1');
 
-      const writtenData = vi.mocked(fs.writeFile).mock.calls[0][1] as string;
+      const writtenData = vi.mocked(fsModule.writeFileSync).mock.calls[0][1] as string;
       const parsed = JSON.parse(writtenData);
       expect(parsed.activeConfigId).toBe('cfg-2');
     });
@@ -390,7 +414,7 @@ describe('config-store', () => {
           {
             id: 'cfg-1',
             name: 'Config 1',
-            apiKey: 'key1',
+            apiKey: 'sk-ant-api123-1234567890' + 'a'.repeat(70),
             baseURL: 'https://api1.com',
             model: 'model1',
             apiType: 'anthropic' as const,
@@ -398,12 +422,13 @@ describe('config-store', () => {
         ],
       };
 
-      vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify(existingStore));
-      vi.mocked(fs.writeFile).mockResolvedValue(undefined);
+      vi.mocked(fsModule.existsSync).mockReturnValue(true);
+      vi.mocked(fsModule.readFileSync).mockReturnValue(JSON.stringify(existingStore));
+      vi.mocked(fsModule.writeFileSync).mockReturnValue(undefined);
 
       deleteApiConfig('cfg-1');
 
-      const writtenData = vi.mocked(fs.writeFile).mock.calls[0][1] as string;
+      const writtenData = vi.mocked(fsModule.writeFileSync).mock.calls[0][1] as string;
       const parsed = JSON.parse(writtenData);
       expect(parsed.activeConfigId).toBeUndefined();
     });
@@ -417,7 +442,7 @@ describe('config-store', () => {
           {
             id: 'cfg-1',
             name: 'Config 1',
-            apiKey: 'key1',
+            apiKey: 'sk-ant-api123-1234567890' + 'a'.repeat(70),
             baseURL: 'https://api1.com',
             model: 'model1',
             apiType: 'anthropic' as const,
@@ -425,7 +450,7 @@ describe('config-store', () => {
           {
             id: 'cfg-2',
             name: 'Config 2',
-            apiKey: 'key2',
+            apiKey: 'sk-ant-api123-9876543210' + 'b'.repeat(70),
             baseURL: 'https://api2.com',
             model: 'model2',
             apiType: 'openai' as const,
@@ -433,12 +458,13 @@ describe('config-store', () => {
         ],
       };
 
-      vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify(existingStore));
-      vi.mocked(fs.writeFile).mockResolvedValue(undefined);
+      vi.mocked(fsModule.existsSync).mockReturnValue(true);
+      vi.mocked(fsModule.readFileSync).mockReturnValue(JSON.stringify(existingStore));
+      vi.mocked(fsModule.writeFileSync).mockReturnValue(undefined);
 
       setActiveApiConfig('cfg-2');
 
-      const writtenData = vi.mocked(fs.writeFile).mock.calls[0][1] as string;
+      const writtenData = vi.mocked(fsModule.writeFileSync).mock.calls[0][1] as string;
       const parsed = JSON.parse(writtenData);
       expect(parsed.activeConfigId).toBe('cfg-2');
     });
@@ -449,14 +475,15 @@ describe('config-store', () => {
         configs: [{
           id: 'cfg-1',
           name: 'Config 1',
-          apiKey: 'key1',
+          apiKey: 'sk-ant-api123-1234567890' + 'a'.repeat(70),
           baseURL: 'https://api1.com',
           model: 'model1',
           apiType: 'anthropic' as const,
         }],
       };
 
-      vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify(existingStore));
+      vi.mocked(fsModule.existsSync).mockReturnValue(true);
+      vi.mocked(fsModule.readFileSync).mockReturnValue(JSON.stringify(existingStore));
 
       expect(() => setActiveApiConfig('cfg-nonexistent')).toThrow();
     });

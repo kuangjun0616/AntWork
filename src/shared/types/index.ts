@@ -1,10 +1,6 @@
 /**
  * 共享类型定义
  * 前后端共享的 TypeScript 类型
- *
- * @author Claude Code
- * @created 2025-01-23
- * @copyright AGPL-3.0
  */
 
 import type { SDKMessage, PermissionResult } from "@anthropic-ai/claude-agent-sdk";

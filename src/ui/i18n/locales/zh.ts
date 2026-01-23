@@ -357,8 +357,8 @@ export default {
 	output: {
 		title: "输出样式",
 		subtitle: "配置 AI 输出样式和格式",
-		description: "输出样式配置功能正在开发中...",
-		comingSoon: "即将推出：可配置输出格式、代码高亮主题、Markdown 渲染选项等。",
+		description: "配置输出格式、代码高亮、主题等选项。",
+		comingSoon: "更多功能即将推出：自定义主题、更多渲染器选项等。",
 	},
 
 	recovery: {

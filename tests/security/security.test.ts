@@ -17,17 +17,22 @@ import {
   validateApiConfig,
   saveApiConfig,
   loadApiConfig,
-} from '../../src/electron/libs/config-store';
+} from '../../src/electron/storage/config-store';
 import {
   createSkill,
   deleteSkill,
-} from '../../src/electron/libs/skills-store';
+} from '../../src/electron/storage/skills-store';
 
 // Mock electron app
 vi.mock('electron', () => ({
   app: {
     getPath: vi.fn((name: string) => `/mock/path/${name}`),
     isPackaged: false,
+  },
+  safeStorage: {
+    isEncryptionAvailable: vi.fn(() => false),
+    encryptString: vi.fn((plaintext: string) => Buffer.from(plaintext)),
+    decryptString: vi.fn((buffer: Buffer) => buffer.toString()),
   },
 }));
 
@@ -40,7 +45,11 @@ vi.mock('fs', () => ({
     mkdir: vi.fn(),
     readdir: vi.fn(),
     rm: vi.fn(),
+    rename: vi.fn(),
   },
+  existsSync: vi.fn(() => true),
+  writeFileSync: vi.fn(),
+  readFileSync: vi.fn(),
 }));
 
 describe('安全测试套件', () => {
@@ -62,11 +71,13 @@ describe('安全测试套件', () => {
       ];
 
       for (const attack of pathTraversalAttacks) {
-        await expect(createSkill({
+        const result = await createSkill({
           name: attack,
           description: 'Malicious',
           prompt: 'test',
-        })).rejects.toThrow();
+        });
+        expect(result.success).toBe(false);
+        expect(result.error).toBeDefined();
       }
     });
 
@@ -78,7 +89,9 @@ describe('安全测试套件', () => {
       ];
 
       for (const attack of attacks) {
-        await expect(deleteSkill(attack)).rejects.toThrow();
+        const result = await deleteSkill(attack);
+        expect(result.success).toBe(false);
+        expect(result.error).toBeDefined();
       }
     });
 
@@ -90,11 +103,13 @@ describe('安全测试套件', () => {
       ];
 
       for (const attack of nullByteAttacks) {
-        await expect(createSkill({
+        const result = await createSkill({
           name: attack,
           description: 'Malicious',
           prompt: 'test',
-        })).rejects.toThrow();
+        });
+        expect(result.success).toBe(false);
+        expect(result.error).toBeDefined();
       }
     });
   });
@@ -125,11 +140,13 @@ describe('安全测试套件', () => {
       ];
 
       for (const attack of xssAttacks) {
-        await expect(createSkill({
+        const result = await createSkill({
           name: attack,
           description: 'XSS',
           prompt: 'test',
-        })).rejects.toThrow();
+        });
+        expect(result.success).toBe(false);
+        expect(result.error).toBeDefined();
       }
     });
 
@@ -225,9 +242,18 @@ describe('安全测试套件', () => {
   describe('竞争条件测试', () => {
     it('应该正确处理并发创建操作', async () => {
       vi.mocked(fs.access)
-        .mockRejectedValueOnce({ code: 'ENOENT' } as never)
-        .mockRejectedValueOnce({ code: 'ENOENT' } as never)
-        .mockResolvedValue(undefined);
+        .mockRejectedValue({ code: 'ENOENT' } as never);
+
+      // 第一次重命名成功，第二次失败（模拟竞争条件）
+      let callCount = 0;
+      vi.mocked(fs.rename).mockImplementation(async () => {
+        callCount++;
+        if (callCount === 1) {
+          return undefined;
+        } else {
+          throw { code: 'EEXIST' } as never;
+        }
+      });
 
       vi.mocked(fs.writeFile).mockResolvedValue(undefined);
 
@@ -279,11 +305,13 @@ describe('安全测试套件', () => {
       ];
 
       for (const path of protectedPaths) {
-        await expect(createSkill({
+        const result = await createSkill({
           name: path,
           description: 'Malicious',
           prompt: 'test',
-        })).rejects.toThrow();
+        });
+        expect(result.success).toBe(false);
+        expect(result.error).toBeDefined();
       }
     });
   });
@@ -353,22 +381,26 @@ describe('安全测试套件', () => {
       // 当前正则只允许字母数字下划线连字符，Unicode 会被拒绝
       // 这是设计决策，但应该有清晰的错误消息
       for (const name of unicodeNames) {
-        await expect(createSkill({
+        const result = await createSkill({
           name,
           description: 'Test',
           prompt: 'Test',
-        })).rejects.toThrow();
+        });
+        expect(result.success).toBe(false);
+        expect(result.error).toBeDefined();
       }
     });
 
     it('应该处理 URL 编码的输入', async () => {
       const urlEncoded = '%3Cscript%3Ealert%28%27XSS%27%29%3C%2Fscript%3E';
 
-      await expect(createSkill({
+      const result = await createSkill({
         name: urlEncoded,
         description: 'Test',
         prompt: 'Test',
-      })).rejects.toThrow();
+      });
+      expect(result.success).toBe(false);
+      expect(result.error).toBeDefined();
     });
   });
 });

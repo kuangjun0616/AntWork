@@ -1,4 +1,4 @@
-import { app } from "electron";
+import { app, safeStorage } from "electron";
 import { readFileSync, existsSync, mkdirSync, writeFileSync, promises as fs } from "fs";
 import { join } from "path";
 import { log } from "../logger.js";
@@ -8,6 +8,67 @@ import { saveApiConfigToEnv } from "../utils/env-file.js";
 
 // 使用 fs.promises 进行异步操作
 const { writeFile, access } = fs;
+
+// ==================== 加密存储 ====================
+
+/**
+ * 检查 safeStorage 是否可用
+ */
+function isSafeStorageAvailable(): boolean {
+  return safeStorage.isEncryptionAvailable();
+}
+
+/**
+ * 加密敏感字符串（如 API Key）
+ */
+function encryptSensitiveData(plaintext: string): string {
+  if (!plaintext) return '';
+  if (!isSafeStorageAvailable()) {
+    log.warn('[config-store] safeStorage 不可用，API Key 将以明文存储');
+    return plaintext;
+  }
+  const buffer = safeStorage.encryptString(plaintext);
+  return buffer.toString('base64');
+}
+
+/**
+ * 解密敏感字符串
+ */
+function decryptSensitiveData(ciphertext: string): string {
+  if (!ciphertext) return '';
+  // 尝试检测是否是 base64 编码的加密数据
+  if (ciphertext.includes(':') || !/^[A-Za-z0-9+/=]+$/.test(ciphertext)) {
+    // 可能是明文（非 base64），直接返回
+    return ciphertext;
+  }
+  if (!isSafeStorageAvailable()) {
+    // 如果 safeStorage 不可用，假设是明文
+    return ciphertext;
+  }
+  try {
+    const buffer = Buffer.from(ciphertext, 'base64');
+    return safeStorage.decryptString(buffer);
+  } catch (error) {
+    // 解密失败，可能是明文，直接返回
+    log.warn('[config-store] 解密失败，假设是明文数据');
+    return ciphertext;
+  }
+}
+
+/**
+ * 检查字符串是否可能是加密数据
+ */
+function isEncrypted(value: string): boolean {
+  if (!value) return false;
+  // 加密数据通常是 base64 格式，且不含常见 API key 前缀
+  if (value.startsWith('sk-') || value.startsWith('sess-') || value.startsWith('ak-')) {
+    return false; // 明文 API key
+  }
+  // 检查是否是有效的 base64
+  return /^[A-Za-z0-9+/=]{20,}$/.test(value);
+}
+
+// ==================== 类型定义 ====================
 
 export type ApiType = ApiProvider;
 
@@ -47,6 +108,10 @@ export type ApiConfig = {
   /** 是否需要代理模式（用于 count_tokens 端点兼容性） */
   needsProxy?: boolean;
   needsProxyCheckedAt?: number;  // 检测时间戳
+  /** 用户配置覆盖：强制启用代理模式（覆盖白名单检测结果） */
+  forceProxy?: boolean;
+  /** 用户配置覆盖：跳过代理检测（用户确定不需要代理） */
+  skipProxyCheck?: boolean;
   /** 创建时间 */
   createdAt?: number;
   /** 更新时间 */
@@ -166,6 +231,11 @@ function validateApiKey(apiKey: string, provider: ApiProvider): string[] {
     errors.push('API Key 包含非法字符');
   }
 
+  // 检查命令注入模式（shell 元字符）
+  if (/[;&|`$()]/.test(trimmed)) {
+    errors.push('API Key 包含潜在命令注入模式');
+  }
+
   // 厂商特定验证
   const patterns = API_KEY_PATTERNS[provider];
   if (patterns && patterns.length > 0) {
@@ -248,11 +318,62 @@ function validateModel(model: string, provider: ApiProvider): string[] {
 }
 
 /**
+ * 验证配置名称
+ */
+function validateConfigName(name: string): string[] {
+  const errors: string[] = [];
+
+  if (!name || typeof name !== 'string') {
+    errors.push('配置名称不能为空');
+    return errors;
+  }
+
+  const trimmed = name.trim();
+
+  if (trimmed.length === 0) {
+    errors.push('配置名称不能为空');
+  }
+
+  if (trimmed.length > 100) {
+    errors.push('配置名称过长（最多 100 个字符）');
+  }
+
+  // 检查 SQL 注入模式
+  const sqlInjectionPatterns = [
+    /--/,           // SQL 注释
+    /;/i,           // 语句分隔符
+    /'?\s*(OR|AND)\s+['\w\s]+=.*=/i,  // OR/AND 条件注入
+    /UNION\s+SELECT/i,  // UNION 注入
+    /DROP\s+TABLE/i,    // DROP TABLE
+    /' OR '/i,      // 简单的 OR 注入
+    /' AND '/i,     // 简单的 AND 注入
+  ];
+  for (const pattern of sqlInjectionPatterns) {
+    if (pattern.test(trimmed)) {
+      errors.push('配置名称包含潜在的 SQL 注入模式');
+      break;
+    }
+  }
+
+  // 检查可疑字符
+  if (/[<>{}]/.test(trimmed)) {
+    errors.push('配置名称包含非法字符');
+  }
+
+  return errors;
+}
+
+/**
  * 完整验证 API 配置
  */
 export function validateApiConfig(config: ApiConfig): ValidationResult {
   const errors: string[] = [];
   const provider = config.apiType || 'anthropic';
+
+  // 验证名称
+  if (config.name) {
+    errors.push(...validateConfigName(config.name));
+  }
 
   // 验证 apiKey
   errors.push(...validateApiKey(config.apiKey, provider));
@@ -429,10 +550,13 @@ export function loadApiConfig(): ApiConfig | null {
     // 检查是否为新格式（有 configs 数组）
     if (data.configs && Array.isArray(data.configs)) {
       const store = data as ApiConfigsStore;
-      // 找到激活的配置
+      // 找到激活的配置并解密 API key
       const activeConfig = store.configs.find(c => c.id === store.activeConfigId) || store.configs[0];
       if (activeConfig) {
-        return activeConfig;
+        return {
+          ...activeConfig,
+          apiKey: decryptSensitiveData(activeConfig.apiKey),
+        };
       }
       return null;
     }
@@ -441,10 +565,21 @@ export function loadApiConfig(): ApiConfig | null {
     if (data.apiKey && data.baseURL && data.model) {
       log.info('[config-store] 检测到旧格式配置，开始迁移...');
       const newStore = migrateOldConfig(data);
-      // 保存新格式
-      writeFileSync(configPath, JSON.stringify(newStore, null, 2), "utf8");
+      // 保存新格式（同时加密）
+      const encryptedStore = {
+        ...newStore,
+        configs: newStore.configs.map((cfg: ApiConfig) => ({
+          ...cfg,
+          apiKey: encryptSensitiveData(cfg.apiKey),
+        })),
+      };
+      writeFileSync(configPath, JSON.stringify(encryptedStore, null, 2), "utf8");
       log.info('[config-store] 旧配置已迁移到新格式');
-      return newStore.configs[0];
+      // 返回解密后的配置
+      return {
+        ...newStore.configs[0],
+        apiKey: decryptSensitiveData(newStore.configs[0].apiKey),
+      };
     }
 
     return null;
@@ -468,17 +603,39 @@ export function loadAllApiConfigs(): ApiConfigsStore | null {
 
     // 检查是否为新格式（有 configs 数组）
     if (data.configs && Array.isArray(data.configs)) {
-      return data as ApiConfigsStore;
+      // 解密所有 API keys
+      const decryptedStore = {
+        ...data,
+        configs: data.configs.map((cfg: ApiConfig) => ({
+          ...cfg,
+          apiKey: decryptSensitiveData(cfg.apiKey),
+        })),
+      };
+      return decryptedStore;
     }
 
     // 旧格式迁移
     if (data.apiKey && data.baseURL && data.model) {
       log.info('[config-store] 检测到旧格式配置，开始迁移...');
       const newStore = migrateOldConfig(data);
-      // 保存新格式
-      writeFileSync(configPath, JSON.stringify(newStore, null, 2), "utf8");
+      // 保存新格式（同时加密）
+      const encryptedStore = {
+        ...newStore,
+        configs: newStore.configs.map((cfg: ApiConfig) => ({
+          ...cfg,
+          apiKey: encryptSensitiveData(cfg.apiKey),
+        })),
+      };
+      writeFileSync(configPath, JSON.stringify(encryptedStore, null, 2), "utf8");
       log.info('[config-store] 旧配置已迁移到新格式');
-      return newStore;
+      // 返回解密后的配置
+      return {
+        ...newStore,
+        configs: newStore.configs.map((cfg: ApiConfig) => ({
+          ...cfg,
+          apiKey: decryptSensitiveData(cfg.apiKey),
+        })),
+      };
     }
 
     return { configs: [] };
@@ -571,11 +728,19 @@ export function saveApiConfig(config: ApiConfig): void {
     // 查找配置是否已存在
     const existingIndex = store.configs.findIndex(c => c.id === config.id);
     if (existingIndex >= 0) {
-      // 更新现有配置
-      store.configs[existingIndex] = config;
+      // 更新现有配置 - 加密 API Key
+      const configToSave = {
+        ...config,
+        apiKey: encryptSensitiveData(config.apiKey),
+      };
+      store.configs[existingIndex] = configToSave;
     } else {
-      // 添加新配置
-      store.configs.push(config);
+      // 添加新配置 - 加密 API Key
+      const configToSave = {
+        ...config,
+        apiKey: encryptSensitiveData(config.apiKey),
+      };
+      store.configs.push(configToSave);
       // 新配置自动设为激活
       store.activeConfigId = config.id;
     }
@@ -584,11 +749,14 @@ export function saveApiConfig(config: ApiConfig): void {
     writeFileSync(configPath, JSON.stringify(store, null, 2), "utf8");
     log.info("[config-store] API config saved successfully");
 
-    // 保存到 .env 文件（使用激活的配置）
+    // 保存到 .env 文件（使用激活的配置，使用解密后的 key）
+    // 注意：config 参数是原始的、包含明文 apiKey 的配置
     const activeConfig = store.configs.find(c => c.id === store.activeConfigId) || config;
+    // 使用原始 config 的明文 apiKey，而不是 store 中加密后的版本
+    const apiKeyForEnv = config.apiKey;
     try {
       saveApiConfigToEnv({
-        apiKey: activeConfig.apiKey,
+        apiKey: apiKeyForEnv,
         baseURL: activeConfig.baseURL,
         model: activeConfig.model,
         apiType: activeConfig.apiType,
@@ -693,10 +861,10 @@ export function setActiveApiConfig(configId: string): void {
     writeFileSync(configPath, JSON.stringify(store, null, 2), "utf8");
     log.info(`[config-store] Active API config set to: ${configId}`);
 
-    // 更新 .env 文件
+    // 更新 .env 文件（使用解密后的 key）
     try {
       saveApiConfigToEnv({
-        apiKey: config.apiKey,
+        apiKey: decryptSensitiveData(config.apiKey),
         baseURL: config.baseURL,
         model: config.model,
         apiType: config.apiType,

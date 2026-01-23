@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { getMcpServerManager, clearMcpServerCache, clearMcpConfigCache } from '../../src/electron/libs/mcp-server-manager.js';
+import { getMcpServerManager, clearMcpServerCache, clearMcpConfigCache } from '../../src/electron/managers/mcp-server-manager.js';
 
 // Mock 依赖
 vi.mock('../../src/electron/libs/memory-tools.js', () => ({

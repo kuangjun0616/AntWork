@@ -1,14 +1,28 @@
 /**
  * 增强的 Markdown 渲染组件
  * 支持 SVG 图表、代码块、表格等多种渲染类型
+ * 注意：已禁用 rehypeRaw 以防止 XSS 攻击
  */
 
 import React from 'react';
 import ReactMarkdown from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
-import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
 import type { HTMLAttributes } from 'react';
+
+/**
+ * 验证 URL 是否安全
+ * 只允许 http、https 协议
+ */
+function isValidUrl(url: string): boolean {
+  if (!url) return false;
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
 
 interface ComponentProps extends HTMLAttributes<HTMLElement> {
   children?: React.ReactNode;
@@ -300,7 +314,7 @@ export default function MDContent({ text }: { text: string }) {
   return (
     <ReactMarkdown
       remarkPlugins={[remarkGfm]}
-      rehypePlugins={[rehypeRaw, rehypeHighlight]}
+      rehypePlugins={[rehypeHighlight]}
       components={{
         h1: ({ className, ...props }: Omit<ComponentProps, 'ref'>) => (
           <h1 className="mt-4 text-xl font-semibold text-ink-900" {...props} />
@@ -417,12 +431,33 @@ export default function MDContent({ text }: { text: string }) {
         hr: ({ className, ...props }: Omit<ComponentProps, 'ref'>) => (
           <hr className="my-4 border-ink-900/10" {...props} />
         ),
-        a: ({ className, ...props }: Omit<ComponentProps, 'ref'>) => (
-          <a className="text-accent hover:text-accent-hover underline" target="_blank" rel="noopener noreferrer" {...props} />
-        ),
-        img: ({ className, ...props }: Omit<ComponentProps, 'ref'>) => (
-          <img className="rounded-lg max-w-full h-auto my-2" {...props} />
-        ),
+        a: ({ className, href, children, ...props }: any) => {
+          // 验证 URL 是否安全，阻止 javascript:、data: 等危险协议
+          const safeHref = href && isValidUrl(href) ? href : undefined;
+          return (
+            <a
+              className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline underline-offset-2"
+              target="_blank"
+              rel="noopener noreferrer"
+              href={safeHref}
+              {...props}
+            >
+              {children}
+            </a>
+          );
+        },
+        img: ({ className, src, alt, ...props }: any) => {
+          // 验证图片源 URL 是否安全
+          const safeSrc = src && isValidUrl(src) ? src : undefined;
+          return (
+            <img
+              className="rounded-lg max-w-full h-auto my-2"
+              src={safeSrc}
+              alt={alt}
+              {...props}
+            />
+          );
+        },
       }}
     >
       {String(text ?? "")}

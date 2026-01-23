@@ -17,24 +17,22 @@ let cleanupComplete = false;
  * 清理函数
  * 在应用退出前执行清理操作
  */
-export function cleanup(): void {
+export async function cleanup(): Promise<void> {
     if (cleanupComplete) return;
     cleanupComplete = true;
 
     // 关闭 Memvid 连接
     try {
         const memvidStore = getMemvidStore();
-        memvidStore.close().catch((err: Error) => {
-            log.warn('[cleanup] Failed to close Memvid store:', err);
-        });
+        await memvidStore.close();
         log.info('[cleanup] Memvid store closed');
     } catch (err) {
         log.warn('[cleanup] Error closing Memvid store:', err);
     }
 
-    // 销毁 SDK 配置缓存
+    // 销毁 SDK 配置缓存（使用动态 import）
     try {
-        const { destroyConfigCache } = require("../managers/sdk-config-cache.js");
+        const { destroyConfigCache } = await import("../managers/sdk-config-cache.js");
         destroyConfigCache();
         log.info('[cleanup] SDK config cache destroyed');
     } catch (err) {
@@ -51,7 +49,9 @@ export function cleanup(): void {
  * 终止信号处理
  */
 export function handleSignal(): void {
-    cleanup();
+    cleanup().catch(err => {
+        log.error('[cleanup] Error during cleanup:', err);
+    });
     app.quit();
 }
 

@@ -1,11 +1,6 @@
 /**
  * API 适配器模块索引
  * 统一导出所有适配器相关功能
- *
- * @author Claude Code
- * @created 2025-01-23
- * @Email noreply@anthropic.com
- * @copyright AGPL-3.0
  */
 
 // 类型定义

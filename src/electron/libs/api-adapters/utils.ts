@@ -1,11 +1,6 @@
 /**
  * API 适配器工具函数
  * 提供 API 格式检测和厂商推断功能
- *
- * @author Claude Code
- * @created 2025-01-23
- * @Email noreply@anthropic.com
- * @copyright AGPL-3.0
  */
 
 import type { ApiProvider } from '../../config/constants.js';
@@ -102,13 +97,43 @@ export function getAnthropicFormatUrl(baseURL: string): string {
 /**
  * 获取预设的 URL 列表
  */
-export function getAllPresetUrls(): Array<{ name: string; url: string; format: string }> {
+export function getAllPresetUrls(): Array<{ provider: string; name: string; url: string; description: string }> {
   return [
-    { name: 'Anthropic 官方', url: 'https://api.anthropic.com', format: 'anthropic' },
-    { name: '智谱 AI (GLM)', url: 'https://open.bigmodel.cn/api/anthropic', format: 'anthropic' },
-    { name: 'DeepSeek', url: 'https://api.deepseek.com', format: 'anthropic' },
-    { name: '阿里云百炼', url: 'https://dashscope.aliyuncs.com', format: 'anthropic' },
-    { name: '月之暗面 (Kimi)', url: 'https://api.moonshot.cn', format: 'anthropic' },
-    { name: 'N1N.AI', url: 'https://api.n1n.ai', format: 'anthropic' },
+    {
+      provider: 'anthropic',
+      name: 'Anthropic 官方',
+      url: 'https://api.anthropic.com',
+      description: 'Anthropic 官方 API 端点'
+    },
+    {
+      provider: 'zhipu',
+      name: '智谱 AI (GLM)',
+      url: 'https://open.bigmodel.cn/api/anthropic',
+      description: '智谱 AI 的 Anthropic 兼容端点'
+    },
+    {
+      provider: 'deepseek',
+      name: 'DeepSeek',
+      url: 'https://api.deepseek.com',
+      description: 'DeepSeek API 端点'
+    },
+    {
+      provider: 'alibaba',
+      name: '阿里云百炼',
+      url: 'https://dashscope.aliyuncs.com',
+      description: '阿里云百炼 API 端点'
+    },
+    {
+      provider: 'moonshot',
+      name: '月之暗面 (Kimi)',
+      url: 'https://api.moonshot.cn',
+      description: '月之暗面 Kimi API 端点'
+    },
+    {
+      provider: 'n1n',
+      name: 'N1N.AI',
+      url: 'https://api.n1n.ai',
+      description: 'N1N.AI API 端点'
+    },
   ];
 }

@@ -1,11 +1,6 @@
 /**
  * OpenAI 格式 API 适配器
  * 将 OpenAI 格式转换为 Anthropic 兼容格式
- *
- * @author Claude Code
- * @created 2025-01-23
- * @Email noreply@anthropic.com
- * @copyright AGPL-3.0
  */
 
 import type { ApiProvider } from '../../config/constants.js';

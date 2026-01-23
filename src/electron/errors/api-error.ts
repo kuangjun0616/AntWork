@@ -53,13 +53,40 @@ const HTTP_STATUS_TO_CODE: Record<number, APICode> = {
 };
 
 /**
+ * 脱敏响应体，移除敏感信息
+ * @param body - 原始响应体
+ * @returns 脱敏后的响应体摘要
+ */
+function sanitizeResponseBody(body: string): { summary: string; size: number } {
+  const size = body.length;
+
+  // 脱敏敏感字段
+  const sanitized = body
+    .replace(/"apiKey":\s*"[^"]+"/gi, '"apiKey": "[REDACTED]"')
+    .replace(/"api_key":\s*"[^"]+"/gi, '"api_key": "[REDACTED]"')
+    .replace(/"token":\s*"[^"]+"/gi, '"token": "[REDACTED]"')
+    .replace(/"password":\s*"[^"]+"/gi, '"password": "[REDACTED]"')
+    .replace(/"secret":\s*"[^"]+"/gi, '"secret": "[REDACTED]"')
+    .replace(/"authorization":\s*"[^"]+"/gi, '"authorization": "[REDACTED]"');
+
+  // 限制摘要长度
+  const maxLength = 200;
+  const summary = sanitized.length > maxLength
+    ? sanitized.substring(0, maxLength) + '... [truncated]'
+    : sanitized;
+
+  return { summary, size };
+}
+
+/**
  * API 请求错误
  */
 export class APIError extends AppError {
   readonly url?: string;
   readonly method?: string;
   readonly responseStatus?: number;
-  readonly responseBody?: string;
+  readonly responseSize?: number;
+  readonly responseSummary?: string;
 
   constructor(
     message: string,
@@ -70,14 +97,16 @@ export class APIError extends AppError {
       url?: string;
       method?: string;
       responseStatus?: number;
-      responseBody?: string;
+      responseSize?: number;
+      responseSummary?: string;
     }
   ) {
     super(message, code, statusCode, cause);
     this.url = metadata?.url;
     this.method = metadata?.method;
     this.responseStatus = metadata?.responseStatus;
-    this.responseBody = metadata?.responseBody;
+    this.responseSize = metadata?.responseSize;
+    this.responseSummary = metadata?.responseSummary;
   }
 
   /**
@@ -90,12 +119,14 @@ export class APIError extends AppError {
     body: string
   ): APIError {
     const code = HTTP_STATUS_TO_CODE[status] || APICode.SERVER_ERROR;
+    const { summary, size } = sanitizeResponseBody(body);
+
     return new APIError(
       `API request failed: ${status} ${status === 404 ? 'Not Found' : status === 500 ? 'Server Error' : 'Error'}`,
       code,
       status,
       undefined,
-      { url, method, responseStatus: status, responseBody: body }
+      { url, method, responseStatus: status, responseSize: size, responseSummary: summary }
     );
   }
 
@@ -106,6 +137,8 @@ export class APIError extends AppError {
     url?: string;
     method?: string;
     responseStatus?: number;
+    responseSize?: number;
+    responseSummary?: string;
   } {
     return {
       message: this.message,
@@ -114,6 +147,8 @@ export class APIError extends AppError {
       url: this.url,
       method: this.method,
       responseStatus: this.responseStatus,
+      responseSize: this.responseSize,
+      responseSummary: this.responseSummary,
     };
   }
 }

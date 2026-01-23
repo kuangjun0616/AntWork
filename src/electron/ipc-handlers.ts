@@ -1,8 +1,7 @@
-import { BrowserWindow } from "electron";
+import { BrowserWindow, app } from "electron";
 import type { ClientEvent, ServerEvent } from "./types.js";
-import { runClaude, type RunnerHandle } from "./libs/runner.js";
+import type { RunnerHandle } from "./libs/runner.js";
 import { SessionStore } from './storage/session-store.js';
-import { app } from "electron";
 import { join } from "path";
 import { log } from "./logger.js";
 import {

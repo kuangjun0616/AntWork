@@ -22,7 +22,7 @@ import {
   validateMcpServer,
   createMcpServerFromTemplate,
   MCP_TEMPLATES,
-} from '../../src/electron/libs/mcp-store';
+} from '../../src/electron/storage/mcp-store';
 
 // Mock os
 vi.mock('os', () => ({
@@ -72,6 +72,8 @@ describe('mcp-store', () => {
         },
       };
 
+      // Mock access to succeed so file reading is attempted
+      vi.mocked(fs.access).mockResolvedValue(undefined);
       vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify(mockSettings));
 
       const result = await loadMcpServers();
@@ -108,6 +110,7 @@ describe('mcp-store', () => {
         },
       };
 
+      vi.mocked(fs.access).mockResolvedValue(undefined);
       vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify(mockSettings));
 
       const result = await loadMcpServer('github');
@@ -126,6 +129,7 @@ describe('mcp-store', () => {
         },
       };
 
+      vi.mocked(fs.access).mockResolvedValue(undefined);
       vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify(mockSettings));
 
       const result = await loadMcpServer('nonexistent');
@@ -141,6 +145,7 @@ describe('mcp-store', () => {
         args: ['@test/server'],
       };
 
+      vi.mocked(fs.access).mockResolvedValue(undefined);
       vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify({ mcpServers: {} }));
       vi.mocked(fs.writeFile).mockResolvedValue(undefined);
 
@@ -168,6 +173,7 @@ describe('mcp-store', () => {
         args: ['@new/server'],
       };
 
+      vi.mocked(fs.access).mockResolvedValue(undefined);
       vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify(existingSettings));
       vi.mocked(fs.writeFile).mockResolvedValue(undefined);
 
@@ -184,6 +190,7 @@ describe('mcp-store', () => {
         args: ['@test'],
       };
 
+      vi.mocked(fs.access).mockResolvedValue(undefined);
       vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify({ mcpServers: {} }));
       vi.mocked(fs.writeFile).mockResolvedValue(undefined);
 
@@ -207,6 +214,7 @@ describe('mcp-store', () => {
         },
       };
 
+      vi.mocked(fs.access).mockResolvedValue(undefined);
       vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify(existingSettings));
       vi.mocked(fs.writeFile).mockResolvedValue(undefined);
 
@@ -221,6 +229,7 @@ describe('mcp-store', () => {
         mcpServers: {},
       };
 
+      vi.mocked(fs.access).mockResolvedValue(undefined);
       vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify(existingSettings));
 
       await expect(deleteMcpServer('nonexistent')).resolves.not.toThrow();
@@ -236,6 +245,7 @@ describe('mcp-store', () => {
         },
       };
 
+      vi.mocked(fs.access).mockResolvedValue(undefined);
       vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify(mockSettings));
 
       const result = await getMcpServerList();
@@ -245,6 +255,7 @@ describe('mcp-store', () => {
     });
 
     it('空配置应该返回空数组', async () => {
+      vi.mocked(fs.access).mockResolvedValue(undefined);
       vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify({ mcpServers: {} }));
 
       const result = await getMcpServerList();

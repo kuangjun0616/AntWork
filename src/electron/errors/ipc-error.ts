@@ -1,10 +1,6 @@
 /**
  * IPC 通信错误类
  * 用于处理 IPC 通道通信过程中的错误
- *
- * @author Claude Code
- * @created 2025-01-23
- * @copyright AGPL-3.0
  */
 
 import { AppError } from "./app-error.js";

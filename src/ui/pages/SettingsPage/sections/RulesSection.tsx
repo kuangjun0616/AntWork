@@ -127,24 +127,31 @@ export function RulesSection() {
 
   // 创建新规则
   const handleCreateRule = async () => {
-    const name = prompt('请输入规则文件名（例如：my-rule.md）：');
-    if (!name) return;
-
-    if (!name.endsWith('.md')) {
-      alert('规则文件必须是 .md 格式');
-      return;
-    }
+    // 使用简单的默认文件名，避免 prompt() 在 Electron 中的问题
+    const timestamp = Date.now();
+    const defaultName = `rule-${timestamp}.md`;
 
     try {
-      const result = await window.electron.createRule(name, '# 新规则\n\n请在此添加规则内容...');
+      const result = await window.electron.createRule(defaultName, '# 新规则\n\n请在此添加规则内容...');
       if (result.success) {
-        loadRules();
+        await loadRules();
+        if (result.path) {
+          // 自动选中新创建的规则
+          const newRule = {
+            name: defaultName,
+            path: result.path,
+            content: '# 新规则\n\n请在此添加规则内容...',
+            language: 'markdown',
+            modified: Date.now()
+          };
+          handleSelectRule(newRule);
+        }
       } else {
         alert(result.error || '创建失败');
       }
     } catch (err) {
       console.error('Failed to create rule:', err);
-      alert('创建失败');
+      alert('创建失败: ' + (err instanceof Error ? err.message : '未知错误'));
     }
   };
 
@@ -200,7 +207,8 @@ export function RulesSection() {
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-medium text-ink-900">规则文件 ({rules.length})</h2>
             <button
-              className="text-xs text-accent hover:text-accent-hover"
+              type="button"
+              className="text-sm px-4 py-2 rounded-lg bg-accent text-white hover:bg-accent-hover transition-colors shadow-soft"
               onClick={handleCreateRule}
             >
               + 新建
@@ -214,7 +222,8 @@ export function RulesSection() {
               {RULE_TEMPLATES.map((template) => (
                 <button
                   key={template.name}
-                  className="text-xs px-3 py-1.5 rounded-lg border border-ink-900/10 bg-surface hover:bg-surface-tertiary transition-colors"
+                  type="button"
+                  className="text-sm px-4 py-2 rounded-lg border border-ink-900/10 bg-surface hover:bg-surface-tertiary hover:border-accent/50 transition-colors"
                   onClick={() => handleCreateFromTemplate(template)}
                   title={template.description}
                 >
@@ -257,6 +266,7 @@ export function RulesSection() {
                       </p>
                     </div>
                     <button
+                      type="button"
                       className="text-xs text-muted hover:text-error p-1"
                       onClick={(e) => {
                         e.stopPropagation();
@@ -292,6 +302,7 @@ export function RulesSection() {
                   {!editing ? (
                     <>
                       <button
+                        type="button"
                         className="text-xs px-3 py-1.5 rounded-lg border border-ink-900/10 bg-surface hover:bg-surface-tertiary transition-colors"
                         onClick={() => setEditing(true)}
                       >
@@ -301,6 +312,7 @@ export function RulesSection() {
                   ) : (
                     <>
                       <button
+                        type="button"
                         className="text-xs px-3 py-1.5 rounded-lg bg-accent text-white hover:bg-accent-hover transition-colors disabled:opacity-50"
                         onClick={handleSaveRule}
                         disabled={saving}
@@ -308,6 +320,7 @@ export function RulesSection() {
                         {saving ? '保存中...' : '保存'}
                       </button>
                       <button
+                        type="button"
                         className="text-xs px-3 py-1.5 rounded-lg border border-ink-900/10 bg-surface hover:bg-surface-tertiary transition-colors"
                         onClick={() => {
                           setEditing(false);

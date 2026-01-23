@@ -1,56 +1,62 @@
 /**
  * AICowork Electron 应用主入口
  * 负责应用初始化和模块协调
- *
- * @author Claude Code
- * @created 2025-01-23
- * @Email noreply@anthropic.com
- * @copyright AGPL-3.0
  */
 
-import { app, Menu } from "electron";
+import { app, Menu, shell } from "electron";
 import { log, logStartup, setupErrorHandling } from "./logger.js";
-import { precheckProxyNeeds } from './services/claude-settings.js';
 import { setupLifecycleEventHandlers } from "./main/lifecycle.js";
 import { createMainWindow } from "./main/window-manager.js";
 import { registerIpcHandlers } from "./main/ipc-registry.js";
 import "./services/claude-settings.js";
 
+// 导入应用服务初始化器
+import { initializeAppServices } from "./main/app-initializer.js";
+
 /**
- * 初始化异步任务
- * 在后台执行，不阻塞应用启动
+ * 设置应用菜单（保留基本功能）
  */
-function initializeAsyncTasks(): void {
-    // 启动时预检测代理需求
-    precheckProxyNeeds().catch((error) => {
-        log.warn('[Main] 代理预检测失败（不影响使用）:', error);
-    });
-
-    // 启动时预加载 SDK 配置
-    // 优化：提前缓存配置，减少会话启动时的3-5秒延迟
-    import("./managers/sdk-config-cache.js").then((cacheModule) => {
-        cacheModule.initializeConfigCache().catch((error) => {
-            log.warn('[Main] SDK 配置缓存初始化失败（不影响使用）:', error);
-        });
-    }).catch((error) => {
-        log.error('[Main] Failed to import sdk-config-cache module:', error);
-    });
-
-    // 从 .env 文件加载环境变量
-    import("./utils/env-file.js").then((envModule) => {
-        try {
-            const envVars = envModule.readEnvFile ? envModule.readEnvFile() : {};
-            Object.assign(process.env, envVars);
-
-            if (Object.keys(envVars).length > 0) {
-                log.info('[Main] Loaded environment variables from .env file:', Object.keys(envVars));
-            }
-        } catch (error) {
-            log.error('[Main] Failed to load .env file:', error);
+function setupApplicationMenu(): void {
+    const template: Electron.MenuItemConstructorOptions[] = [
+        {
+            label: '文件',
+            submenu: [
+                {
+                    label: '退出',
+                    accelerator: 'CmdOrCtrl+Q',
+                    click: () => {
+                        app.quit();
+                    }
+                }
+            ]
+        },
+        {
+            label: '编辑',
+            submenu: [
+                { role: 'undo', label: '撤销' },
+                { role: 'redo', label: '重做' },
+                { type: 'separator' },
+                { role: 'cut', label: '剪切' },
+                { role: 'copy', label: '复制' },
+                { role: 'paste', label: '粘贴' },
+                { role: 'selectAll', label: '全选' }
+            ]
+        },
+        {
+            label: '帮助',
+            submenu: [
+                {
+                    label: '文档',
+                    click: () => {
+                        shell.openExternal('https://docs.qq.com/form/page/DRm5uV1pSZFB3VHNv');
+                    }
+                }
+            ]
         }
-    }).catch((error) => {
-        log.error('[Main] Failed to import env-file module:', error);
-    });
+    ];
+
+    const menu = Menu.buildFromTemplate(template);
+    Menu.setApplicationMenu(menu);
 }
 
 /**
@@ -63,11 +69,13 @@ app.on("ready", () => {
     // 2. 记录应用启动
     logStartup();
 
-    // 3. 初始化异步任务
-    initializeAsyncTasks();
+    // 3. 初始化应用服务（后台异步执行）
+    initializeAppServices().catch((error) => {
+        log.error('[App] Failed to initialize services:', error);
+    });
 
-    // 4. 设置应用菜单
-    Menu.setApplicationMenu(null);
+    // 4. 设置应用菜单（保留基本功能）
+    setupApplicationMenu();
 
     // 5. 设置生命周期事件监听器
     setupLifecycleEventHandlers();

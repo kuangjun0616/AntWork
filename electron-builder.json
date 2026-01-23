@@ -6,26 +6,15 @@
         "dist-electron/**/*",
         "dist-react/**/*",
         "templateIcon.ico",
-        "node_modules/**/*",
-        "!node_modules/**/*.ts",
-        "!node_modules/**/*.map",
-        "!node_modules/**/*.md",
-        "!node_modules/**/test/**/*",
-        "!node_modules/**/tests/**/*",
-        "!node_modules/**/*.d.ts"
+        "!**/*.map",
+        "!**/*.test.*",
+        "!**/*.spec.*"
     ],
-    "extraResources": [
-        "dist-electron/preload.cjs",
-        {
-            "from": "templateIcon.ico",
-            "to": "templateIcon.ico"
-        }
-    ],
+    "extraResources": [],
     "npmRebuild": false,
     "asarUnpack": [
-        "node_modules/@anthropic-ai/claude-agent-sdk/**/*",
-        "node_modules/better-sqlite3/**/*",
-        "node_modules/@memvid/sdk/**/*"
+        "node_modules/better-sqlite3/build/**/*.node",
+        "node_modules/@memvid/sdk/**/*.node"
     ],
     "icon": "./templateIcon.ico",
     "mac": {
@@ -36,7 +25,6 @@
         "category": "Utility"
     },
     "win": {
-        "icon": "./templateIcon.ico",
         "signAndEditExecutable": false,
         "target": [
             "portable"

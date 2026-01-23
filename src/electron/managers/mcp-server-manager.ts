@@ -135,6 +135,7 @@ class McpServerManager {
 
   /**
    * 获取多个服务器（批量获取，用于会话启动）
+   * 优化：只加载启用的服务器，减少初始化时间
    *
    * @returns 服务器实例映射表
    */
@@ -159,32 +160,46 @@ class McpServerManager {
       } catch (error) {
         log.error('[MCP Manager] Failed to acquire memory servers:', error);
       }
+    } else {
+      log.info('[MCP Manager] Memory tools disabled, skipping');
     }
 
-    // 2. 获取外部 MCP 服务器（从配置）
+    // 2. 获取外部 MCP 服务器（从配置，仅启用的）
     try {
       const configs = await this.loadMcpConfigsWithCache();
+      let enabledCount = 0;
+      let skippedCount = 0;
+
       for (const [name, config] of Object.entries(configs)) {
+        // 优化：跳过禁用的服务器
         if (config.disabled) {
+          skippedCount++;
+          log.debug(`[MCP Manager] Skipping disabled server: ${name}`);
           continue;
         }
+
+        // 检查是否有 enabled 字段（显式启用）
+        if ('enabled' in config && !config.enabled) {
+          skippedCount++;
+          log.debug(`[MCP Manager] Skipping not-enabled server: ${name}`);
+          continue;
+        }
+
+        // 避免覆盖内置服务器
         if (servers[name]) {
-          continue; // 避免覆盖内置服务器
+          continue;
         }
 
         try {
-          // 外部服务器使用配置对象（SDK会自动处理）
-          servers[name] = {
-            type: config.type || 'stdio',
-            command: config.command,
-            args: config.args,
-            env: config.env,
-            url: config.url,
-          };
+          // 为启用的服务器创建实例
+          servers[name] = await this.acquireServer(name, config);
+          enabledCount++;
         } catch (error) {
           log.error(`[MCP Manager] Failed to acquire server ${name}:`, error);
         }
       }
+
+      log.info(`[MCP Manager] External servers: ${enabledCount} enabled, ${skippedCount} skipped`);
     } catch (error) {
       log.warn('[MCP Manager] Failed to load external MCP configs:', error);
     }

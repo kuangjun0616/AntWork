@@ -7,8 +7,7 @@ import { createServer, IncomingMessage, ServerResponse, Server } from 'http';
 import { log } from '../logger.js';
 import { estimateTokens } from './token-counter.js';
 import { saveApiConfig, type ApiConfig } from '../storage/config-store.js';
-import type { AnthropicRequest } from '../libs/api-adapter.js';
-import { getApiAdapter } from '../libs/api-adapter.js';
+import { getApiAdapter, type AnthropicRequest } from '../libs/api-adapter.js';
 
 /** 代理服务器端口 */
 const PROXY_PORT = 35721;
@@ -204,12 +203,29 @@ async function handleForwardRequest(req: IncomingMessage, res: ServerResponse, r
       log.info(`[API Proxy] 转发到: ${transformedRequest.url}`);
       log.info(`[API Proxy] 发送请求体:`, JSON.stringify(transformedRequest.body, null, 2));
 
-      // 转发请求到第三方 API
-      const response = await fetch(transformedRequest.url, {
-        method: 'POST',
-        headers: transformedRequest.headers,
-        body: JSON.stringify(transformedRequest.body),
-      });
+      // 转发请求到第三方 API（添加超时机制）
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30秒超时
+
+      let response: Response;
+      try {
+        response = await fetch(transformedRequest.url, {
+          method: 'POST',
+          headers: transformedRequest.headers,
+          body: JSON.stringify(transformedRequest.body),
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+      } catch (fetchError: any) {
+        clearTimeout(timeoutId);
+        if (fetchError.name === 'AbortError') {
+          log.error('[API Proxy] Request timeout after 30s');
+          res.writeHead(408, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Request timeout' }));
+          return;
+        }
+        throw fetchError;
+      }
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -241,16 +257,33 @@ async function handleForwardRequest(req: IncomingMessage, res: ServerResponse, r
             log.warn('[API Proxy] 保存配置失败:', e);
           }
 
-          // 使用新适配器重试
+          // 使用新适配器重试（添加超时机制）
           const retryAdapter = getApiAdapter(apiType);
           const retryRequest = retryAdapter.transformRequest(request, currentConfig);
           log.info(`[API Proxy] 重试到: ${retryRequest.url}`);
 
-          const retryResponse = await fetch(retryRequest.url, {
-            method: 'POST',
-            headers: retryRequest.headers,
-            body: JSON.stringify(retryRequest.body),
-          });
+          const retryController = new AbortController();
+          const retryTimeoutId = setTimeout(() => retryController.abort(), 30000);
+
+          let retryResponse: Response;
+          try {
+            retryResponse = await fetch(retryRequest.url, {
+              method: 'POST',
+              headers: retryRequest.headers,
+              body: JSON.stringify(retryRequest.body),
+              signal: retryController.signal,
+            });
+            clearTimeout(retryTimeoutId);
+          } catch (retryError: any) {
+            clearTimeout(retryTimeoutId);
+            if (retryError.name === 'AbortError') {
+              log.error('[API Proxy] Retry request timeout after 30s');
+              res.writeHead(408, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ error: 'Retry request timeout' }));
+              return;
+            }
+            throw retryError;
+          }
 
           if (retryResponse.ok) {
             // 重试成功，处理响应

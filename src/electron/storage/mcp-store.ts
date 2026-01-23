@@ -352,7 +352,7 @@ async function testStdioServer(config: McpServerConfig): Promise<McpTestResult> 
       );
 
       const child = spawn(command, testArgs.length > 0 ? testArgs : args, {
-        shell: true,
+        shell: false,  // 移除 shell 以防止命令注入风险
         env: { ...process.env, ...config.env },
       });
 

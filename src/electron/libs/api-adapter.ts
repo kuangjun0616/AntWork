@@ -1,14 +1,10 @@
 /**
  * API 适配器模块
  * 多厂商 API 转换和适配器工厂
- *
- * @author Claude Code
- * @created 2025-01-23
- * @Email noreply@anthropic.com
- * @copyright AGPL-3.0
  */
 
 import type { ApiProvider } from '../config/constants.js';
+import { OpenAIAdapter } from './api-adapters/openai-adapter.js';
 
 // 重新导出新模块的内容
 export * from './api-adapters/index.js';
@@ -18,10 +14,31 @@ export type { ApiProvider } from '../config/constants.js';
 
 /**
  * 获取 API 适配器
- * 返回 Anthropic 透传适配器（因为所有支持的厂商都兼容 Anthropic 格式）
+ * 根据厂商类型返回正确的适配器
  */
 export function getApiAdapter(provider: ApiProvider): any {
-  // 所有支持的厂商都使用 Anthropic 透传适配器
+  // OpenAI 格式的提供商
+  const openAIFormatProviders: ApiProvider[] = [
+    'huawei', 'ollama', 'openai', 'xingchen', 'tencent', 'iflytek',
+    'spark', 'sensetime', 'stepfun', 'lingyi', '01ai', 'abd',
+    'bestex', 'puyu', 'volcengine', 'doubao', 'hunyuan', 'wenxin',
+    'baichuan', 'google', 'cohere', 'mistral', 'meta', 'replicate',
+    'together', 'anyscale', 'fireworks', 'baseten', 'octoai', 'lamini',
+    'forefront', 'perplexity', 'you', 'phind', 'poe', 'character',
+    'vllm', 'textgen', 'localai', 'fastchat', 'lmstudio', 'jan',
+    'openrouter', 'togetherai', 'anywb', 'aiproxy', 'gptapi', 'api2d',
+    'closeai', 'custom',
+  ];
+
+  // 判断是否为 OpenAI 格式
+  const isOpenAIFormat = openAIFormatProviders.includes(provider);
+
+  if (isOpenAIFormat) {
+    // 使用 OpenAI 适配器
+    return new OpenAIAdapter(provider);
+  }
+
+  // Anthropic 格式的提供商（透传适配器）
   return {
     transformRequest: (request: any, config: any) => ({
       url: `${config.baseURL}/v1/messages`,
@@ -46,6 +63,7 @@ export function getProviderDefaults(provider: ApiProvider): {
   defaultModel: string;
 } {
   const defaults: Partial<Record<ApiProvider, { baseURL: string; models: string[]; defaultModel: string }>> = {
+    // Anthropic 格式提供商
     anthropic: {
       baseURL: 'https://api.anthropic.com',
       models: ['claude-sonnet-4-20250514', 'claude-3-5-sonnet-20241022', 'claude-3-haiku-20240307'],
@@ -85,6 +103,102 @@ export function getProviderDefaults(provider: ApiProvider): {
       baseURL: 'https://api.minimaxi.com',
       models: ['MiniMax-M2.1', 'MiniMax-M2.1-lightning', 'MiniMax-M2'],
       defaultModel: 'MiniMax-M2.1',
+    },
+    // OpenAI 格式提供商
+    ollama: {
+      baseURL: 'http://localhost:11434',
+      models: ['llama3', 'llama2', 'mistral', 'codellama'],
+      defaultModel: 'llama3',
+    },
+    openai: {
+      baseURL: 'https://api.openai.com',
+      models: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo'],
+      defaultModel: 'gpt-4o',
+    },
+    huawei: {
+      baseURL: 'https://maas-model.cn-north-4.myhuaweicloud.com',
+      models: ['glm-4', 'glm-3-turbo'],
+      defaultModel: 'glm-4',
+    },
+    xingchen: {
+      baseURL: 'https://api.baichuan.com',
+      models: ['Baichuan2-Turbo', 'Baichuan2-53B'],
+      defaultModel: 'Baichuan2-Turbo',
+    },
+    tencent: {
+      baseURL: 'https://api.hunyuan.cloudapi.com',
+      models: ['hunyuan-lite', 'hunyuan-standard', 'hunyuan-pro'],
+      defaultModel: 'hunyuan-standard',
+    },
+    iflytek: {
+      baseURL: 'https://spark-api.xf-yun.com',
+      models: ['spark-lite', 'spark-pro', 'spark-max'],
+      defaultModel: 'spark-pro',
+    },
+    spark: {
+      baseURL: 'https://spark-api.xf-yun.com',
+      models: ['spark-lite', 'spark-pro', 'spark-max'],
+      defaultModel: 'spark-pro',
+    },
+    sensetime: {
+      baseURL: 'https://api.sensetime.com',
+      models: ['sensechat-lite', 'sensechat-pro', 'sensechat-turbo'],
+      defaultModel: 'sensechat-pro',
+    },
+    stepfun: {
+      baseURL: 'https://api.stepfun.com',
+      models: ['step-1v', 'step-2-16k'],
+      defaultModel: 'step-1v',
+    },
+    lingyi: {
+      baseURL: 'https://api.lingyiwanwu.com',
+      models: ['yi-34b-chat', 'yi-6b-chat'],
+      defaultModel: 'yi-34b-chat',
+    },
+    '01ai': {
+      baseURL: 'https://api.01.ai',
+      models: ['yi-34b-chat', 'yi-6b-chat'],
+      defaultModel: 'yi-34b-chat',
+    },
+    abd: {
+      baseURL: 'https://api.abd.ai',
+      models: ['abd-chat', 'abd-coder'],
+      defaultModel: 'abd-chat',
+    },
+    bestex: {
+      baseURL: 'https://api.bestex.ai',
+      models: ['bestex-chat', 'bestex-turbo'],
+      defaultModel: 'bestex-chat',
+    },
+    puyu: {
+      baseURL: 'https://puyu.intern-ai.org.cn',
+      models: ['puyu-chat', 'puyu-turbo'],
+      defaultModel: 'puyu-chat',
+    },
+    volcengine: {
+      baseURL: 'https://ark.cn-beijing.volces.com',
+      models: ['doubao-pro', 'doubao-lite'],
+      defaultModel: 'doubao-pro',
+    },
+    doubao: {
+      baseURL: 'https://ark.cn-beijing.volces.com',
+      models: ['doubao-pro', 'doubao-lite'],
+      defaultModel: 'doubao-pro',
+    },
+    hunyuan: {
+      baseURL: 'https://hunyuan.tencentcloudapi.com',
+      models: ['hunyuan-lite', 'hunyuan-standard', 'hunyuan-pro'],
+      defaultModel: 'hunyuan-standard',
+    },
+    wenxin: {
+      baseURL: 'https://aip.baidubce.com',
+      models: ['ernie-bot', 'ernie-bot-turbo'],
+      defaultModel: 'ernie-bot',
+    },
+    baichuan: {
+      baseURL: 'https://api.baichuan-ai.com',
+      models: ['baichuan2-turbo', 'baichuan2-53b'],
+      defaultModel: 'baichuan2-turbo',
     },
   };
 

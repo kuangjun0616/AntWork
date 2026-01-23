@@ -3,7 +3,7 @@
  * 负责协调 Claude SDK 会话的执行
  */
 
-import { query, type SDKMessage, type PermissionResult } from "@anthropic-ai/claude-agent-sdk";
+import { query, type SDKMessage } from "@anthropic-ai/claude-agent-sdk";
 import type { ServerEvent } from "../../types.js";
 import type { RunnerOptions, RunnerHandle, MemoryConfig } from "./types.js";
 import type { Session } from "../../storage/session-store.js";
@@ -144,11 +144,11 @@ export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
         ? `${memoryGuidancePrompt}\n${languageHint || ''}`.trim()
         : languageHint;
 
-      // 9. 确定权限模式
+      // 9. 确定权限模式（使用更严格的默认值）
       const hasExplicitPermissions = (sdkNativeConfig.allowedTools && sdkNativeConfig.allowedTools.length > 0) ||
                                      (sdkNativeConfig.disallowedTools && sdkNativeConfig.disallowedTools.length > 0);
       const permissionMode: 'default' | 'acceptEdits' | 'bypassPermissions' | 'plan' | 'delegate' | 'dontAsk' =
-        hasExplicitPermissions ? "default" : "acceptEdits";
+        "default";  // 使用最严格的默认模式，防止权限绕过
 
       log.info(`[Runner] Permission mode: ${permissionMode}, hasExplicitPermissions: ${hasExplicitPermissions}`);
 

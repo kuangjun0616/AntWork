@@ -36,7 +36,7 @@ export function FeedbackSection() {
             <div className="flex-1">
               <h3 className="text-sm font-medium text-ink-900">{t('feedback.bugReport.title')}</h3>
               <p className="mt-2 text-sm text-muted">{t('feedback.bugReport.description')}</p>
-              <p className="mt-2 inline-flex items-center gap-1 text-sm text-accent">
+              <p className="mt-2 inline-flex items-center gap-1 text-sm text-blue-600 dark:text-blue-400">
                 {t('feedback.bugReport.link')}
                 <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M7 17L17 7M7 7h10v10" />
