@@ -105,11 +105,11 @@ export default {
 		},
 		techStack: {
 			title: "技術スタック",
-			description: "Electron + React + TypeScript + Claude Agent SDK",
+			description: "Electron + React + TypeScript + AI Agent SDK",
 		},
 		license: {
 			title: "ライセンス",
-			description: "AGCPA v3.0",
+			description: "GNU Affero General Public License v3.0 (AGPL-3.0)",
 		},
 	},
 

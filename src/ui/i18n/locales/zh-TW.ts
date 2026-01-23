@@ -87,8 +87,8 @@ export default {
 	about: {
 		title: "關於 AICowork",
 		version: { title: "版本信息", description: "版本 1.0.0" },
-		techStack: { title: "技術棧", description: "Electron + React + TypeScript + Claude Agent SDK" },
-		license: { title: "許可證", description: "MIT" },
+		techStack: { title: "技術棧", description: "Electron + React + TypeScript + AI Agent SDK" },
+		license: { title: "許可證", description: "GNU Affero General Public License v3.0 (AGPL-3.0)" },
 		subtitle: "AI 協作工作台——AICowork！",
 		tagline: "AICowork 讓 AI 成為你的工作協作夥伴。",
 	},

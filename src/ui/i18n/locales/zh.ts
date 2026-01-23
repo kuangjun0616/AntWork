@@ -116,15 +116,15 @@ export default {
 		},
 		techStack: {
 			title: "技术栈",
-			description: "Electron + React + TypeScript + Claude Agent SDK",
+			description: "Electron + React + TypeScript + AI Agent SDK",
 			electron: "• Electron - 跨平台桌面应用框架",
 			react: "• React + TypeScript - 前端框架",
 			tailwind: "• Tailwind CSS - 样式框架",
-			claude: "• Claude Agent SDK - AI 集成",
+			claude: "• AI Agent SDK - AI 集成",
 		},
 		license: {
 			title: "许可证",
-			description: "MIT",
+			description: "GNU Affero General Public License v3.0 (AGPL-3.0)",
 		},
 		tagline: "AICowork 让 AI 成为你的工作协作伙伴。",
 	},

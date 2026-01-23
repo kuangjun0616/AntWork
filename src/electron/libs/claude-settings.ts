@@ -7,7 +7,7 @@ import { app } from "electron";
 import { log } from "../logger.js";
 
 /**
- * 获取 Claude Code CLI 路径
+ * 获取 AI Agent SDK CLI 路径
  *
  * 重要说明：
  * 1. 项目已对 SDK 打补丁，使用 fork() 代替 spawn()
@@ -33,7 +33,7 @@ export function getClaudeCodePath(): string {
       log.error(`[claude-settings] Please ensure @anthropic-ai/claude-agent-sdk is in asarUnpack`);
       // 抛出明确的错误
       throw new Error(
-        'Claude SDK CLI not found. Please ensure the application is properly built.\n' +
+        'AI Agent SDK CLI not found. Please ensure the application is properly built.\n' +
         `Expected path: ${cliPath}`
       );
     }

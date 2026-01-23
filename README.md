@@ -4,7 +4,7 @@
 
 <div align="center">
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](LICENSE.txt)
 [![Version](https://img.shields.io/badge/version-0.1.0-orange.svg)](https://github.com/Pan519/AICowork)
 [![Electron](https://img.shields.io/badge/Electron-39.2.7-9FEAF9.svg)](https://www.electronjs.org/)
 [![React](https://img.shields.io/badge/React-19.2.3-61DAFB.svg)](https://react.dev/)
@@ -17,13 +17,13 @@
 
 ## 项目简介
 
-**AICowork** 是一款基于 Electron 开发的桌面 AI 智能协作助手，通过 Claude Agent SDK 提供强大的 AI 对话能力，帮助用户在办公、学习、创作等多个场景中提高效率。
+**AICowork** 是一款基于 Electron 开发的桌面 AI 智能协作助手，提供强大的 AI 对话能力，帮助用户在办公、学习、创作等多个场景中提高效率。
 
 ### 核心价值
 
 | 特性 | 说明 |
 |------|------|
-| **智能对话** | 基于 Claude AI 的自然语言交互 |
+| **智能对话** | 基于 AI 大模型的自然语言交互 |
 | **记忆系统** | 本地持久化知识库，AI 记住重要信息 |
 | **技能扩展** - | 支持自定义技能和 MCP 服务器 |
 | **多场景应用** | 文档写作、学习辅助、创意工作、数据分析 |
@@ -46,7 +46,12 @@
 
 ### 1. AI 对话系统
 
-与 Claude AI 进行自然语言对话，支持：
+与 AI 大模型进行自然语言对话，支持：
+- **多厂商 API 支持**：兼容 60+ 第三方 AI 服务商
+  - 国内厂商：智谱 AI、DeepSeek、阿里云通义千问、七牛云、月之暗面、华为云、MiniMax、百川智能、百度文心一言、腾讯混元、科大讯飞等
+  - 国外厂商：OpenAI、Google Gemini、Cohere、Mistral AI 等
+  - 本地部署：Ollama、vLLM、LocalAI 等
+  - 代理服务：OpenRouter、N1N.AI 等
 - 多轮连续对话，上下文记忆
 - 文档写作和润色
 - 知识问答和解释
@@ -78,11 +83,33 @@
 
 | 命令 | 功能 |
 |------|------|
+| `/plan` | 制定实施计划 |
 | `/help` | 显示帮助信息 |
-| `/clear` | 清空当前对话 |
-| `/memory save` | 保存到记忆系统 |
-| `/memory search` | 搜索记忆内容 |
-| `/memory ask` | 询问记忆相关信息 |
+| `/bug` | 报告 Bug |
+| `/clear` | 清除屏幕 |
+| `/exit` | 退出会话 |
+| `/new` | 新建会话 |
+| `/sessions` | 会话管理 |
+| `/commit` | 创建 Git 提交 |
+| `/review` | 代码审查 |
+| `/test` | 运行测试 |
+| `/build` | 构建项目 |
+| `/lint` | 代码检查 |
+| `/format` | 代码格式化 |
+| `/plugins` | 管理插件 |
+| `/mcp` | MCP 服务器管理 |
+| `/memory` | 记忆管理 |
+| `/agents` | 代理管理 |
+| `/hooks` | 钩子配置 |
+| `/permissions` | 权限设置 |
+| `/output` | 输出样式设置 |
+| `/settings` | 设置 |
+| `/customize` | 自定义配置 |
+| `/config` | 配置管理 |
+| `/env` | 环境变量 |
+| `/provider` | API 提供商 |
+| `/model` | 模型设置 |
+| `/token` | Token 使用情况 |
 
 ### 5. 安全控制
 
@@ -98,16 +125,16 @@
 ### 前置要求
 
 - **操作系统**: Windows 10+, macOS 11+, Linux
-- **API Key**: 需要从 [Anthropic Console](https://console.anthropic.com) 获取
+- **API Key**: 需要从 AI 服务商获取（支持 60+ 厂商）
 
 ### 三步快速上手
 
 #### 1. 获取 API Key
 
 ```
-1. 访问 https://console.anthropic.com
+1. 选择支持的 AI 服务商（如智谱 AI、DeepSeek、OpenAI 等）
 2. 注册或登录账号
-3. 点击 "API Keys" → "Create Key"
+3. 在控制台创建 API Key
 4. 复制生成的 API Key
 ```
 
@@ -116,7 +143,7 @@
 ```
 1. 打开 AICowork
 2. 点击左侧栏底部的 ⚙️ 设置
-3. 点击 "Claude API" 标签
+3. 点击 "API 配置" 标签
 4. 粘贴 API Key 到输入框
 5. 点击"保存"按钮
 ```
@@ -140,10 +167,10 @@
 
 | 平台 | 文件名 |
 |------|--------|
-| Windows | `AICowork-Setup-0.1.0.exe` |
+| Windows | `AICowork-win32-x64-0.1.0.exe` (便携版) |
 | macOS (ARM) | `AICowork-0.1.0-arm64.dmg` |
 | macOS (Intel) | `AICowork-0.1.0-x64.dmg` |
-| Linux | `aicowork_0.1.0_amd64.deb` |
+| Linux | `AICowork-0.1.0.AppImage` |
 
 ### 方式二：从源码构建
 
@@ -152,11 +179,8 @@
 git clone https://github.com/Pan519/AICowork.git
 cd AICowork
 
-#安装pnpm
+# 安装 pnpm（如未安装）
 npm install -g pnpm
-
-#安装bun
-npm install -g bun
 
 # 安装依赖
 pnpm install
@@ -256,7 +280,7 @@ electron-fix start
 | Electron | 39.2.7 | 桌面框架 |
 | better-sqlite3 | 12.6.0 | 数据库 |
 | Winston | 3.19.0 | 日志系统 |
-| @anthropic-ai/claude-agent-sdk | 0.2.6 | Claude SDK |
+| @anthropic-ai/claude-agent-sdk | 0.2.6 | AI Agent SDK |
 | @memvid/sdk | 2.0.120 | 记忆系统 |
 
 ### 架构设计
@@ -292,7 +316,6 @@ src/
 │   ├── ipc-handlers.ts   # IPC 事件处理
 │   ├── logger.ts         # 日志系统
 │   └── libs/             # 核心库
-│       ├── claude-settings.ts
 │       ├── config-store.ts
 │       ├── runner.ts
 │       └── session-store.ts
@@ -315,10 +338,31 @@ src/
 
 ### 文件位置
 
+**Windows:**
 ```
-配置文件: C:\Users\你的用户名\.aicowork\config.json
-记忆数据: C:\Users\你的用户名\.aicowork\memvid\memory.mv2
-日志文件: C:\Users\你的用户名\.aicowork\logs\
+配置文件: C:\Users\你的用户名\AppData\Roaming\AICowork\config.json
+记忆数据: C:\Users\你的用户名\AppData\Roaming\AICowork\memvid\memory.mv2
+日志文件: C:\Users\你的用户名\AppData\Roaming\AICowork\logs\
+```
+
+**macOS:**
+```
+配置文件: ~/Library/Application Support/AICowork/config.json
+记忆数据: ~/Library/Application Support/AICowork/memvid/memory.mv2
+日志文件: ~/Library/Application Support/AICowork/logs/
+```
+
+**Linux:**
+```
+配置文件: ~/.config/AICowork/config.json
+记忆数据: ~/.config/AICowork/memvid/memory.mv2
+日志文件: ~/.config/AICowork/logs/
+```
+
+**全局目录（跨项目共享）:**
+```
+技能目录: ~/.claude/skills/
+插件目录: ~/.claude/plugins/
 ```
 
 ### 环境变量
@@ -371,7 +415,7 @@ pnpm lint
 
 **问题**: 提示"API Key 未配置"
 
-**解决**: 设置 → Claude API → 粘贴 API Key → 保存
+**解决**: 设置 → API 配置 → 粘贴 API Key → 保存
 
 ### 发送消息无响应
 
@@ -467,17 +511,24 @@ pnpm lint
 
 ## 许可证
 
-本项目采用 **MIT** 许可证 - 详见 [LICENSE](LICENSE) 文件
+本项目采用 **GNU Affero General Public License v3.0 (AGPL-3.0)** 许可证 - 详见 [LICENSE.txt](LICENSE.txt) 文件
+
+### 关于 AGPL-3.0
+
+AGPL-3.0 是一个强 copyleft 自由软件许可证，与 GPL 类似，但额外要求：
+
+- 如果您在网络上运行修改后的程序并向用户提供服务，必须向这些用户提供源代码
+- 这确保了网络服务的用户也能获得源代码，防止 SaaS 提供商利用自由软件而不回馈社区
 
 ---
 
 ## 致谢
 
-- [Anthropic](https://www.anthropic.com/) - Claude AI
 - [Electron](https://www.electronjs.org/) - 桌面应用框架
 - [React](https://react.dev/) - UI 框架
 - [Tailwind CSS](https://tailwindcss.com/) - CSS 框架
 - [Memvid](https://memvid.ai/) - 记忆系统 SDK
+- [Anthropic](https://www.anthropic.com/) - AI Agent SDK 框架
 
 ---
 
