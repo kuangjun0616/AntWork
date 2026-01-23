@@ -1,9 +1,4 @@
 /**
- * @author      Alan
- * @copyright   AGCPA v3.0
- * @created     2026-01-20
- * @Email       None
- *
  * Token 计算工具
  * 使用 @anthropic-ai/tokenizer 进行精确计算，失败时使用估算
  */

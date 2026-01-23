@@ -265,21 +265,25 @@ async function fetchPluginCommands(): Promise<Array<{ name: string; description:
 
 /**
  * 从 settings.json 读取已启用的插件
+ * 优化：只读取一次 settings.json，避免重复 I/O 操作
  */
-async function fetchEnabledPlugins(): Promise<Array<{ name: string; description: string; source: string }>> {
+async function fetchEnabledPlugins(settings?: ClaudeSettings): Promise<Array<{ name: string; description: string; source: string }>> {
   const commands: Array<{ name: string; description: string; source: string }> = [];
 
   try {
-    const homeDir = getUserHomeDir();
-    const settingsFile = join(homeDir, '.claude', 'settings.json');
+    // 如果未传入 settings，从文件读取
+    if (!settings) {
+      const homeDir = getUserHomeDir();
+      const settingsFile = join(homeDir, '.claude', 'settings.json');
 
-    if (!existsSync(settingsFile)) {
-      log.warn('[slash-commands] settings.json not found');
-      return commands;
+      if (!existsSync(settingsFile)) {
+        log.warn('[slash-commands] settings.json not found');
+        return commands;
+      }
+
+      const settingsContent = readFileSync(settingsFile, 'utf-8');
+      settings = JSON.parse(settingsContent);
     }
-
-    const settingsContent = readFileSync(settingsFile, 'utf-8');
-    const settings: ClaudeSettings = JSON.parse(settingsContent);
 
     if (!settings.enabledPlugins) {
       log.info('[slash-commands] No enabled plugins in settings.json');
@@ -310,20 +314,24 @@ async function fetchEnabledPlugins(): Promise<Array<{ name: string; description:
 
 /**
  * 从 settings.json 读取 MCP 服务器列表
+ * 优化：只读取一次 settings.json，避免重复 I/O 操作
  */
-async function fetchMcpServers(): Promise<Array<{ name: string; description: string; source: string }>> {
+async function fetchMcpServers(settings?: ClaudeSettings): Promise<Array<{ name: string; description: string; source: string }>> {
   const commands: Array<{ name: string; description: string; source: string }> = [];
 
   try {
-    const homeDir = getUserHomeDir();
-    const settingsFile = join(homeDir, '.claude', 'settings.json');
+    // 如果未传入 settings，从文件读取
+    if (!settings) {
+      const homeDir = getUserHomeDir();
+      const settingsFile = join(homeDir, '.claude', 'settings.json');
 
-    if (!existsSync(settingsFile)) {
-      return commands;
+      if (!existsSync(settingsFile)) {
+        return commands;
+      }
+
+      const settingsContent = readFileSync(settingsFile, 'utf-8');
+      settings = JSON.parse(settingsContent);
     }
-
-    const settingsContent = readFileSync(settingsFile, 'utf-8');
-    const settings: ClaudeSettings = JSON.parse(settingsContent);
 
     if (!settings.mcpServers) {
       log.info('[slash-commands] No MCP servers in settings.json');
@@ -362,20 +370,24 @@ async function fetchMcpServers(): Promise<Array<{ name: string; description: str
 
 /**
  * 从 settings.json 读取钩子配置
+ * 优化：只读取一次 settings.json，避免重复 I/O 操作
  */
-async function fetchHookConfigs(): Promise<Array<{ name: string; description: string; source: string }>> {
+async function fetchHookConfigs(settings?: ClaudeSettings): Promise<Array<{ name: string; description: string; source: string }>> {
   const commands: Array<{ name: string; description: string; source: string }> = [];
 
   try {
-    const homeDir = getUserHomeDir();
-    const settingsFile = join(homeDir, '.claude', 'settings.json');
+    // 如果未传入 settings，从文件读取
+    if (!settings) {
+      const homeDir = getUserHomeDir();
+      const settingsFile = join(homeDir, '.claude', 'settings.json');
 
-    if (!existsSync(settingsFile)) {
-      return commands;
+      if (!existsSync(settingsFile)) {
+        return commands;
+      }
+
+      const settingsContent = readFileSync(settingsFile, 'utf-8');
+      settings = JSON.parse(settingsContent);
     }
-
-    const settingsContent = readFileSync(settingsFile, 'utf-8');
-    const settings: ClaudeSettings = JSON.parse(settingsContent);
 
     if (!settings.hooks) {
       return commands;
@@ -404,6 +416,8 @@ async function fetchHookConfigs(): Promise<Array<{ name: string; description: st
  * 获取所有可用的斜杠命令
  * 包括内置命令、用户技能、插件、MCP 服务器和钩子
  *
+ * 优化：只读取一次 settings.json，避免重复 I/O 操作
+ *
  * 用户输入斜杠命令时，程序会自动转换为：
  * - 内置命令：直接发送给 SDK
  * - 用户技能：转换为"请使用 X 技能"再发送给 SDK
@@ -420,16 +434,32 @@ export async function getSlashCommands(): Promise<Array<{ name: string; descript
     const pluginCommands = await fetchPluginCommands();
     commands.push(...pluginCommands);
 
-    // 从 settings.json 加载已启用的插件
-    const enabledPlugins = await fetchEnabledPlugins();
+    // 优化：只读取一次 settings.json
+    // 读取配置并传递给各个子函数，避免重复 I/O
+    let settings: ClaudeSettings | null = null;
+    try {
+      const homeDir = getUserHomeDir();
+      const settingsFile = join(homeDir, '.claude', 'settings.json');
+
+      if (existsSync(settingsFile)) {
+        const settingsContent = readFileSync(settingsFile, 'utf-8');
+        settings = JSON.parse(settingsContent);
+        log.debug('[slash-commands] 已加载 settings.json');
+      }
+    } catch (error) {
+      log.warn('[slash-commands] 读取 settings.json 失败:', error);
+    }
+
+    // 从 settings 加载已启用的插件（传入 settings，避免重复读取）
+    const enabledPlugins = await fetchEnabledPlugins(settings || undefined);
     commands.push(...enabledPlugins);
 
-    // 从 settings.json 加载 MCP 服务器
-    const mcpServers = await fetchMcpServers();
+    // 从 settings 加载 MCP 服务器（传入 settings，避免重复读取）
+    const mcpServers = await fetchMcpServers(settings || undefined);
     commands.push(...mcpServers);
 
-    // 从 settings.json 加载钩子配置
-    const hookConfigs = await fetchHookConfigs();
+    // 从 settings 加载钩子配置（传入 settings，避免重复读取）
+    const hookConfigs = await fetchHookConfigs(settings || undefined);
     commands.push(...hookConfigs);
 
     commands.sort((a, b) => {
@@ -448,11 +478,11 @@ export async function getSlashCommands(): Promise<Array<{ name: string; descript
     const pluginCount = uniqueCommands.filter(c => c.source === 'plugin').length;
     const mcpCount = uniqueCommands.filter(c => c.source === 'mcp').length;
     const hookCount = uniqueCommands.filter(c => c.source === 'hook').length;
-    log.info(`[slash-commands] Total: ${uniqueCommands.length} (${builtinCount} builtin, ${skillCount} skills, ${pluginCount} plugins, ${mcpCount} mcp, ${hookCount} hooks)`);
+    log.info(`[slash-commands] 总计: ${uniqueCommands.length} (${builtinCount} 内置, ${skillCount} 技能, ${pluginCount} 插件, ${mcpCount} MCP, ${hookCount} 钩子)`);
 
     return uniqueCommands;
   } catch (error) {
-    log.error('[slash-commands] Error fetching commands:', error);
+    log.error('[slash-commands] 获取命令时出错:', error);
     return commands;
   }
 }

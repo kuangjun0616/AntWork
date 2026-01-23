@@ -5,15 +5,15 @@
  * @updated     2026-01-21
  * @Email       None
  *
- * Deutsche Übersetzung
+ * Deutsche bersetzung
  */
 
 export default {
 	// Language names
 	languageNames: {
-		en: "Englisch",
-		zh: "Vereinfachtes Chinesisch",
+		en: "English",
 		"zh-TW": "Traditionelles Chinesisch",
+		zh: "Vereinfachtes Chinesisch",
 		ja: "Japanisch",
 		ko: "Koreanisch",
 		es: "Spanisch",
@@ -61,6 +61,8 @@ export default {
 			permissions: "Berechtigungen",
 			output: "Ausgabeformate",
 			recovery: "Sitzungswiederherstellung",
+			rules: "Regeln",
+			claudeMd: "Claude.md",
 		},
 		placeholder: {
 			title: "Einstellungen",
@@ -71,6 +73,7 @@ export default {
 	// Settings Sections
 	help: {
 		title: "Hilfe",
+		subtitle: "Hilfe und Dokumentation erhalten",
 		quickStart: {
 			title: "Schnellstart",
 			description: "Erfahren Sie, wie Sie AICowork für Ihre erste Aufgabe verwenden",
@@ -83,22 +86,30 @@ export default {
 			title: "Dokumentation",
 			description: "Besuchen Sie die offizielle Dokumentation für weitere Informationen",
 		},
+		tip: "Tipp: Konsultieren Sie zuerst die FAQ, wenn Sie Probleme haben, oder kontaktieren Sie uns über die Feedback-Kanäle.",
+		helpUrl: "https://ima.qq.com/note/share/_AwZPbuK9wucK5gWaVdjNQ?channel=4",
 	},
 
 	feedback: {
 		title: "Feedback",
+		subtitle: "Probleme und Vorschläge einreichen, um uns zu helfen, uns zu verbessern",
 		bugReport: {
 			title: "Fehlerbericht",
 			description: "Fehler auf GitHub melden",
+			link: "Zu GitHub gehen",
+			url: "https://github.com/Pan519/AICowork",
 		},
 		featureRequest: {
 			title: "Funktionswunsch",
 			description: "Schlagen Sie neue Funktionen vor, die Sie sehen möchten",
+			url: "https://docs.qq.com/form/page/DRm5uV1pSZFB3VHNv",
 		},
+		thankYou: "Vielen Dank für Ihr Feedback! Wir werden jedes Feedback sorgfältig prüfen.",
 	},
 
 	about: {
 		title: "Über AICowork",
+		subtitle: "KI-Kollaborations-Arbeitsplatz - AICowork!",
 		version: {
 			title: "Version",
 			description: "Version 1.0.0",
@@ -106,18 +117,28 @@ export default {
 		techStack: {
 			title: "Tech Stack",
 			description: "Electron + React + TypeScript + AI Agent SDK",
+			electron: "• Electron - Framework für plattformübergreifende Desktop-Anwendungen",
+			react: "• React + TypeScript - Frontend-Framework",
+			tailwind: "• Tailwind CSS - Styling-Framework",
+			claude: "• AI Agent SDK - KI-Integration",
 		},
 		license: {
 			title: "Lizenz",
 			description: "GNU Affero General Public License v3.0 (AGPL-3.0)",
 		},
+		tagline: "AICowork macht KI zu Ihrem collaborativen Arbeitspartner.",
 	},
 
 	language: {
 		title: "Sprache",
+		description: "Anzeigesprache der Schnittstelle auswählen",
 		current: "Aktuelle Sprache",
 		switching: "Wechseln...",
 		hint: "Spracheinstellungen werden lokal gespeichert und beim nächsten Start automatisch angewendet.",
+		tip: {
+			label: "Tipp",
+			text: "Spracheinstellungen werden lokal gespeichert und beim nächsten Start automatisch angewendet.",
+		},
 	},
 
 	api: {
@@ -176,30 +197,44 @@ export default {
 		testFailed: "Test fehlgeschlagen",
 		noConfigs: "Keine gespeicherten Konfigurationen",
 		hint: "Konfigurieren Sie den API-Schlüssel, um zu beginnen. Mehrere Konfigurationen werden für schnelles Wechseln unterstützt.",
+		hintLabel: "Tipp: ",
 		docsLink: "Dokumentation",
+		learnMore: "Mehr erfahren.",
+		saveSuccess: "Erfolgreich gespeichert",
+		current: "Aktuell",
+		confirmDelete: "Möchten Sie diese Konfiguration wirklich löschen?",
+		modelLimits: "Modell-Limits: max_tokens  [{{min}}, {{max}}]",
+		azure: {
+			resourceName: "Azure-Ressourcenname",
+			deploymentName: "Azure-Bereitstellungsname",
+			resourceNameRequired: "Azure-Ressourcenname darf nicht leer sein",
+			deploymentNameRequired: "Azure-Bereitstellungsname darf nicht leer sein",
+			bothRequired: "Azure erfordert sowohl Ressourcenname als auch Bereitstellungsname",
+		},
 	},
 
 	mcp: {
 		title: "MCP-Einstellungen",
-		description: "Model Context Protocol Server konfigurieren",
+		description: "Model Context Protocol Server konfigurieren, SDK wird automatisch starten und Tools registrieren",
 		noServers: "Keine MCP-Serverkonfigurationen",
-		addServer: "MCP-Server hinzufügen",
+		addServer: "+ Server hinzufügen",
 		templates: {
 			title: "Aus Vorlage hinzufügen",
 		},
 		form: {
 			name: {
 				label: "Servername",
-				placeholder: "github",
+				placeholder: "my-mcp-server",
 			},
 			displayName: {
 				label: "Anzeigename (optional)",
-				placeholder: "GitHub MCP",
+				placeholder: "Mein MCP-Server",
 			},
 			type: {
 				label: "Servertyp",
-				stdio: "STDIO",
-				sse: "SSE",
+				stdio: "stdio (Standardeingabe/-ausgabe)",
+				sse: "SSE (Server-Sent Events)",
+				streamableHttp: "Streamable HTTP",
 			},
 			command: {
 				label: "Befehl",
@@ -209,15 +244,22 @@ export default {
 				label: "Argumente (leerzeichengetrennt)",
 				placeholder: "@modelcontextprotocol/server-github",
 			},
+			url: {
+				label: "URL",
+				placeholder: "https://example.com/mcp",
+			},
 			description: {
 				label: "Beschreibung (optional)",
 				placeholder: "Beschreibung der Serverfunktionalität",
 			},
+			addTitle: "MCP-Server hinzufügen",
+			editTitle: "MCP-Server bearbeiten",
 		},
 		view: {
 			type: "Typ",
 			command: "Befehl",
 			args: "Argumente",
+			url: "URL",
 			description: "Beschreibung",
 		},
 		actions: {
@@ -225,13 +267,21 @@ export default {
 			saving: "Speichern...",
 			edit: "Bearbeiten",
 			delete: "Löschen",
+			cancel: "Abbrechen",
 		},
 		errors: {
 			deleteFailed: "Löschen fehlgeschlagen",
 			nameRequired: "Servername darf nicht leer sein",
 			saveFailed: "Speichern fehlgeschlagen",
+			invalidNameFormat: "Servername darf nur Buchstaben, Zahlen, Unterstriche und Bindestriche enthalten",
+			commandRequired: "stdio-Typ-Server müssen einen Befehl angeben",
+			urlRequired: "Dieser Servertyp muss eine URL angeben",
+			invalidUrl: "Ungültiges URL-Format",
+			saveSuccess: "Erfolgreich gespeichert",
 		},
-		hint: "MCP-Serverkonfigurationen werden in ~/.claude/settings.json gespeichert.",
+		confirmDelete: "Möchten Sie den MCP-Server \"{{name}}\" wirklich löschen?",
+		hint: "Tipp: MCP-Serverkonfigurationen werden in ~/.claude/settings.json gespeichert. Das SDK startet automatisch die konfigurierten MCP-Server und registriert Tools in der Sitzung.",
+		hintPath: "~/.claude/settings.json",
 	},
 
 	skills: {
@@ -260,27 +310,38 @@ export default {
 
 	memory: {
 		title: "Memory",
-		description: "Reserviert für memvid-Projektfunktionalität",
-		comingSoon: "Demnächst: Memory ermöglicht der KI, Informationen über Sitzungen hinweg zu teilen für kohärentere Gespräche.",
+		description: "Memory-Funktion konfigurieren, damit KI wichtige Informationen merken kann",
+		underDevelopment: "Memory-Funktion ist in Entwicklung...",
+		reservedArea: "Bereich reserviert für memvid-Projektfunktionalität",
+		comingSoon: "Demnächst verfügbar",
+		comingSoonDescription: "Memory-Funktion ermöglicht der KI, Informationen über Sitzungen hinweg zu teilen für persistente Kontext-Erinnerung.",
 	},
 
 	agents: {
 		title: "Agents",
-		description: "Sub-Agent-Einstellungen konfigurieren",
-		subAgents: "SubAgents: Kann bis zu 10 Sub-Agenden parallel für verbesserte Effizienz bei komplexen Aufgaben starten.",
+		description: "KI-Agents für parallele Aufgabenverarbeitung konfigurieren",
+		underDevelopment: "Agents-Konfigurationsfunktion ist in Entwicklung...",
+		subAgents: "SubAgents",
+		subAgentsDescription: "Kann bis zu 10 Sub-Agents parallel für verbesserte Effizienz bei komplexen Aufgaben starten (N Kosten).",
 	},
 
 	hooks: {
 		title: "Hooks",
+		description: "Event-Hooks konfigurieren, um automatisch Aktionen zu bestimmten Zeitpunkten auszulösen",
 		postToolUse: {
-			title: "Ausgelöst nach Tool-Nutzung",
+			title: "PostToolUse",
+			description: "Nach Tool-Nutzung ausgelöst",
 			noConfig: "Keine Konfiguration",
 		},
 		preToolUse: {
-			title: "Ausgelöst vor Tool-Nutzung",
+			title: "PreToolUse",
+			description: "Vor Tool-Nutzung ausgelöst",
 			noConfig: "Keine Konfiguration",
 		},
-		hint: "Hooks-Konfigurationen werden in ~/.claude/settings.json gespeichert.",
+		addHook: "+ Hook hinzufügen",
+		hint: "Tipp: Hooks-Konfigurationen werden gespeichert in",
+		hintPath: "~/.claude/settings.json",
+		hintSuffix: ". Das SDK lädt und führt automatisch konfigurierte Hooks aus.",
 	},
 
 	permissions: {
@@ -300,13 +361,17 @@ export default {
 
 	output: {
 		title: "Ausgabeformate",
-		description: "Ausgabestil-Konfiguration ist in Entwicklung...",
-		comingSoon: "Demnächst: Konfigurierbares Ausgabeformat, Code-Highlighting-Theme, Markdown-Rendering-Optionen, etc.",
+		subtitle: "KI-Ausgabestile und -formate konfigurieren",
+		description: "Ausgabestil-Konfigurationsfunktion ist in Entwicklung...",
+		comingSoon: "Demnächst verfügbar: Konfigurierbares Ausgabeformat, Code-Highlighting-Theme, Markdown-Rendering-Optionen, etc.",
 	},
 
 	recovery: {
 		title: "Sitzungswiederherstellung",
+		subtitle: "Vorherige Sitzungen anzeigen und fortsetzen",
 		description: "Vorherige Sitzungen fortsetzen, um Gespräche fortzusetzen",
+		loading: "Laden...",
+		refresh: "Liste aktualisieren",
 		example1: {
 			title: "Neue Web-App erstellen",
 			sessionId: "Sitzungs-ID: abc123def456",
@@ -317,7 +382,92 @@ export default {
 			sessionId: "Sitzungs-ID: ghi789jkl012",
 			updated: "Aktualisiert: vor 1 Tag",
 		},
+		recover: "Fortsetzen",
 		hint: "Sitzungsdaten werden in der lokalen Datenbank gespeichert. Das Fortsetzen einer Sitzung lädt den vollständigen Gesprächsverlauf.",
+		hintWithCommand: "Sie können auch die Befehlszeile verwenden:",
+	},
+
+	rules: {
+		title: "Regeln",
+		subtitle: "Projektregeldateien verwalten (.claude/rules/)",
+		description: "Benutzerdefinierte Regeldateien im .claude/rules/ Verzeichnis Ihres Projekts erstellen und verwalten",
+		noRules: "Noch keine Regeldateien",
+		createFromTemplate: "Aus Vorlage erstellen",
+		createNew: "Neue Regel erstellen",
+		editor: {
+			nameLabel: "Regelname",
+			namePlaceholder: "z.B.: coding-style",
+			contentLabel: "Regelinhalt (Markdown)",
+			contentPlaceholder: "Regelinhalt eingeben...",
+			save: "Regel speichern",
+			saving: "Speichern...",
+			cancel: "Abbrechen",
+		},
+		templates: {
+			title: "Vorlage auswählen",
+			language: {
+				name: "Sprachregeln",
+				description: "Programmiersprache und Kodierungsstandards angeben",
+			},
+			codingStyle: {
+				name: "Kodierungsstil",
+				description: "Code-Formatierung und Stilrichtlinien definieren",
+			},
+			gitCommit: {
+				name: "Git Commit",
+				description: "Git-Commit-Nachrichtenformat und -standards konfigurieren",
+			},
+		},
+		confirmDelete: "Möchten Sie die Regel \"{{name}}\" wirklich löschen?",
+		deleted: "Regel gelöscht",
+		saved: "Regel gespeichert",
+		hint: "Regeldateien werden im .claude/rules/ Verzeichnis des Projekts gespeichert. Jede Regel ist eine Datei im Markdown-Format, die KI führt Aufgaben gemäß dem Regelinhalt aus.",
+	},
+
+	claudeMd: {
+		title: "Claude.md",
+		subtitle: "Projekt-Claude-Konfiguration verwalten (CLAUDE.md)",
+		description: "Projektweite KI-Anleitungen in CLAUDE.md im Projektstammverzeichnis konfigurieren",
+		status: {
+			exists: "Konfigurationsdatei vorhanden",
+			missing: "Konfigurationsdatei fehlt",
+			charCount: "{{count}} Zeichen",
+			lastModified: "Zuletzt geändert: {{date}}",
+		},
+		actions: {
+			view: "Aktuelle Konfiguration anzeigen",
+			edit: "Konfiguration bearbeiten",
+			save: "Konfiguration speichern",
+			saving: "Speichern...",
+			delete: "Konfiguration löschen",
+			createFromTemplate: "Aus Vorlage erstellen",
+			openDirectory: "Verzeichnis öffnen",
+		},
+		templates: {
+			title: "Vorlage auswählen",
+			basic: {
+				name: "Grundkonfiguration",
+				description: "Einfache Vorlage mit grundlegenden Projektinformationen",
+			},
+			frontend: {
+				name: "Frontend-Projekt",
+				description: "Für Frontend-Projekte wie React/Vue/Next.js",
+			},
+			backend: {
+				name: "Backend-Projekt",
+				description: "Für Backend-Projekte wie Node.js/Python/FastAPI",
+			},
+		},
+		editor: {
+			label: "Claude.md Inhalt",
+			placeholder: "Projektkonfigurationsinhalt hier eingeben...",
+			save: "Konfiguration speichern",
+			cancel: "Abbrechen",
+		},
+		confirmDelete: "Möchten Sie die CLAUDE.md-Konfigurationsdatei wirklich löschen?",
+		deleted: "Konfiguration gelöscht",
+		saved: "Konfiguration gespeichert",
+		hint: "Die CLAUDE.md-Datei befindet sich im Projektstammverzeichnis und definiert projektweite KI-Verhaltensrichtlinien. Diese Datei überschreibt globale Einstellungen.",
 	},
 
 	// Settings Modal (legacy)
@@ -391,7 +541,7 @@ export default {
 
 	// Deletion Confirmation
 	deletion: {
-		title: "⚠️ Löschbestätigung",
+		title: " Löschbestätigung",
 		subtitle: "KI führt eine Löschoperation aus",
 		description: "Die KI versucht, eine Löschoperation auszuführen. Dieser Vorgang kann Dateien oder Verzeichnisse dauerhaft löschen. Bitte überprüfen Sie den Inhalt des Befehls sorgfältig.",
 		commandLabel: "Auszuführender Befehl:",

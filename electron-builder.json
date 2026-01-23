@@ -1,11 +1,18 @@
 {
     "appId": "com.devagentforge.aicowork",
     "productName": "AICowork",
+    "compression": "maximum",
     "files": [
         "dist-electron/**/*",
         "dist-react/**/*",
         "templateIcon.ico",
-        "node_modules/**/*"
+        "node_modules/**/*",
+        "!node_modules/**/*.ts",
+        "!node_modules/**/*.map",
+        "!node_modules/**/*.md",
+        "!node_modules/**/test/**/*",
+        "!node_modules/**/tests/**/*",
+        "!node_modules/**/*.d.ts"
     ],
     "extraResources": [
         "dist-electron/preload.cjs",
@@ -17,17 +24,7 @@
     "npmRebuild": false,
     "asarUnpack": [
         "node_modules/@anthropic-ai/claude-agent-sdk/**/*",
-        "node_modules/@anthropic-ai/tokenizer/**/*",
         "node_modules/better-sqlite3/**/*",
-        "node_modules/os-utils/**/*",
-        "node_modules/winston/**/*",
-        "node_modules/winston-transport/**/*",
-        "node_modules/async/**/*",
-        "node_modules/@colors/colors/**/*",
-        "node_modules/@dabh/diagnostic-tools/**/*",
-        "node_modules/@dabh/unsafe-random/**/*",
-        "node_modules/stack-trace/**/*",
-        "node_modules/util-deprecate/**/*",
         "node_modules/@memvid/sdk/**/*"
     ],
     "icon": "./templateIcon.ico",

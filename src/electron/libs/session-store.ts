@@ -178,6 +178,15 @@ export class SessionStore {
   deleteSession(id: string): boolean {
     const existing = this.sessions.get(id);
     if (existing) {
+      // 清理所有待处理的权限请求，防止内存泄漏
+      for (const [_toolUseId, pending] of existing.pendingPermissions) {
+        try {
+          pending.resolve({ behavior: "deny", message: "Session deleted" });
+        } catch (err) {
+          // 忽略 resolve 可能抛出的错误
+        }
+      }
+      existing.pendingPermissions.clear();
       this.sessions.delete(id);
     }
     this.db.prepare(`delete from messages where session_id = ?`).run(id);

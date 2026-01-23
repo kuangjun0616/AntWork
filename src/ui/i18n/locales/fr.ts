@@ -1,10 +1,4 @@
 /**
- * @author      Alan
- * @copyright   AGCPA v3.0
- * @created     2026-01-21
- * @updated     2026-01-21
- * @Email       None
- *
  * Traduction française
  */
 
@@ -61,6 +55,8 @@ export default {
 			permissions: "Permissions",
 			output: "Styles de Sortie",
 			recovery: "Récupération de Session",
+			rules: "Règles",
+			claudeMd: "Claude.md",
 		},
 		placeholder: {
 			title: "Paramètres",
@@ -71,6 +67,7 @@ export default {
 	// Settings Sections
 	help: {
 		title: "Aide",
+		subtitle: "Obtenir de l'aide et de la documentation",
 		quickStart: {
 			title: "Démarrage Rapide",
 			description: "Apprenez à utiliser AICowork pour démarrer votre première tâche",
@@ -83,22 +80,30 @@ export default {
 			title: "Documentation",
 			description: "Visitez la documentation officielle pour plus d'informations",
 		},
+		tip: "Conseil : Consultez d'abord la FAQ si vous rencontrez des problmes, ou contactez-nous via les canaux de commentaires.",
+		helpUrl: "https://ima.qq.com/note/share/_AwZPbuK9wucK5gWaVdjNQ?channel=4",
 	},
 
 	feedback: {
 		title: "Commentaires",
+		subtitle: "Soumettre des problmes et suggestions pour nous aider amliorer",
 		bugReport: {
 			title: "Rapport de Bug",
-			description: "Soumettre des rapports de problèmes sur GitHub",
+			description: "Soumettre des rapports de problmes sur GitHub",
+			link: "Aller sur GitHub",
+			url: "https://github.com/Pan519/AICowork",
 		},
 		featureRequest: {
-			title: "Demande de Fonctionnalité",
-			description: "Suggérer de nouvelles fonctionnalités que vous souhaitez voir",
+			title: "Demande de Fonctionnalit",
+			description: "Suggrer de nouvelles fonctionnalits que vous souhaitez voir",
+			url: "https://docs.qq.com/form/page/DRm5uV1pSZFB3VHNv",
 		},
+		thankYou: "Merci pour vos commentaires! Nous examinerons attentivement chaque commentaire.",
 	},
 
 	about: {
 		title: "À propos d'AICowork",
+		subtitle: "Espace de Travail Collaboratif IA - AICowork!",
 		version: {
 			title: "Version",
 			description: "Version 1.0.0",
@@ -106,18 +111,28 @@ export default {
 		techStack: {
 			title: "Stack Technique",
 			description: "Electron + React + TypeScript + AI Agent SDK",
+			electron: "• Electron - Framework d'applications de bureau multiplateforme",
+			react: "• React + TypeScript - Framework frontend",
+			tailwind: "• Tailwind CSS - Framework de style",
+			claude: "• AI Agent SDK - Intgration IA",
 		},
 		license: {
 			title: "Licence",
 			description: "GNU Affero General Public License v3.0 (AGPL-3.0)",
 		},
+		tagline: "AICowork fait de l'IA votre partenaire de travail collaboratif.",
 	},
 
 	language: {
 		title: "Langue",
+		description: "Slectionner la langue d'affichage de l'interface",
 		current: "Langue Actuelle",
 		switching: "Changement en cours...",
-		hint: "Les paramètres de langue sont enregistrés localement et seront appliqués automatiquement au prochain démarrage de l'application.",
+		hint: "Les paramtres de langue sont enregistrs localement et seront appliqus automatiquement au prochain dmarrage de l'application.",
+		tip: {
+			label: "Conseil",
+			text: "Les paramtres de langue sont enregistrs localement et seront appliqus automatiquement au prochain dmarrage de l'application.",
+		},
 	},
 
 	api: {
@@ -176,14 +191,27 @@ export default {
 		testFailed: "Échec du Test",
 		noConfigs: "Aucune configuration enregistrée",
 		hint: "Configurez la clé API pour commencer à utiliser. Plusieurs configurations prises en charge pour un changement rapide.",
+		hintLabel: "Conseil : ",
 		docsLink: "Documentation",
+		learnMore: "En savoir plus.",
+		saveSuccess: "Enregistr avec succs",
+		current: "Actuelle",
+		confirmDelete: "tes-vous sr de vouloir supprimer cette configuration?",
+		modelLimits: "Limites du modle : max_tokens  [{{min}}, {{max}}]",
+		azure: {
+			resourceName: "Nom de la Ressource Azure",
+			deploymentName: "Nom du Dploiement Azure",
+			resourceNameRequired: "Le nom de la ressource Azure ne peut pas tre vide",
+			deploymentNameRequired: "Le nom du dploiement Azure ne peut pas tre vide",
+			bothRequired: "Azure ncessite  la fois le nom de la ressource et le nom du dploiement",
+		},
 	},
 
 	mcp: {
 		title: "Paramètres MCP",
-		description: "Configurer les serveurs Model Context Protocol",
+		description: "Configurer les serveurs Model Context Protocol, le SDK dmarrera automatiquement et enregistrera les outils",
 		noServers: "Aucune configuration de serveur MCP",
-		addServer: "Ajouter un Serveur MCP",
+		addServer: "+ Ajouter un Serveur",
 		templates: {
 			title: "Ajouter depuis un Modèle",
 		},
@@ -198,8 +226,9 @@ export default {
 			},
 			type: {
 				label: "Type de Serveur",
-				stdio: "STDIO",
-				sse: "SSE",
+				stdio: "stdio (Entre/Sortie Standard)",
+				sse: "SSE (Server-Sent Events)",
+				streamableHttp: "HTTP Diffusable",
 			},
 			command: {
 				label: "Commande",
@@ -211,13 +240,16 @@ export default {
 			},
 			description: {
 				label: "Description (Facultatif)",
-				placeholder: "Description des fonctionnalités du serveur",
+				placeholder: "Description des fonctionnalits du serveur",
 			},
+			addTitle: "Ajouter un Serveur MCP",
+			editTitle: "Modifier le Serveur MCP",
 		},
 		view: {
 			type: "Type",
 			command: "Commande",
 			args: "Arguments",
+			url: "URL",
 			description: "Description",
 		},
 		actions: {
@@ -225,13 +257,21 @@ export default {
 			saving: "Enregistrement...",
 			edit: "Modifier",
 			delete: "Supprimer",
+			cancel: "Annuler",
 		},
 		errors: {
-			deleteFailed: "Échec de la Suppression",
-			nameRequired: "Le nom du serveur ne peut pas être vide",
-			saveFailed: "Échec de l'Enregistrement",
+			deleteFailed: "chec de la Suppression",
+			nameRequired: "Le nom du serveur ne peut pas tre vide",
+			saveFailed: "chec de l'Enregistrement",
+			invalidNameFormat: "Le nom du serveur ne peut contenir que des lettres, des chiffres, des traits de soulignement et des tirets",
+			commandRequired: "Les serveurs de type stdio doivent spcifier une commande",
+			urlRequired: "Ce type de serveur doit spcifier une URL",
+			invalidUrl: "Format d'URL invalide",
+			saveSuccess: "Enregistr avec succs",
 		},
-		hint: "Les configurations de serveur MCP sont stockées dans ~/.claude/settings.json.",
+		confirmDelete: "tes-vous sr de vouloir supprimer le serveur MCP \"{{name}}\"?",
+		hint: "Conseil : Les configurations de serveur MCP sont stockes dans ~/.claude/settings.json. Le SDK dmarrera automatiquement les serveurs MCP configurs et enregistrera les outils dans la session.",
+		hintPath: "~/.claude/settings.json",
 	},
 
 	skills: {
@@ -259,28 +299,39 @@ export default {
 	},
 
 	memory: {
-		title: "Mémoire",
-		description: "Réservé pour les fonctionnalités du projet memvid",
-		comingSoon: "Bientôt disponible : La Mémoire permettra à l'IA de partager des informations entre les sessions pour des conversations plus cohérentes.",
+		title: "Mmoire",
+		description: "Configurer la fonctionnalit de mmoire, permettant  l'IA de se souvenir d'informations importantes",
+		underDevelopment: "La fonctionnalit Mmoire est en dveloppement...",
+		reservedArea: "Zone rserve pour les fonctionnalits du projet memvid",
+		comingSoon: "Bientt disponible",
+		comingSoonDescription: "La fonctionnalit Mmoire permettra  l'IA de partager des informations entre les sessions pour une mmoire contextuelle persistante.",
 	},
 
 	agents: {
 		title: "Agents",
-		description: "Configurer les paramètres des sous-agents",
-		subAgents: "Sous-Agents : Peut lancer jusqu'à 10 sous-agents en parallèle pour améliorer l'efficacité sur les tâches complexes.",
+		description: "Configurer les agents IA pour le traitement parallle des tches",
+		underDevelopment: "La fonctionnalit de configuration des Agents est en dveloppement...",
+		subAgents: "SubAgents",
+		subAgentsDescription: "Peut lancer jusqu' 10 sous-agents en parallle pour amliorer l'efficacit sur les tches complexes (N cot).",
 	},
 
 	hooks: {
 		title: "Hooks",
+		description: "Configurer les hooks d'vnements pour dclencher automatiquement des actions  des moments spcifiques",
 		postToolUse: {
-			title: "Déclenché Après l'Utilisation d'Outil",
+			title: "PostToolUse",
+			description: "Dclench aprs l'utilisation de l'outil",
 			noConfig: "Aucune configuration",
 		},
 		preToolUse: {
-			title: "Déclenché Avant l'Utilisation d'Outil",
+			title: "PreToolUse",
+			description: "Dclench avant l'utilisation de l'outil",
 			noConfig: "Aucune configuration",
 		},
-		hint: "Les configurations de Hooks sont stockées dans ~/.claude/settings.json.",
+		addHook: "+ Ajouter un Hook",
+		hint: "Conseil : La configuration des Hooks est stocke dans",
+		hintPath: "~/.claude/settings.json",
+		hintSuffix: ". Le SDK chargera et excutera automatiquement les hooks configurs.",
 	},
 
 	permissions: {
@@ -300,24 +351,113 @@ export default {
 
 	output: {
 		title: "Styles de Sortie",
-		description: "La configuration des styles de sortie est en développement...",
-		comingSoon: "Bientôt disponible : Format de sortie configurable, thème de coloration syntaxique, options de rendu Markdown, etc.",
+		subtitle: "Configurer les styles et formats de sortie de l'IA",
+		description: "La fonctionnalit de configuration des styles de sortie est en dveloppement...",
+		comingSoon: "Bientt disponible : Format de sortie configurable, thme de coloration syntaxique, options de rendu Markdown, etc.",
 	},
 
 	recovery: {
-		title: "Récupération de Session",
-		description: "Reprendre les sessions précédentes pour continuer les conversations",
+		title: "Rcupration de Session",
+		subtitle: "Voir et reprendre les sessions prcdentes",
+		description: "Reprendre les sessions prcdentes pour continuer les conversations",
+		loading: "Chargement...",
+		refresh: "Actualiser la Liste",
 		example1: {
 			title: "Créer une Nouvelle Application Web",
 			sessionId: "ID de Session : abc123def456",
 			updated: "Mis à jour : il y a 2 heures",
 		},
 		example2: {
-			title: "Corriger le Problème d'Intégration API",
+			title: "Corriger le Problme d'Intgration API",
 			sessionId: "ID de Session : ghi789jkl012",
-			updated: "Mis à jour : il y a 1 jour",
+			updated: "Mis  jour : il y a 1 jour",
 		},
-		hint: "Les données de session sont stockées dans la base de données locale. La reprise d'une session chargera l'historique complet de la conversation.",
+		recover: "Reprendre",
+		hint: "Les donnes de session sont stockes dans la base de donnes locale. La reprise d'une session chargera l'historique complet de la conversation.",
+		hintWithCommand: "Vous pouvez aussi utiliser la ligne de commande :",
+	},
+
+	rules: {
+		title: "Rgles",
+		subtitle: "Grer les fichiers de rgles du projet (.claude/rules/)",
+		description: "Crer et grer des fichiers de rgles personnalises dans le rpertoire .claude/rules/ de votre projet",
+		noRules: "Aucun fichier de rgles pour le moment",
+		createFromTemplate: "Crer depuis un Modle",
+		createNew: "Crer une Nouvelle Rgle",
+		editor: {
+			nameLabel: "Nom de la Rgle",
+			namePlaceholder: "ex : coding-style",
+			contentLabel: "Contenu de la Rgle (Markdown)",
+			contentPlaceholder: "Entrez le contenu de la rgle...",
+			save: "Enregistrer la Rgle",
+			saving: "Enregistrement...",
+			cancel: "Annuler",
+		},
+		templates: {
+			title: "Slectionner un Modle",
+			language: {
+				name: "Rgles de Langage",
+				description: "Spcifier le langage de programmation et les normes de codage",
+			},
+			codingStyle: {
+				name: "Style de Codage",
+				description: "Dfinir les guides de formatage et de style de code",
+			},
+			gitCommit: {
+				name: "Git Commit",
+				description: "Configurer le format et les normes des messages de commit Git",
+			},
+		},
+		confirmDelete: "tes-vous sr de vouloir supprimer la rgle \"{{name}}\"?",
+		deleted: "Rgle supprime",
+		saved: "Rgle enregistre",
+		hint: "Les fichiers de rgles sont stocks dans le rpertoire .claude/rules/ du projet. Chaque rgle est un fichier au format Markdown, l'IA excutera les tches conformment au contenu de la rgle.",
+	},
+
+	claudeMd: {
+		title: "Claude.md",
+		subtitle: "Grer la configuration Claude du projet (CLAUDE.md)",
+		description: "Configurer les guides IA au niveau du projet dans CLAUDE.md  la racine du projet",
+		status: {
+			exists: "Le fichier de configuration existe",
+			missing: "Le fichier de configuration n'existe pas",
+			charCount: "{{count}} caractres",
+			lastModified: "Dernire modification : {{date}}",
+		},
+		actions: {
+			view: "Voir la Configuration Actuelle",
+			edit: "Modifier la Configuration",
+			save: "Enregistrer la Configuration",
+			saving: "Enregistrement...",
+			delete: "Supprimer la Configuration",
+			createFromTemplate: "Crer depuis un Modle",
+			openDirectory: "Ouvrir le Rpertoire",
+		},
+		templates: {
+			title: "Slectionner un Modle",
+			basic: {
+				name: "Configuration de Base",
+				description: "Modle simple avec des informations de base sur le projet",
+			},
+			frontend: {
+				name: "Projet Frontend",
+				description: "Pour les projets frontend comme React/Vue/Next.js",
+			},
+			backend: {
+				name: "Projet Backend",
+				description: "Pour les projets backend comme Node.js/Python/FastAPI",
+			},
+		},
+		editor: {
+			label: "Contenu Claude.md",
+			placeholder: "Entrez le contenu de la configuration du projet ici...",
+			save: "Enregistrer la Configuration",
+			cancel: "Annuler",
+		},
+		confirmDelete: "tes-vous sr de vouloir supprimer le fichier de configuration CLAUDE.md?",
+		deleted: "Configuration supprime",
+		saved: "Configuration enregistre",
+		hint: "Le fichier CLAUDE.md est situ  la racine du projet et dfinit les guides de comportement IA au niveau du projet. Ce fichier remplace la configuration globale.",
 	},
 
 	// Settings Modal (legacy)

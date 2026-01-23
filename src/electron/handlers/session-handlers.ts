@@ -1,9 +1,4 @@
 /**
- * @author      Alan
- * @copyright   AGCPA v3.0
- * @created     2026-01-20
- * @Email       None
- *
  * 会话相关的 IPC 事件处理器
  * 将 handleClientEvent 中的大型 switch-case 拆分为独立处理器
  */

@@ -1,10 +1,5 @@
 /**
- * @author      Alan
- * @copyright   AGCPA v3.0
- * @created     2026-01-20
- * @updated     2026-01-21
- * @Email       None
- *
+
  * English translations
  */
 
@@ -73,6 +68,7 @@ export default {
 	// Settings Sections
 	help: {
 		title: "Help",
+		subtitle: "Get help and documentation",
 		quickStart: {
 			title: "Quick Start",
 			description: "Learn how to use AICowork to start your first task",
@@ -85,22 +81,30 @@ export default {
 			title: "Documentation",
 			description: "Visit official documentation for more information",
 		},
+		tip: "Tip: Check FAQ first if you encounter issues, or contact us through feedback channels.",
+		helpUrl: "https://ima.qq.com/note/share/_AwZPbuK9wucK5gWaVdjNQ?channel=4",
 	},
 
 	feedback: {
 		title: "Feedback",
+		subtitle: "Submit issues and suggestions to help us improve",
 		bugReport: {
 			title: "Bug Report",
 			description: "Submit issue reports on GitHub",
+			link: "Go to GitHub",
+			url: "https://github.com/Pan519/AICowork",
 		},
 		featureRequest: {
 			title: "Feature Request",
 			description: "Suggest new features you'd like to see",
+			url: "https://docs.qq.com/form/page/DRm5uV1pSZFB3VHNv",
 		},
+		thankYou: "Thank you for your feedback! We will carefully review every feedback.",
 	},
 
 	about: {
 		title: "About AICowork",
+		subtitle: "AI Collaboration Workbench - AICowork!",
 		version: {
 			title: "Version",
 			description: "Version 1.0.0",
@@ -108,18 +112,28 @@ export default {
 		techStack: {
 			title: "Tech Stack",
 			description: "Electron + React + TypeScript + AI Agent SDK",
+			electron: "• Electron - Cross-platform desktop app framework",
+			react: "• React + TypeScript - Frontend framework",
+			tailwind: "• Tailwind CSS - Styling framework",
+			claude: "• AI Agent SDK - AI Integration",
 		},
 		license: {
 			title: "License",
 			description: "GNU Affero General Public License v3.0 (AGPL-3.0)",
 		},
+		tagline: "AICowork makes AI your collaborative work partner.",
 	},
 
 	language: {
 		title: "Language",
+		description: "Select interface display language",
 		current: "Current Language",
 		switching: "Switching...",
 		hint: "Language settings are saved locally and will be applied automatically when you start the app next time.",
+		tip: {
+			label: "Tip",
+			text: "Language settings are saved locally and will be applied automatically when you start the app next time.",
+		},
 	},
 
 	api: {
@@ -178,7 +192,20 @@ export default {
 		testFailed: "Test Failed",
 		noConfigs: "No saved configurations",
 		hint: "Configure API key to start using. Multiple configurations supported for quick switching.",
+		hintLabel: "Tip: ",
 		docsLink: "Documentation",
+		learnMore: "Learn more.",
+		saveSuccess: "Saved successfully",
+		current: "Current",
+		confirmDelete: "Are you sure you want to delete this configuration?",
+		modelLimits: "Model limits: max_tokens ∈ [{{min}}, {{max}}]",
+		azure: {
+			resourceName: "Azure Resource Name",
+			deploymentName: "Azure Deployment Name",
+			resourceNameRequired: "Azure resource name cannot be empty",
+			deploymentNameRequired: "Azure deployment name cannot be empty",
+			bothRequired: "Azure requires both resource name and deployment name",
+		},
 	},
 
 	mcp: {
@@ -278,27 +305,38 @@ export default {
 
 	memory: {
 		title: "Memory",
-		description: "Reserved for memvid project functionality",
-		comingSoon: "Coming Soon: Memory will allow AI to share information across sessions for more coherent conversations.",
+		description: "Configure memory feature, allowing AI to remember important information",
+		underDevelopment: "Memory feature is under development...",
+		reservedArea: "Reserved for memvid project functionality",
+		comingSoon: "Coming Soon",
+		comingSoonDescription: "Memory feature will allow AI to share information across sessions for persistent context memory.",
 	},
 
 	agents: {
 		title: "Agents",
-		description: "Configure sub-agent settings",
-		subAgents: "SubAgents: Can launch up to 10 sub-agents in parallel for improved efficiency on complex tasks.",
+		description: "Configure AI agents for parallel task processing",
+		underDevelopment: "Agents configuration feature is under development...",
+		subAgents: "SubAgents",
+		subAgentsDescription: "Can launch up to 10 sub-agents in parallel for improved efficiency on complex tasks (N× cost).",
 	},
 
 	hooks: {
 		title: "Hooks",
+		description: "Configure event hooks to automatically trigger actions at specific times",
 		postToolUse: {
-			title: "Triggered After Tool Use",
+			title: "PostToolUse",
+			description: "Triggered after tool use",
 			noConfig: "No configuration",
 		},
 		preToolUse: {
-			title: "Triggered Before Tool Use",
+			title: "PreToolUse",
+			description: "Triggered before tool use",
 			noConfig: "No configuration",
 		},
-		hint: "Hooks configurations are stored in ~/.claude/settings.json.",
+		addHook: "+ Add Hook",
+		hint: "Tip: Hooks configuration is stored in",
+		hintPath: "~/.claude/settings.json",
+		hintSuffix: ". SDK will automatically load and execute configured hooks.",
 	},
 
 	permissions: {
@@ -318,7 +356,8 @@ export default {
 
 	output: {
 		title: "Output Styles",
-		description: "Output style configuration is under development...",
+		subtitle: "Configure AI output styles and formats",
+		description: "Output style configuration feature is under development...",
 		comingSoon: "Coming Soon: Configurable output format, code highlighting theme, Markdown rendering options, etc.",
 	},
 
@@ -338,12 +377,14 @@ export default {
 			sessionId: "Session ID: ghi789jkl012",
 			updated: "Updated: 1 day ago",
 		},
+		recover: "Resume",
 		hint: "Session data is stored in local database. Resuming a session will load the complete conversation history.",
+		hintWithCommand: "You can also use command line:",
 	},
 
 	rules: {
 		title: "Rules",
-		subtitle: "Manage project rules (.claude/rules/)",
+		subtitle: "Manage project rule files (.claude/rules/)",
 		description: "Create and manage custom rule files in your project's .claude/rules/ directory",
 		noRules: "No rule files yet",
 		createFromTemplate: "Create from Template",
@@ -375,7 +416,7 @@ export default {
 		confirmDelete: "Are you sure you want to delete rule \"{{name}}\"?",
 		deleted: "Rule deleted",
 		saved: "Rule saved",
-		hint: "Rule files are stored in the project's .claude/rules/ directory. Each rule is a Markdown file that AI will follow when executing tasks.",
+		hint: "Rule files are stored in the project's .claude/rules/ directory. Each rule is a Markdown formatted file, AI will execute tasks according to rule content.",
 	},
 
 	claudeMd: {

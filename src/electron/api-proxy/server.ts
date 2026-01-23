@@ -1,9 +1,4 @@
 /**
- * @author      Alan
- * @copyright   AGCPA v3.0
- * @created     2026-01-20
- * @Email       None
- *
  * API 代理服务器
  * 将第三方 API 伪装成 Anthropic 官方 API，解决 /count_tokens 端点缺失问题
  */
@@ -202,7 +197,7 @@ async function handleForwardRequest(req: IncomingMessage, res: ServerResponse, r
 
       // 获取 API 适配器（传递 config 以支持 forceOpenaiFormat 标志）
       const apiType = currentConfig.apiType || 'anthropic';
-      const adapter = getApiAdapter(apiType, currentConfig);
+      const adapter = getApiAdapter(apiType);
 
       // 使用适配器转换请求
       const transformedRequest = adapter.transformRequest(request, currentConfig);
@@ -247,7 +242,7 @@ async function handleForwardRequest(req: IncomingMessage, res: ServerResponse, r
           }
 
           // 使用新适配器重试
-          const retryAdapter = getApiAdapter(apiType, currentConfig);
+          const retryAdapter = getApiAdapter(apiType);
           const retryRequest = retryAdapter.transformRequest(request, currentConfig);
           log.info(`[API Proxy] 重试到: ${retryRequest.url}`);
 

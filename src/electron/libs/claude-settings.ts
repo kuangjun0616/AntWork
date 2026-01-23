@@ -5,6 +5,7 @@ import { loadApiConfig, saveApiConfig, type ApiConfig } from "./config-store.js"
 import { startProxyServer, stopProxyServer, getProxyStatus } from "../api-proxy/index.js";
 import { app } from "electron";
 import { log } from "../logger.js";
+import { PROXY_CHECK_TIMEOUT, PROXY_CACHE_TTL } from "../config/network-constants.js";
 
 /**
  * 获取 AI Agent SDK CLI 路径
@@ -158,6 +159,9 @@ export function buildEnvForConfig(config: ApiConfig): Record<string, string> {
 // 记录需要代理的 API 配置（baseURL 为 key）
 const proxyNeededApis = new Map<string, boolean>();
 
+// 预检测进行中标记
+let isPrechecking = false;
+
 /**
  * 清除代理检测缓存
  * 在配置改变时调用，确保重新检测
@@ -168,10 +172,78 @@ export function clearProxyCache(): void {
 }
 
 /**
+ * 应用启动时预检测代理需求
+ * 在后台异步执行，不阻塞应用启动
+ */
+export async function precheckProxyNeeds(): Promise<void> {
+  // 如果已经在预检测中，跳过
+  if (isPrechecking) {
+    log.debug('[claude-settings] 代理预检测已在进行中，跳过');
+    return;
+  }
+
+  // 获取当前配置
+  const config = getCurrentApiConfig();
+  if (!config) {
+    log.debug('[claude-settings] 无 API 配置，跳过预检测');
+    return;
+  }
+
+  // 检查是否已有缓存结果
+  let cleanBaseURL: string;
+  try {
+    const url = new URL(config.baseURL);
+    url.pathname = '';
+    cleanBaseURL = url.toString().replace(/\/$/, '');
+  } catch {
+    cleanBaseURL = config.baseURL;
+  }
+  const cacheKey = cleanBaseURL;
+
+  // 检查配置文件缓存（24小时内有效）
+  if (config.needsProxy !== undefined && config.needsProxyCheckedAt) {
+    const age = Date.now() - config.needsProxyCheckedAt;
+    if (age < PROXY_CACHE_TTL) {
+      log.debug(`[claude-settings] 配置文件缓存有效，跳过预检测 (${Math.round(age / 1000 / 60)} 分钟前)`);
+      proxyNeededApis.set(cacheKey, config.needsProxy);
+      return;
+    }
+  }
+
+  // 检查内存缓存
+  if (proxyNeededApis.has(cacheKey)) {
+    log.debug(`[claude-settings] 内存缓存有效，跳过预检测`);
+    return;
+  }
+
+  // 开始预检测
+  isPrechecking = true;
+  log.info(`[claude-settings] 开始代理预检测: ${cleanBaseURL}`);
+
+  // 异步执行检测，不阻塞
+  checkProxyNeeded(config)
+    .then((needsProxy) => {
+      log.info(`[claude-settings] 代理预检测完成: ${needsProxy ? '需要代理' : '无需代理'}`);
+    })
+    .catch((error) => {
+      log.warn(`[claude-settings] 代理预检测失败:`, error);
+    })
+    .finally(() => {
+      isPrechecking = false;
+    });
+}
+
+/**
  * 检测 API 是否需要代理模式
  *
  * 背景：部分第三方 API 不支持 Anthropic 的 /count_tokens 端点
  * 策略：测试 /v1/messages/count_tokens 端点是否可用
+ *
+ * 优化特性：
+ * - 5 秒超时（从 10 秒缩短）
+ * - 失败快速降级到代理模式
+ * - 配置文件缓存（24 小时有效）
+ * - 内存缓存（会话期间复用）
  *
  * @param config API 配置
  * @returns true 表示需要启动代理服务器拦截 count_tokens 请求
@@ -200,7 +272,6 @@ export async function checkProxyNeeded(config: ApiConfig): Promise<boolean> {
   });
 
   // 优先级 1: 检查配置文件中是否已有检测结果（24小时内有效）
-  const PROXY_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 小时
   if (config.needsProxy !== undefined && config.needsProxyCheckedAt) {
     const age = Date.now() - config.needsProxyCheckedAt;
     if (age < PROXY_CACHE_TTL) {
@@ -220,11 +291,11 @@ export async function checkProxyNeeded(config: ApiConfig): Promise<boolean> {
   // 尝试测试 /count_tokens 端点（使用 Anthropic 标准路径）
   try {
     const testUrl = `${cleanBaseURL}/v1/messages/count_tokens`;
-    log.info(`[claude-settings] 测试端点: ${testUrl}`);
+    log.info(`[claude-settings] 测试端点: ${testUrl} (超时: ${PROXY_CHECK_TIMEOUT}ms)`);
 
-    // 设置超时控制（10秒超时）
+    // 设置超时控制（使用优化的超时时间）
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    const timeoutId = setTimeout(() => controller.abort(), PROXY_CHECK_TIMEOUT);
 
     const response = await fetch(testUrl, {
       method: 'POST',
@@ -270,7 +341,13 @@ export async function checkProxyNeeded(config: ApiConfig): Promise<boolean> {
 
     return needsProxy;
   } catch (error) {
-    log.warn(`[claude-settings] API 检测失败，默认使用代理模式: ${cleanBaseURL}`, error);
+    // 快速降级：检测失败时默认使用代理模式
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    if (errorMsg.includes('abort') || errorMsg.includes('timeout')) {
+      log.warn(`[claude-settings] API 检测超时 (${PROXY_CHECK_TIMEOUT}ms)，使用代理模式: ${cleanBaseURL}`);
+    } else {
+      log.warn(`[claude-settings] API 检测失败，使用代理模式: ${cleanBaseURL}`, error);
+    }
     proxyNeededApis.set(cacheKey, true);
     return true;
   }

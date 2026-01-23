@@ -1,10 +1,4 @@
 /**
- * @author      Alan
- * @copyright   AGCPA v3.0
- * @created     2026-01-21
- * @updated     2026-01-21
- * @Email       None
- *
  * 繁體中文翻譯
  */
 
@@ -13,7 +7,7 @@ export default {
 	languageNames: {
 		en: "English",
 		zh: "簡體中文",
-		"zh-TW": "繁體中文 (台灣)",
+		"zh-TW": "繁體中文",
 		ja: "日本語",
 		ko: "한국어",
 		es: "Español",
@@ -61,6 +55,8 @@ export default {
 			permissions: "權限",
 			output: "輸出樣式",
 			recovery: "會話恢復",
+			rules: "規則",
+			claudeMd: "Claude.md",
 		},
 		placeholder: {
 			title: "設定",
@@ -68,8 +64,10 @@ export default {
 		},
 	},
 
+	// Settings Sections
 	help: {
 		title: "幫助",
+		subtitle: "獲取使用幫助和文檔",
 		quickStart: { title: "快速開始", description: "了解如何使用 AICowork 開始第一個任務" },
 		faq: { title: "常見問題", description: "查看常見問題和解決方案" },
 		docs: { title: "文檔鏈接", description: "訪問官方文檔獲取更多信息" },
@@ -79,22 +77,40 @@ export default {
 
 	feedback: {
 		title: "反饋",
-		bugReport: { title: "Bug 報告", description: "在 GitHub 上提交問題報告", url: "https://github.com/Pan519/AICowork" },
-		featureRequest: { title: "功能建議", description: "提出您希望看到的新功能", url: "https://docs.qq.com/form/page/DRm5uV1pSZFB3VHNv" },
+		subtitle: "提交問題和建議，幫助我們改進",
+		bugReport: {
+			title: "Bug 報告",
+			description: "在 GitHub 上提交問題報告",
+			link: "前往 GitHub",
+			url: "https://github.com/Pan519/AICowork",
+		},
+		featureRequest: {
+			title: "功能建議",
+			description: "提出您希望看到的新功能",
+			url: "https://docs.qq.com/form/page/DRm5uV1pSZFB3VHNv",
+		},
 		thankYou: "感謝您的反饋！我們會認真閱讀每一條反饋意見。",
 	},
 
 	about: {
 		title: "關於 AICowork",
-		version: { title: "版本信息", description: "版本 1.0.0" },
-		techStack: { title: "技術棧", description: "Electron + React + TypeScript + AI Agent SDK" },
-		license: { title: "許可證", description: "GNU Affero General Public License v3.0 (AGPL-3.0)" },
 		subtitle: "AI 協作工作台——AICowork！",
+		version: { title: "版本信息", description: "版本 1.0.0" },
+		techStack: {
+			title: "技術棧",
+			description: "Electron + React + TypeScript + AI Agent SDK",
+			electron: "• Electron - 跨平台桌面應用框架",
+			react: "• React + TypeScript - 前端框架",
+			tailwind: "• Tailwind CSS - 樣式框架",
+			claude: "• AI Agent SDK - AI 集成",
+		},
+		license: { title: "許可證", description: "GNU Affero General Public License v3.0 (AGPL-3.0)" },
 		tagline: "AICowork 讓 AI 成為你的工作協作夥伴。",
 	},
 
 	language: {
 		title: "語言",
+		description: "選擇界面顯示語言",
 		current: "當前語言",
 		switching: "切換中...",
 		hint: "語言設定會保存在本地，下次啟動應用時自動應用。",
@@ -133,31 +149,59 @@ export default {
 		testFailed: "測試失敗",
 		noConfigs: "暫無保存的配置",
 		hint: "配置 API 金鑰後即可開始使用。支援多個配置快速切換。",
+		hintLabel: "提示：",
 		docsLink: "幫助文檔",
+		learnMore: "了解更多。",
+		saveSuccess: "保存成功",
+		current: "當前",
+		confirmDelete: "確定要刪除此配置嗎？",
+		modelLimits: "模型限制: max_tokens ∈ [{{min}}, {{max}}]",
+		azure: {
+			resourceName: "Azure 資源名稱",
+			deploymentName: "Azure 部署名稱",
+			resourceNameRequired: "Azure 資源名稱不能為空",
+			deploymentNameRequired: "Azure 部署名稱不能為空",
+			bothRequired: "Azure 需要填寫資源名稱和部署名稱",
+		},
 	},
 
 	mcp: {
 		title: "MCP 設定",
-		description: "配置 Model Context Protocol 伺服器",
+		description: "配置 Model Context Protocol 伺服器，SDK 會自動啟動並註冊工具",
 		noServers: "暫無 MCP 伺服器配置",
-		addServer: "添加 MCP 伺服器",
+		addServer: "+ 添加伺服器",
 		templates: { title: "從模板添加" },
 		form: {
-			name: { label: "伺服器名稱", placeholder: "github" },
-			displayName: { label: "顯示名稱（可選）", placeholder: "GitHub MCP" },
-			type: { label: "伺服器類型", stdio: "STDIO", sse: "SSE" },
+			name: { label: "伺服器名稱", placeholder: "my-mcp-server" },
+			displayName: { label: "顯示名稱（可選）", placeholder: "我的 MCP 伺服器" },
+			type: {
+				label: "伺服器類型",
+				stdio: "stdio (標準輸入輸出)",
+				sse: "SSE (伺服器發送事件)",
+				streamableHttp: "Streamable HTTP",
+			},
 			command: { label: "命令", placeholder: "npx" },
 			args: { label: "參數（空格分隔）", placeholder: "@modelcontextprotocol/server-github" },
+			url: { label: "URL", placeholder: "https://example.com/mcp" },
 			description: { label: "描述（可選）", placeholder: "伺服器功能描述" },
+			addTitle: "添加 MCP 伺服器",
+			editTitle: "編輯 MCP 伺服器",
 		},
-		view: { type: "類型", command: "命令", args: "參數", description: "描述" },
-		actions: { save: "保存", saving: "保存中...", edit: "編輯", delete: "刪除" },
+		view: { type: "類型", command: "命令", args: "參數", url: "URL", description: "描述" },
+		actions: { save: "保存", saving: "保存中...", edit: "編輯", delete: "刪除", cancel: "取消" },
 		errors: {
 			deleteFailed: "刪除失敗",
 			nameRequired: "伺服器名稱不能為空",
 			saveFailed: "保存失敗",
+			invalidNameFormat: "伺服器名稱只能包含字母、數字、下劃線和連字符",
+			commandRequired: "stdio 類型伺服器必須指定命令",
+			urlRequired: "該類型伺服器必須指定 URL",
+			invalidUrl: "URL 格式無效",
+			saveSuccess: "保存成功",
 		},
-		hint: "MCP 伺服器配置存儲在 ~/.claude/settings.json 中。",
+		confirmDelete: "確定要刪除 MCP 伺服器 \"{{name}}\" 嗎？",
+		hint: "提示：MCP 伺服器配置存儲在 ~/.claude/settings.json 中。SDK 會自動啟動配置的 MCP 伺服器並將工具註冊到會話中。",
+		hintPath: "~/.claude/settings.json",
 	},
 
 	skills: {
@@ -181,45 +225,142 @@ export default {
 
 	memory: {
 		title: "記憶",
-		description: "此區域預留給 memvid 項目功能",
-		comingSoon: "即將推出：Memory 功能將允許 AI 在多個會話之間共享信息，提供更連貫的對話體驗。",
+		description: "配置記憶功能，讓 AI 記住重要信息",
+		underDevelopment: "Memory 功能正在開發中...",
+		reservedArea: "此區域預留給 memvid 項目功能",
+		comingSoon: "即將推出",
+		comingSoonDescription: "Memory 功能將允許 AI 在多個會話之間共享信息，實現持久化的上下文記憶。",
 	},
 
 	agents: {
 		title: "代理",
-		description: "配置子代理設定",
-		subAgents: "SubAgents：最多可以同時啟動 10 個子代理並行處理任務，提高複雜任務的處理效率。",
+		description: "配置 AI 代理，實現並行任務處理",
+		underDevelopment: "Agents 配置功能正在開發中...",
+		subAgents: "SubAgents",
+		subAgentsDescription: "最多可以同時啟動 10 個子代理並行處理任務，但請注意成本會相應增加（N×）。",
 	},
 
 	hooks: {
 		title: "鉤子",
-		postToolUse: { title: "工具使用後觸發", noConfig: "暫無配置" },
-		preToolUse: { title: "工具使用前觸發", noConfig: "暫無配置" },
-		hint: "Hooks 配置存儲在 ~/.claude/settings.json 中。",
+		description: "配置事件鉤子，在特定時機自動觸發操作",
+		postToolUse: {
+			title: "PostToolUse",
+			description: "工具使用後觸發",
+			noConfig: "暫無配置",
+		},
+		preToolUse: {
+			title: "PreToolUse",
+			description: "工具使用前觸發",
+			noConfig: "暫無配置",
+		},
+		addHook: "+ 添加鉤子",
+		hint: "提示：Hooks 配置存儲在",
+		hintPath: "~/.claude/settings.json",
+		hintSuffix: "中。SDK 會自動加載並執行配置的鉤子。",
 	},
 
 	permissions: {
 		title: "權限",
-		allowedTools: { title: "允許的工具", description: "無需用戶確認即可使用", noConfig: "暫無配置" },
-		customRules: { title: "自定義規則", description: "配置特定的權限規則", noConfig: "暫無自定義規則" },
-		securityHint: "安全提示：謹慎授予工具權限，特別是 Bash 和文件操作。",
+		description: "配置工具權限規則，控制 AI 可以執行的操作",
+		allowedTools: {
+			title: "允許的工具",
+			description: "無需用戶確認即可使用",
+			noConfig: "暫無配置",
+		},
+		customRules: {
+			title: "自定義規則",
+			description: "配置特定的權限規則",
+			noConfig: "暫無自定義規則",
+		},
+		securityHint: "安全提示：謹慎授予工具權限，特別是 Bash 和文件操作。建議使用通配符規則而非完全開放。",
 	},
 
 	output: {
 		title: "輸出樣式",
+		subtitle: "配置 AI 輸出樣式和格式",
 		description: "輸出樣式配置功能正在開發中...",
 		comingSoon: "即將推出：可配置輸出格式、代碼高亮主題、Markdown 渲染選項等。",
 	},
 
 	recovery: {
 		title: "會話恢復",
+		subtitle: "查看歷史會話並恢復",
 		description: "恢復之前的會話繼續對話",
+		loading: "載入中...",
+		refresh: "刷新列表",
 		example1: { title: "創建新的 Web 應用", sessionId: "會話 ID: abc123def456", updated: "更新於: 2 小時前" },
 		example2: { title: "修復 API 集成問題", sessionId: "會話 ID: ghi789jkl012", updated: "更新於: 1 天前" },
+		recover: "恢復",
 		hint: "會話數據存儲在本地數據庫中。恢復會話將加載完整的對話歷史。",
+		hintWithCommand: "也可以使用命令行：",
 	},
 
-	// Legacy
+	rules: {
+		title: "規則",
+		subtitle: "管理項目規則文件 (.claude/rules/)",
+		description: "在項目的 .claude/rules/ 目錄中創建和管理自定義規則文件",
+		noRules: "暫無規則文件",
+		createFromTemplate: "從模板創建",
+		createNew: "創建新規則",
+		editor: {
+			nameLabel: "規則名稱",
+			namePlaceholder: "例如：coding-style",
+			contentLabel: "規則內容 (Markdown)",
+			contentPlaceholder: "輸入規則內容...",
+			save: "保存規則",
+			saving: "保存中...",
+			cancel: "取消",
+		},
+		templates: {
+			title: "選擇模板",
+			language: { name: "語言規則", description: "指定項目使用的編程語言和編碼規範" },
+			codingStyle: { name: "代碼風格", description: "定義代碼格式化和風格指南" },
+			gitCommit: { name: "Git 提交", description: "配置 Git 提交消息格式和規範" },
+		},
+		confirmDelete: "確定要刪除規則 \"{{name}}\" 嗎？",
+		deleted: "規則已刪除",
+		saved: "規則已保存",
+		hint: "規則文件存儲在項目的 .claude/rules/ 目錄中。每個規則都是 Markdown 格式的文件，AI 會根據規則內容執行任務。",
+	},
+
+	claudeMd: {
+		title: "Claude.md",
+		subtitle: "管理項目 Claude 配置 (CLAUDE.md)",
+		description: "在項目根目錄的 CLAUDE.md 文件中配置項目級別的 AI 指導",
+		status: {
+			exists: "配置文件存在",
+			missing: "配置文件不存在",
+			charCount: "{{count}} 個字符",
+			lastModified: "最後修改: {{date}}",
+		},
+		actions: {
+			view: "查看當前配置",
+			edit: "編輯配置",
+			save: "保存配置",
+			saving: "保存中...",
+			delete: "刪除配置",
+			createFromTemplate: "從模板創建",
+			openDirectory: "打開目錄",
+		},
+		templates: {
+			title: "選擇模板",
+			basic: { name: "基礎配置", description: "包含基本項目信息的簡單模板" },
+			frontend: { name: "前端項目", description: "針對 React/Vue/Next.js 等前端項目" },
+			backend: { name: "後端項目", description: "針對 Node.js/Python/FastAPI 等後端項目" },
+		},
+		editor: {
+			label: "Claude.md 內容",
+			placeholder: "在此輸入項目配置內容...",
+			save: "保存配置",
+			cancel: "取消",
+		},
+		confirmDelete: "確定要刪除 CLAUDE.md 配置文件嗎？",
+		deleted: "配置文件已刪除",
+		saved: "配置已保存",
+		hint: "CLAUDE.md 文件位於項目根目錄，用於定義項目級別的 AI 行為指導。此文件會覆蓋全局配置。",
+	},
+
+	// Settings Modal (legacy)
 	settings: {
 		title: "API 配置",
 		description: "支援 Anthropic 官方 API 以及相容 Anthropic 格式的第三方 API。",
@@ -232,6 +373,7 @@ export default {
 		saved: "配置儲存成功！",
 	},
 
+	// Validation errors
 	errors: {
 		apiKeyRequired: "API 金鑰為必填項",
 		baseUrlRequired: "基礎 URL 為必填項",
@@ -244,6 +386,7 @@ export default {
 		failedToGetSessionTitle: "取得會話標題失敗。",
 	},
 
+	// Start Session Modal
 	startSession: {
 		title: "啟動會話",
 		description: "建立新會話以開始與代理互動。",
@@ -256,6 +399,7 @@ export default {
 		starting: "啟動中...",
 	},
 
+	// Prompt Input
 	promptInput: {
 		placeholderDisabled: "建立/選擇任務以開始...",
 		placeholder: "描述您希望代理處理的內容...",
@@ -263,6 +407,7 @@ export default {
 		sendPrompt: "傳送提示詞",
 	},
 
+	// Common
 	common: {
 		close: "關閉",
 		cancel: "取消",
@@ -275,6 +420,7 @@ export default {
 		back: "返回",
 	},
 
+	// App
 	app: {
 		noMessagesYet: "暫無訊息",
 		startConversation: "開始與 AICowork 對話",
@@ -283,6 +429,7 @@ export default {
 		newMessages: "新訊息",
 	},
 
+	// Deletion Confirmation
 	deletion: {
 		title: "⚠️ 刪除操作確認",
 		subtitle: "AI 即將執行刪除操作",
@@ -295,6 +442,7 @@ export default {
 		deniedMessage: "使用者拒絕了刪除操作",
 	},
 
+	// Event Card
 	events: {
 		sessionResult: "會話結果",
 		duration: "耗時",
