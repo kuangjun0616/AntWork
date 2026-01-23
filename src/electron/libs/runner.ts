@@ -4,13 +4,43 @@ import type { Session } from "./session-store.js";
 import { checkIfDeletionOperation } from "../../shared/deletion-detection.js";
 import { RUNNER_TIMEOUT } from "../config/constants.js";
 
-import { getCurrentApiConfig, buildEnvForConfig, buildEnvForConfigWithProxy, getClaudeCodePath, checkProxyNeeded } from "./claude-settings.js";
+import { getCurrentApiConfig, buildEnvForConfig, buildEnvForConfigWithProxy, checkProxyNeeded, getClaudeCodePath } from "./claude-settings.js";
 import { getEnhancedEnv } from "./util.js";
 import { addLanguagePreference } from "../utils/language-detector.js";
 import { transformSlashCommand } from "./slash-commands.js";
 import { memoryStore, getMemoryToolConfig } from "./memory-tools.js";
 import { createMemoryMcpServer } from "./memory-mcp-server.js";
 import { createClaudeMemoryToolServer } from "./claude-memory-mcp-server.js";
+import { loadSdkNativeConfig, type SdkNativeConfig } from "./sdk-native-loader.js";
+import { loadMcpServers, type McpServerConfig } from "./mcp-store.js";
+import { createSdkMcpServer, tool } from "@anthropic-ai/claude-agent-sdk";
+import { z } from "zod";
+
+// ========== 全局缓存 - 跨会话复用 ==========
+// MCP 服务器实例缓存（按名称存储）
+const mcpServersCache: Record<string, any> = {};
+// 记忆指南系统提示缓存
+let memoryGuidancePromptCache: string | null = null;
+
+/**
+ * 清除全局缓存（在配置更改时调用）
+ * 注意：这会关闭所有缓存的 MCP 服务器
+ */
+export function clearRunnerCache(): void {
+  // 关闭所有缓存的 MCP 服务器
+  for (const [name, server] of Object.entries(mcpServersCache)) {
+    try {
+      if (server?.close && typeof server.close === 'function') {
+        server.close();
+      }
+    } catch (e) {
+      /* 忽略关闭错误 */
+    }
+    delete mcpServersCache[name];
+  }
+  // 清除记忆提示缓存
+  memoryGuidancePromptCache = null;
+}
 
 
 export type RunnerOptions = {
@@ -264,8 +294,12 @@ export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
         });
       }
 
-      // 调试：记录 prompt 转换
+      // 加载 SDK 原生配置（插件、代理、权限、钩子等）
       const { log } = await import("../logger.js");
+      const sdkNativeConfig: SdkNativeConfig = await loadSdkNativeConfig();
+      log.info(`[Runner] SDK native config loaded: plugins=${sdkNativeConfig.plugins?.length || 0}, agents=${Object.keys(sdkNativeConfig.agents || {}).length}, allowedTools=${sdkNativeConfig.allowedTools?.length || 0}`);
+
+      // 调试：记录 prompt 转换
       log.info(`[Runner] Original prompt: "${prompt.substring(0, 100)}${prompt.length > 100 ? '...' : ''}"`);
       if (transformedPrompt !== prompt) {
         log.info(`[Runner] Transformed prompt: "${transformedPrompt.substring(0, 100)}${transformedPrompt.length > 100 ? '...' : ''}"`);
@@ -275,32 +309,90 @@ export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
       }
       log.info(`[Runner] Memory enabled: ${memConfig.enabled}, autoStore: ${memConfig.autoStore}`);
 
-      // 创建 MCP 服务器（如果启用记忆功能）
+      // 创建 MCP 服务器（包括记忆工具和 settings.json 中的 MCP 服务器）
+      // 注意：每次会话创建新的服务器实例，避免复用已关闭的实例
       const mcpServers: Record<string, any> = {};
+
+      // 1. 创建记忆 MCP 服务器（如果启用）
       if (memConfig.enabled) {
-        // 注册自定义 MCP 工具（memory_search, memory_store, memory_ask）
-        try {
-          const serverConfig = await createMemoryMcpServer();
-          mcpServers["memory-tools"] = serverConfig;
-          log.info(`[Runner] Memory MCP server registered: memory-tools`);
-        } catch (error) {
-          log.error('[Runner] Failed to create memory MCP server:', error);
+        // 并行创建两个 MCP 服务器
+        const [memoryToolsServer, claudeMemoryServer] = await Promise.allSettled([
+          createMemoryMcpServer(),
+          createClaudeMemoryToolServer()
+        ]);
+
+        if (memoryToolsServer.status === 'fulfilled') {
+          mcpServers["memory-tools"] = memoryToolsServer.value;
+          log.info(`[Runner] Memory MCP server created: memory-tools`);
+        } else {
+          log.warn(`[Runner] Memory MCP server creation failed:`, memoryToolsServer.reason);
         }
 
-        // 注册 Claude 标准 Memory Tool（view, create, str_replace, insert, delete, rename）
-        try {
-          const claudeMemoryServer = await createClaudeMemoryToolServer();
-          mcpServers["memory"] = claudeMemoryServer;
-          log.info(`[Runner] Claude Memory Tool MCP server registered: memory`);
-        } catch (error) {
-          log.error('[Runner] Failed to create Claude Memory Tool MCP server:', error);
+        if (claudeMemoryServer.status === 'fulfilled') {
+          mcpServers["memory"] = claudeMemoryServer.value;
+          log.info(`[Runner] Claude Memory Tool MCP server created: memory`);
+        } else {
+          log.warn(`[Runner] Claude Memory Tool MCP server creation failed:`, claudeMemoryServer.reason);
+        }
+
+        // 如果都失败了，记录警告但不阻塞启动
+        if (memoryToolsServer.status === 'rejected' && claudeMemoryServer.status === 'rejected') {
+          log.warn('[Runner] Both memory MCP servers failed to initialize, continuing without memory');
         }
       }
 
+      // 2. 加载 settings.json 中的 MCP 服务器
+      try {
+        const settingsMcpServers = await loadMcpServers();
+        log.info(`[Runner] Found ${Object.keys(settingsMcpServers).length} MCP servers in settings.json`);
+
+        for (const [serverName, serverConfig] of Object.entries(settingsMcpServers)) {
+          // 跳过禁用的服务器
+          if (serverConfig.disabled) {
+            log.info(`[Runner] Skipping disabled MCP server: ${serverName}`);
+            continue;
+          }
+
+          // 跳过已存在的（避免覆盖程序化创建的服务器）
+          if (mcpServers[serverName]) {
+            log.warn(`[Runner] MCP server '${serverName}' already exists, skipping settings.json config`);
+            continue;
+          }
+
+          try {
+            // 创建 SDK MCP 服务器包装器
+            // 注意：SDK 需要实际的服务器实例，而不是配置对象
+            // 对于外部 MCP 服务器（stdio/sse），SDK 会自动处理
+            // 这里我们创建一个占位符配置，让 SDK 知道服务器的存在
+            mcpServers[serverName] = {
+              type: serverConfig.type || 'stdio',
+              command: serverConfig.command,
+              args: serverConfig.args,
+              env: serverConfig.env,
+              url: serverConfig.url,
+            };
+            log.info(`[Runner] Settings MCP server loaded: ${serverName} (${serverConfig.type})`);
+          } catch (err) {
+            log.error(`[Runner] Failed to load MCP server ${serverName}:`, err);
+          }
+        }
+      } catch (error) {
+        log.warn('[Runner] Failed to load MCP servers from settings.json:', error);
+      }
+
+      log.info(`[Runner] Total MCP servers: ${Object.keys(mcpServers).length}`, Object.keys(mcpServers));
+
       // 构建记忆使用指南系统提示（简化版，因为工具已通过 MCP 注册）
+      // 优化：使用缓存，避免每次会话都重新构建
       let memoryGuidancePrompt: string | undefined;
       if (memConfig.enabled) {
-        memoryGuidancePrompt = `
+        if (memoryGuidancePromptCache) {
+          // 复用缓存
+          memoryGuidancePrompt = memoryGuidancePromptCache;
+          log.info(`[Runner] Reusing cached memory guidance prompt`);
+        } else {
+          // 构建并缓存
+          memoryGuidancePrompt = `
 ## AI 记忆功能
 
 你有访问两类记忆工具的权限，可以跨会话存储和检索信息。
@@ -339,12 +431,25 @@ export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
 - 选择合适的标签：project/preference/technical/context/custom
 - 使用文件工具可以创建更结构化的记忆文件
 `;
+          memoryGuidancePromptCache = memoryGuidancePrompt;
+          log.info(`[Runner] Memory guidance prompt created and cached`);
+        }
       }
 
       // 合并系统提示（语言提示 + 记忆指南）
       const combinedSystemPrompt = memoryGuidancePrompt
         ? `${memoryGuidancePrompt}\n${languageHint || ''}`.trim()
         : languageHint;
+
+      // 确定权限模式：
+      // - 如果用户明确配置了 allowedTools 或 disallowedTools，使用 "default" 模式
+      // - 否则使用 "acceptEdits" 模式以自动批准文件编辑并允许 MCP 工具
+      // 注意：PermissionMode = 'default' | 'acceptEdits' | 'bypassPermissions' | 'plan' | 'delegate' | 'dontAsk'
+      const hasExplicitPermissions = (sdkNativeConfig.allowedTools && sdkNativeConfig.allowedTools.length > 0) ||
+                                     (sdkNativeConfig.disallowedTools && sdkNativeConfig.disallowedTools.length > 0);
+      const permissionMode: 'default' | 'acceptEdits' | 'bypassPermissions' | 'plan' | 'delegate' | 'dontAsk' = hasExplicitPermissions ? "default" : "acceptEdits";
+
+      log.info(`[Runner] Permission mode: ${permissionMode}, hasExplicitPermissions: ${hasExplicitPermissions}`);
 
       const q = query({
         prompt: transformedPrompt,
@@ -354,12 +459,23 @@ export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
           abortController,
           env: mergedEnv,
           pathToClaudeCodeExecutable: getClaudeCodePath(),
-          permissionMode: "default",
+          permissionMode,
           includePartialMessages: true,
           // 追加系统提示（语言偏好 + 记忆指南）
           ...(combinedSystemPrompt ? { extraArgs: { 'append-system-prompt': combinedSystemPrompt } } : {}),
           // 注册 MCP 服务器（记忆工具）
           ...(Object.keys(mcpServers).length > 0 ? { mcpServers } : {}),
+          // SDK 原生配置（插件、代理、权限、钩子等）
+          ...(sdkNativeConfig.plugins && sdkNativeConfig.plugins.length > 0 ? { plugins: sdkNativeConfig.plugins } : {}),
+          ...(sdkNativeConfig.agents && Object.keys(sdkNativeConfig.agents).length > 0 ? { agents: sdkNativeConfig.agents } : {}),
+          ...(sdkNativeConfig.agent ? { agent: sdkNativeConfig.agent } : {}),
+          ...(sdkNativeConfig.allowedTools && sdkNativeConfig.allowedTools.length > 0 ? { allowedTools: sdkNativeConfig.allowedTools } : {}),
+          ...(sdkNativeConfig.disallowedTools && sdkNativeConfig.disallowedTools.length > 0 ? { disallowedTools: sdkNativeConfig.disallowedTools } : {}),
+          ...(sdkNativeConfig.hooks && Object.keys(sdkNativeConfig.hooks).length > 0 ? { hooks: sdkNativeConfig.hooks } : {}),
+          ...(sdkNativeConfig.maxTurns ? { maxTurns: sdkNativeConfig.maxTurns } : {}),
+          ...(sdkNativeConfig.maxBudgetUsd ? { maxBudgetUsd: sdkNativeConfig.maxBudgetUsd } : {}),
+          ...(sdkNativeConfig.persistSession !== undefined ? { persistSession: sdkNativeConfig.persistSession } : {}),
+          ...(sdkNativeConfig.enableFileCheckpointing !== undefined ? { enableFileCheckpointing: sdkNativeConfig.enableFileCheckpointing } : {}),
           canUseTool: async (toolName, input, { signal }) => {
             // 检测删除操作 - 需要用户确认
             const isDeletionOperation = checkIfDeletionOperation(toolName, input);

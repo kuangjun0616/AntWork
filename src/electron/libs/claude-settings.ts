@@ -192,17 +192,28 @@ export async function checkProxyNeeded(config: ApiConfig): Promise<boolean> {
   }
   const cacheKey = cleanBaseURL;
 
-  log.info('[claude-settings] 开始检测 API 代理需求:', {
+  log.info('[claude-settings] 检查 API 代理需求:', {
     originalBaseURL: config.baseURL,
     cleanBaseURL,
     apiType: config.apiType,
     model: config.model,
   });
 
-  // 如果已经检测过，直接返回缓存结果
+  // 优先级 1: 检查配置文件中是否已有检测结果（24小时内有效）
+  const PROXY_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 小时
+  if (config.needsProxy !== undefined && config.needsProxyCheckedAt) {
+    const age = Date.now() - config.needsProxyCheckedAt;
+    if (age < PROXY_CACHE_TTL) {
+      log.info(`[claude-settings] 使用配置文件中的检测结果: ${config.needsProxy} (缓存于 ${Math.round(age / 1000 / 60)} 分钟前)`);
+      proxyNeededApis.set(cacheKey, config.needsProxy);
+      return config.needsProxy;
+    }
+  }
+
+  // 优先级 2: 检查内存缓存
   if (proxyNeededApis.has(cacheKey)) {
     const cached = proxyNeededApis.get(cacheKey)!;
-    log.info(`[claude-settings] 使用缓存结果: ${cached} for ${cacheKey}`);
+    log.info(`[claude-settings] 使用内存缓存结果: ${cached} for ${cacheKey}`);
     return cached;
   }
 
@@ -210,6 +221,10 @@ export async function checkProxyNeeded(config: ApiConfig): Promise<boolean> {
   try {
     const testUrl = `${cleanBaseURL}/v1/messages/count_tokens`;
     log.info(`[claude-settings] 测试端点: ${testUrl}`);
+
+    // 设置超时控制（10秒超时）
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
 
     const response = await fetch(testUrl, {
       method: 'POST',
@@ -222,7 +237,10 @@ export async function checkProxyNeeded(config: ApiConfig): Promise<boolean> {
         model: config.model,
         messages: [{ role: 'user', content: 'test' }],
       }),
+      signal: controller.signal,
     });
+
+    clearTimeout(timeoutId);
 
     const needsProxy = !response.ok;
     proxyNeededApis.set(cacheKey, needsProxy);
@@ -231,6 +249,23 @@ export async function checkProxyNeeded(config: ApiConfig): Promise<boolean> {
       log.info(`[claude-settings] ✓ API 需要代理模式: ${cleanBaseURL} (status: ${response.status})`);
     } else {
       log.warn(`[claude-settings] ✗ API 可以直接连接（可能有问题）: ${cleanBaseURL} (status: ${response.status})`);
+    }
+
+    // 保存检测结果到配置文件，避免下次重复检测
+    try {
+      const { saveApiConfig, loadAllApiConfigs } = await import('./config-store.js');
+      const store = loadAllApiConfigs();
+      if (store) {
+        const existingConfig = store.configs.find(c => c.id === config.id);
+        if (existingConfig) {
+          existingConfig.needsProxy = needsProxy;
+          existingConfig.needsProxyCheckedAt = Date.now();
+          saveApiConfig(existingConfig);
+          log.info(`[claude-settings] 检测结果已保存到配置文件`);
+        }
+      }
+    } catch (saveError) {
+      log.warn(`[claude-settings] 保存检测结果失败（不影响使用）:`, saveError);
     }
 
     return needsProxy;

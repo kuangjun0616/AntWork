@@ -3,7 +3,7 @@
  */
 
 import { useState, useEffect } from "react";
-import { Trash2, Edit2, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { Trash2, Edit2, X, ChevronDown, ChevronUp, Shield, ShieldCheck } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 interface McpServerConfig {
@@ -16,6 +16,10 @@ interface McpServerConfig {
   url?: string;
   disabled?: boolean;
   description?: string;
+  /** 权限配置 */
+  autoApproveTools?: boolean;  // 自动批准该 MCP 服务器的所有工具
+  allowedTools?: string[];      // 明确允许的工具列表
+  disallowedTools?: string[];   // 明确禁止的工具列表
 }
 
 type ViewMode = 'list' | 'add' | 'edit';
@@ -40,6 +44,10 @@ export function McpSection() {
   const [args, setArgs] = useState<string>('');
   const [url, setUrl] = useState<string>('');
   const [description, setDescription] = useState<string>('');
+  // 权限配置状态
+  const [autoApproveTools, setAutoApproveTools] = useState<boolean>(false);
+  const [allowedTools, setAllowedTools] = useState<string>('');
+  const [disallowedTools, setDisallowedTools] = useState<string>('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -110,6 +118,10 @@ export function McpSection() {
     setArgs(server.config.args?.join(' ') || '');
     setUrl(server.config.url || '');
     setDescription(server.config.description || '');
+    // 加载权限配置
+    setAutoApproveTools(server.config.autoApproveTools || false);
+    setAllowedTools(server.config.allowedTools?.join(', ') || '');
+    setDisallowedTools(server.config.disallowedTools?.join(', ') || '');
     setError(null);
     setViewMode('edit');
   };
@@ -178,6 +190,10 @@ export function McpSection() {
         args: serverType === 'stdio' && args.trim() ? args.trim().split(/\s+/) : undefined,
         url: (serverType === 'sse' || serverType === 'streamableHttp') ? url.trim() : undefined,
         description: description.trim() || undefined,
+        // 权限配置
+        autoApproveTools,
+        allowedTools: allowedTools.trim() ? allowedTools.trim().split(',').map(s => s.trim()).filter(Boolean) : undefined,
+        disallowedTools: disallowedTools.trim() ? disallowedTools.trim().split(',').map(s => s.trim()).filter(Boolean) : undefined,
       };
 
       const result = await window.electron.saveMcpServer(editName.trim(), config);
@@ -244,6 +260,10 @@ export function McpSection() {
     setArgs('');
     setUrl('');
     setDescription('');
+    // 重置权限配置
+    setAutoApproveTools(false);
+    setAllowedTools('');
+    setDisallowedTools('');
     setError(null);
   };
 
@@ -310,6 +330,23 @@ export function McpSection() {
                       </div>
                     </div>
                     <div className="flex items-center gap-1">
+                      {/* 测试结果 - 显示在按钮之间 */}
+                      {testResults[server.name] && (
+                        <span className={`text-xs px-2 py-0.5 rounded ${
+                          testResults[server.name].success
+                            ? 'bg-success/10 text-success'
+                            : 'bg-error/10 text-error'
+                        }`}>
+                          {testingServer === server.name ? (
+                            <svg className="w-3 h-3 animate-spin inline" viewBox="0 0 24 24" fill="none">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                            </svg>
+                          ) : (
+                            <span>{testResults[server.name].success ? '✓' : '✗'}</span>
+                          )}
+                        </span>
+                      )}
                       <button
                         className="p-1.5 rounded-lg text-muted hover:text-accent hover:bg-surface transition-colors"
                         onClick={(e) => { e.stopPropagation(); handleEdit(server); }}
@@ -337,27 +374,10 @@ export function McpSection() {
                     </div>
                   </div>
 
-                  {/* 测试结果 - 始终可见 */}
-                  {testResults[server.name] && (
-                    <div className={`px-4 py-2 text-xs ${
-                      testResults[server.name].success
-                        ? 'bg-success/10 text-success'
-                        : 'bg-error/10 text-error'
-                    }`}>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">
-                          {testResults[server.name].success ? '✓' : '✗'} {testResults[server.name].message}
-                        </span>
-                        {testingServer === server.name && (
-                          <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                          </svg>
-                        )}
-                      </div>
-                      {testResults[server.name].details && (
-                        <div className="mt-1 text-xs opacity-80">{testResults[server.name].details}</div>
-                      )}
+                  {/* 测试详细信息 - 仅在有详情时显示在展开区域 */}
+                  {testResults[server.name]?.details && isExpanded && (
+                    <div className="px-4 py-2 text-xs text-muted border-b border-ink-900/5">
+                      {testResults[server.name].details}
                     </div>
                   )}
 
@@ -393,6 +413,41 @@ export function McpSection() {
                         <div className="flex items-start justify-between gap-4">
                           <span className="text-xs text-muted">{t('mcp.view.description')}</span>
                           <span className="text-xs text-ink-700 text-right">{server.config.description}</span>
+                        </div>
+                      )}
+                      {/* 权限配置显示 */}
+                      {(server.config.autoApproveTools || server.config.allowedTools || server.config.disallowedTools) && (
+                        <div className="mt-3 pt-3 border-t border-ink-900/10">
+                          <div className="flex items-center gap-1.5 mb-2">
+                            {server.config.autoApproveTools ? (
+                              <ShieldCheck className="w-3.5 h-3.5 text-success" strokeWidth={2} />
+                            ) : (
+                              <Shield className="w-3.5 h-3.5 text-muted" strokeWidth={2} />
+                            )}
+                            <span className="text-xs font-medium text-ink-900">权限配置</span>
+                          </div>
+                          {server.config.autoApproveTools && (
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs text-muted">自动批准工具</span>
+                              <span className="text-xs text-success">是</span>
+                            </div>
+                          )}
+                          {server.config.allowedTools && server.config.allowedTools.length > 0 && (
+                            <div className="flex items-start justify-between gap-4">
+                              <span className="text-xs text-muted">允许的工具</span>
+                              <span className="text-xs text-ink-700 font-mono text-right break-all">
+                                {server.config.allowedTools.join(', ')}
+                              </span>
+                            </div>
+                          )}
+                          {server.config.disallowedTools && server.config.disallowedTools.length > 0 && (
+                            <div className="flex items-start justify-between gap-4">
+                              <span className="text-xs text-muted">禁止的工具</span>
+                              <span className="text-xs text-error font-mono text-right break-all">
+                                {server.config.disallowedTools.join(', ')}
+                              </span>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -536,6 +591,65 @@ export function McpSection() {
               />
             </label>
 
+            {/* 权限配置 */}
+            <div className="rounded-xl border border-ink-900/10 bg-surface-secondary p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                {autoApproveTools ? (
+                  <ShieldCheck className="w-4 h-4 text-success" strokeWidth={2} />
+                ) : (
+                  <Shield className="w-4 h-4 text-muted" strokeWidth={2} />
+                )}
+                <h4 className="text-xs font-medium text-ink-900">工具权限配置</h4>
+              </div>
+
+              {/* 自动批准开关 */}
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="w-4 h-4 rounded border-ink-900/20 text-accent focus:ring-accent/20"
+                  checked={autoApproveTools}
+                  onChange={(e) => setAutoApproveTools(e.target.checked)}
+                />
+                <span className="text-xs text-ink-700">
+                  自动批准该 MCP 服务器的所有工具
+                </span>
+              </label>
+
+              {/* 允许的工具列表 */}
+              <label className="grid gap-1.5">
+                <span className="text-xs font-medium text-muted">
+                  明确允许的工具（逗号分隔，留空表示不限制）
+                </span>
+                <input
+                  type="text"
+                  className="rounded-lg border border-ink-900/10 bg-surface px-2 py-1.5 text-xs text-ink-800 placeholder:text-muted-light focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/20 transition-colors font-mono"
+                  placeholder="例如: tool1, tool2, tool3"
+                  value={allowedTools}
+                  onChange={(e) => setAllowedTools(e.target.value)}
+                />
+                <p className="text-[10px] text-muted-light">
+                  这些工具将自动批准，无需用户确认
+                </p>
+              </label>
+
+              {/* 禁止的工具列表 */}
+              <label className="grid gap-1.5">
+                <span className="text-xs font-medium text-muted">
+                  明确禁止的工具（逗号分隔）
+                </span>
+                <input
+                  type="text"
+                  className="rounded-lg border border-ink-900/10 bg-surface px-2 py-1.5 text-xs text-ink-800 placeholder:text-muted-light focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/20 transition-colors font-mono"
+                  placeholder="例如: dangerous_tool, delete_all"
+                  value={disallowedTools}
+                  onChange={(e) => setDisallowedTools(e.target.value)}
+                />
+                <p className="text-[10px] text-muted-light">
+                  这些工具将被禁止，即使开启了自动批准
+                </p>
+              </label>
+            </div>
+
             {/* 错误/成功提示 */}
             {error && (
               <div className="rounded-xl border border-error/20 bg-error-light px-3 py-2 text-sm text-error">
@@ -585,6 +699,10 @@ export function McpSection() {
                   } : {}),
                   ...(serverType !== 'stdio' ? { url: url || 'https://example.com/mcp' } : {}),
                   description: description || undefined,
+                  // 权限配置
+                  ...(autoApproveTools ? { autoApproveTools: true } : {}),
+                  ...(allowedTools.trim() ? { allowedTools: allowedTools.split(',').map(s => s.trim()).filter(Boolean) } : {}),
+                  ...(disallowedTools.trim() ? { disallowedTools: disallowedTools.split(',').map(s => s.trim()).filter(Boolean) } : {}),
                 }, null, 2)}
               </pre>
             </div>

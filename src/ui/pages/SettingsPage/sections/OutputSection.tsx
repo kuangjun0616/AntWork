@@ -6,8 +6,8 @@ import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 
 type OutputConfig = {
-  format: 'markdown' | 'plain';
-  theme: 'default' | 'dark' | 'light';
+  format: 'markdown' | 'plain' | 'html' | 'json';
+  theme: 'default' | 'dark' | 'light' | 'monokai' | 'github' | 'dracula' | 'nord';
   codeHighlight: boolean;
   showLineNumbers: boolean;
   fontSize: 'small' | 'medium' | 'large';

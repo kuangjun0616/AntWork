@@ -44,6 +44,9 @@ export type ApiConfig = {
     min_top_p?: number;
     lastUpdated?: number;  // 时间戳
   };
+  /** 是否需要代理模式（用于 count_tokens 端点兼容性） */
+  needsProxy?: boolean;
+  needsProxyCheckedAt?: number;  // 检测时间戳
   /** 创建时间 */
   createdAt?: number;
   /** 更新时间 */

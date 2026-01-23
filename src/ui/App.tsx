@@ -12,6 +12,7 @@ import { PromptInput, usePromptActions } from "./components/PromptInput";
 import { SettingsPage } from "./pages/SettingsPage/SettingsPage";
 import { MessageCard } from "./components/EventCard";
 import { DeletionConfirmDialog } from "./components/DeletionConfirmDialog";
+import { SessionStatusIndicator, type SessionStatusType } from "./components/SessionStatusIndicator";
 import MDContent from "./render/markdown";
 import { isDeletionPermissionRequest } from "@/shared/deletion-detection";
 import { log } from "./utils/logger";
@@ -37,6 +38,14 @@ function App() {
   const scrollHeightBeforeLoadRef = useRef(0);
   const shouldRestoreScrollRef = useRef(false);
 
+  // 会话状态管理
+  const [sessionStatus, setSessionStatus] = useState<SessionStatusType>('idle');
+  const [responseStartTime, setResponseStartTime] = useState<number | null>(null);
+  const [showTimeoutWarning, setShowTimeoutWarning] = useState(false);
+  const responseCheckTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const scrollRafRef = useRef<ReturnType<typeof requestAnimationFrame> | null>(null);
+  const updateRafRef = useRef<ReturnType<typeof requestAnimationFrame> | null>(null);
+
   const sessions = useAppStore((s) => s.sessions);
   const activeSessionId = useAppStore((s) => s.activeSessionId);
   const showStartModal = useAppStore((s) => s.showStartModal);
@@ -56,6 +65,10 @@ function App() {
   const setApiConfigChecked = useAppStore((s) => s.setApiConfigChecked);
   const currentPage = useAppStore((s) => s.currentPage);
   const setCurrentPage = useAppStore((s) => s.setCurrentPage);
+
+  // 在 hooks 前定义 activeSession 和 isRunning，供后续使用
+  const activeSession = activeSessionId ? sessions[activeSessionId] : undefined;
+  const isRunning = activeSession?.status === "running";
 
   // Helper function to extract partial message content
   const getPartialMessageContent = (eventMessage: any) => {
@@ -78,6 +91,45 @@ function App() {
     return 'muted';
   };
 
+  // 超时检查逻辑
+  useEffect(() => {
+    // 清除之前的定时器
+    if (responseCheckTimerRef.current) {
+      clearInterval(responseCheckTimerRef.current);
+      responseCheckTimerRef.current = null;
+    }
+
+    // 如果不在运行状态，重置所有状态
+    if (!isRunning) {
+      setSessionStatus('idle');
+      setResponseStartTime(null);
+      setShowTimeoutWarning(false);
+      return;
+    }
+
+    // 开始响应时记录时间
+    if (!responseStartTime) {
+      setResponseStartTime(Date.now());
+    }
+
+    // 设置定时检查
+    responseCheckTimerRef.current = setInterval(() => {
+      if (responseStartTime) {
+        const elapsedSeconds = Math.floor((Date.now() - responseStartTime) / 1000);
+        // 30秒后显示超时警告
+        if (elapsedSeconds >= 30 && !showTimeoutWarning) {
+          setShowTimeoutWarning(true);
+        }
+      }
+    }, 1000);
+
+    return () => {
+      if (responseCheckTimerRef.current) {
+        clearInterval(responseCheckTimerRef.current);
+      }
+    };
+  }, [isRunning, responseStartTime, showTimeoutWarning]);
+
   // Handle partial messages from stream events
   const handlePartialMessages = useCallback((partialEvent: ServerEvent) => {
     if (partialEvent.type !== "stream.message" || partialEvent.payload.message.type !== "stream_event") return;
@@ -87,16 +139,34 @@ function App() {
       partialMessageRef.current = "";
       setPartialMessage(partialMessageRef.current);
       setShowPartialMessage(true);
+      // 开始接收内容时更新状态为"正在输入"
+      setSessionStatus('typing');
+      setShowTimeoutWarning(false);
     }
 
     if (message.event.type === "content_block_delta") {
-      partialMessageRef.current += getPartialMessageContent(message.event) || "";
-      setPartialMessage(partialMessageRef.current);
-      if (shouldAutoScroll) {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-      } else {
-        setHasNewMessages(true);
+      // 取消之前的更新请求
+      if (updateRafRef.current) {
+        cancelAnimationFrame(updateRafRef.current);
       }
+
+      // 使用 requestAnimationFrame 批量更新，避免频繁渲染
+      updateRafRef.current = requestAnimationFrame(() => {
+        partialMessageRef.current += getPartialMessageContent(message.event) || "";
+        setPartialMessage(partialMessageRef.current);
+
+        // 使用节流优化滚动，避免频繁滚动
+        if (shouldAutoScroll) {
+          if (scrollRafRef.current) {
+            cancelAnimationFrame(scrollRafRef.current);
+          }
+          scrollRafRef.current = requestAnimationFrame(() => {
+            messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+          });
+        } else {
+          setHasNewMessages(true);
+        }
+      });
     }
 
     if (message.event.type === "content_block_stop") {
@@ -117,10 +187,8 @@ function App() {
   const { connected, sendEvent } = useIPC(onEvent);
   const { handleStartFromModal } = usePromptActions(sendEvent);
 
-  const activeSession = activeSessionId ? sessions[activeSessionId] : undefined;
   const messages = activeSession?.messages ?? [];
   const permissionRequests = activeSession?.permissionRequests ?? [];
-  const isRunning = activeSession?.status === "running";
 
   const {
     visibleMessages,
@@ -225,6 +293,18 @@ function App() {
     setTimeout(() => {
       messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
     }, SCROLL_RESTORE_DELAY);
+
+    // 清理 animation frames
+    return () => {
+      if (scrollRafRef.current) {
+        cancelAnimationFrame(scrollRafRef.current);
+        scrollRafRef.current = null;
+      }
+      if (updateRafRef.current) {
+        cancelAnimationFrame(updateRafRef.current);
+        updateRafRef.current = null;
+      }
+    };
   }, [activeSessionId]);
 
   useEffect(() => {
@@ -274,6 +354,10 @@ function App() {
     setShouldAutoScroll(true);
     setHasNewMessages(false);
     resetToLatest();
+    // 开始发送消息时设置状态为"正在思考"
+    setSessionStatus('thinking');
+    setResponseStartTime(Date.now());
+    setShowTimeoutWarning(false);
   }, [resetToLatest]);
 
   // 设置页面模式
@@ -295,8 +379,7 @@ function App() {
           className="flex items-center justify-center gap-2 h-12 border-b border-ink-900/10 bg-surface-cream select-none"
           style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
         >
-          <span className="text-sm font-medium text-ink-700">{activeSession?.title || "AICowork"}</span>
-          {/* 记忆状态指示器 - 主页面标题旁边 */}
+          {/* 记忆状态指示器 - 主页面标题前面 */}
           {activeSession?.memoryStatus ? (
             <div
               className="flex items-center"
@@ -305,6 +388,15 @@ function App() {
               <BrainIcon className="h-3.5 w-3.5" color={getBrainIconColor(activeSession.memoryStatus)} />
             </div>
           ) : null}
+          <span className="text-sm font-medium text-ink-700">{activeSession?.title || "AICowork"}</span>
+        </div>
+
+        {/* 固定的会话状态指示器栏 - 合并显示状态和超时提示 */}
+        <div className="sticky top-0 z-10 bg-surface-cream/95 backdrop-blur-sm border-b border-ink-900/5 px-8 py-1.5">
+          <SessionStatusIndicator
+            status={sessionStatus}
+            elapsedSeconds={showTimeoutWarning && responseStartTime ? Math.floor((Date.now() - responseStartTime) / 1000) : undefined}
+          />
         </div>
 
         {/* 删除操作确认弹窗 - z-index 最高，强制用户确认 */}
@@ -365,9 +457,9 @@ function App() {
             )}
 
             {/* Partial message display with skeleton loading */}
-            <div className="partial-message">
-              <MDContent text={partialMessage} />
-              {showPartialMessage && (
+            {showPartialMessage && (
+              <div className="partial-message">
+                <MDContent text={partialMessage} />
                 <div className="mt-3 flex flex-col gap-2 px-1">
                   <div className="relative h-3 w-2/12 overflow-hidden rounded-full bg-ink-900/10">
                     <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-ink-900/30 to-transparent animate-shimmer" />
@@ -385,8 +477,8 @@ function App() {
                     <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-ink-900/30 to-transparent animate-shimmer" />
                   </div>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
 
             <div ref={messagesEndRef} />
           </div>

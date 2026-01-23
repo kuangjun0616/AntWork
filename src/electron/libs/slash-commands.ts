@@ -133,49 +133,90 @@ function parseSkillFile(skillPath: string): { name: string; description: string;
 
 /**
  * 从用户的 ~/.claude/skills 目录读取已安装的技能
+ * 降级机制：目录不存在 → 从 plugins 目录读取 → 空列表
  */
 async function fetchUserSkills(): Promise<Array<{ name: string; description: string; source: string }>> {
   const commands: Array<{ name: string; description: string; source: string }> = [];
 
+  // 方法 1: 从 skills 目录扫描
   try {
     const homeDir = getUserHomeDir();
     const skillsDir = join(homeDir, '.claude', 'skills');
 
     log.info(`[slash-commands] Looking for skills in: ${skillsDir}`);
 
-    if (!existsSync(skillsDir)) {
-      log.warn('[slash-commands] Skills directory not found:', skillsDir);
-      return [];
-    }
+    if (existsSync(skillsDir)) {
+      const skillDirs = readdirSync(skillsDir, { withFileTypes: true })
+        .filter(dirent => dirent.isDirectory())
+        .map(dirent => dirent.name);
 
-    const skillDirs = readdirSync(skillsDir, { withFileTypes: true })
-      .filter(dirent => dirent.isDirectory())
-      .map(dirent => dirent.name);
+      log.info(`[slash-commands] Found ${skillDirs.length} skill directories: ${skillDirs.join(', ')}`);
 
-    log.info(`[slash-commands] Found ${skillDirs.length} skill directories: ${skillDirs.join(', ')}`);
+      for (const skillDir of skillDirs) {
+        const skillFile = join(skillsDir, skillDir, 'SKILL.md');
+        log.debug(`[slash-commands] Checking skill: ${skillDir} at ${skillFile}`);
 
-    for (const skillDir of skillDirs) {
-      const skillFile = join(skillsDir, skillDir, 'SKILL.md');
-      log.debug(`[slash-commands] Checking skill: ${skillDir} at ${skillFile}`);
-
-      if (existsSync(skillFile)) {
-        const skill = parseSkillFile(skillFile);
-        if (skill) {
-          commands.push(skill);
-          log.info(`[slash-commands] ✓ Loaded skill: ${skill.name} - ${skill.description}`);
+        if (existsSync(skillFile)) {
+          const skill = parseSkillFile(skillFile);
+          if (skill) {
+            commands.push(skill);
+            log.info(`[slash-commands] ✓ Loaded skill: ${skill.name} - ${skill.description}`);
+          } else {
+            log.warn(`[slash-commands] ✗ Failed to parse skill: ${skillDir}`);
+          }
         } else {
-          log.warn(`[slash-commands] ✗ Failed to parse skill: ${skillDir}`);
+          log.debug(`[slash-commands] - No SKILL.md in: ${skillDir}`);
         }
-      } else {
-        log.debug(`[slash-commands] - No SKILL.md in: ${skillDir}`);
       }
-    }
 
-    log.info(`[slash-commands] Loaded ${commands.length} user skills (out of ${skillDirs.length} directories)`);
+      if (commands.length > 0) {
+        log.info(`[slash-commands] Loaded ${commands.length} user skills from skills/ directory`);
+        return commands;
+      }
+    } else {
+      log.warn('[slash-commands] Skills directory not found, trying fallback:', skillsDir);
+    }
   } catch (error) {
-    log.error('[slash-commands] Failed to fetch user skills:', error);
+    log.warn('[slash-commands] Failed to fetch from skills directory, trying fallback:', error);
   }
 
+  // 方法 2: 降级 - 尝试从 plugins 目录读取（兼容性）
+  try {
+    const homeDir = getUserHomeDir();
+    const pluginsDir = join(homeDir, '.claude', 'plugins');
+
+    if (existsSync(pluginsDir)) {
+      const pluginDirs = readdirSync(pluginsDir, { withFileTypes: true })
+        .filter(dirent => dirent.isDirectory())
+        .map(dirent => dirent.name);
+
+      log.info(`[slash-commands] Fallback: checking ${pluginDirs.length} plugin directories`);
+
+      for (const pluginDir of pluginDirs) {
+        const skillFile = join(pluginsDir, pluginDir, 'SKILL.md');
+        if (existsSync(skillFile)) {
+          const skill = parseSkillFile(skillFile);
+          if (skill) {
+            commands.push({
+              ...skill,
+              source: "plugin"  // 标记为插件来源
+            });
+            log.info(`[slash-commands] ✓ Loaded skill from plugins/: ${skill.name}`);
+          }
+        }
+      }
+
+      if (commands.length > 0) {
+        log.info(`[slash-commands] Loaded ${commands.length} skills from plugins/ directory (fallback)`);
+        return commands;
+      }
+    }
+  } catch (error) {
+    log.warn('[slash-commands] Failed to fetch from plugins directory:', error);
+  }
+
+  // 方法 3: 最后降级 - 返回空列表
+  log.info('[slash-commands] No user skills found, continuing without skills');
   return commands;
 }
 
@@ -249,9 +290,10 @@ async function fetchEnabledPlugins(): Promise<Array<{ name: string; description:
       if (enabled) {
         // 移除 @claude-plugins-official 等后缀，提取插件名
         const baseName = pluginName.replace(/@.*/, '');
-        const displayName = baseName.replace(/-/g, '/');
+        // 插件命令格式：/plugin-name:command
+        // 对于 pr-review-toolkit，命令应该是 /pr-review-toolkit:review-pr
         commands.push({
-          name: `/${displayName}`,
+          name: `/${baseName}`,  // 保留原始插件名，让 SDK 处理具体命令
           description: `插件: ${baseName}`,
           source: "plugin"
         });

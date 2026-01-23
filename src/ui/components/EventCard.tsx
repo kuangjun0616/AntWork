@@ -152,7 +152,22 @@ const ToolResult = ({ messageContent }: { messageContent: ToolResultContent }) =
   } else {
     try {
       if (Array.isArray(messageContent.content)) {
-        lines = messageContent.content.map((item: any) => item.text || "").join("\n").split("\n");
+        // 检查是否是带 text 属性的对象数组
+        const hasTextProperty = messageContent.content.length > 0 &&
+          messageContent.content[0] && typeof messageContent.content[0] === 'object' &&
+          'text' in messageContent.content[0];
+
+        if (hasTextProperty) {
+          lines = messageContent.content.map((item: any) => item.text || "").join("\n").split("\n");
+        } else {
+          // 纯数组（如资源列表），格式化为易读形式
+          const formatted = JSON.stringify(messageContent.content, null, 2);
+          lines = formatted.split("\n");
+        }
+      } else if (typeof messageContent.content === 'object' && messageContent.content !== null) {
+        // 对象类型，格式化显示
+        const formatted = JSON.stringify(messageContent.content, null, 2);
+        lines = formatted.split("\n");
       } else {
         lines = String(messageContent.content).split("\n");
       }
@@ -333,6 +348,19 @@ export function MessageCard({
   onPermissionResult?: (toolUseId: string, result: PermissionResult) => void;
 }) {
   const showIndicator = isLast && isRunning;
+
+  // 过滤掉不应显示的系统消息类型
+  // 这些是内部系统消息，不应在用户界面显示
+  // 使用类型断言避免类型检查冲突
+  const messageType = message.type as string;
+  if (messageType === "status" ||
+      messageType === "hook_response" ||
+      messageType === "tool_progress" ||
+      messageType === "auth_status" ||
+      messageType === "task_notification" ||
+      messageType === "compact_boundary") {
+    return null;
+  }
 
   if (message.type === "user_prompt") {
     return <UserMessageCard message={message} showIndicator={showIndicator} />;

@@ -112,6 +112,33 @@ code, pre, textarea.mono, input.mono {
   animation: shimmer 1.4s linear infinite;
 }
 
+/* Animation delays for staggered effects */
+.delay-75 {
+  animation-delay: 75ms;
+}
+
+.delay-100 {
+  animation-delay: 100ms;
+}
+
+.delay-150 {
+  animation-delay: 150ms;
+}
+
+.delay-200 {
+  animation-delay: 200ms;
+}
+
+/* Subtle bounce animation for new messages button */
+@keyframes bounce-subtle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+.animate-bounce-subtle {
+  animation: bounce-subtle 2s ease-in-out infinite;
+}
+
 /* 记忆状态图标颜色 - 针对 stroke 图标 */
 .text-error svg,
 .text-error svg * {

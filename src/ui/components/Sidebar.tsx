@@ -145,10 +145,7 @@ export function Sidebar({
             <div className="flex items-center justify-between gap-2">
               <div className="flex flex-col min-w-0 flex-1 overflow-hidden">
                 <div className="flex items-center gap-1.5">
-                  <div className={`text-[12px] font-semibold ${session.status === "running" ? "text-info" : session.status === "completed" ? "text-success" : session.status === "error" ? "text-error" : "text-ink-800"}`}>
-                    {session.title}
-                  </div>
-                  {/* 记忆状态指示器 - 大脑图标，不同颜色表示不同状态 */}
+                  {/* 记忆状态指示器 - 大脑图标，不同颜色表示不同状态 - 放在标题前面 */}
                   {session.memoryStatus ? (
                     <div className="flex items-center gap-1" title={session.memoryStatus.message || '记忆状态'}>
                       <BrainIcon className="h-3.5 w-3.5" color={getBrainIconColor(session.memoryStatus)} />
@@ -158,6 +155,9 @@ export function Sidebar({
                       <BrainIcon className="h-3.5 w-3.5" color="muted" />
                     </div>
                   ) : null}
+                  <div className={`text-[12px] font-semibold ${session.status === "running" ? "text-info" : session.status === "completed" ? "text-success" : session.status === "error" ? "text-error" : "text-ink-800"}`}>
+                    {session.title}
+                  </div>
                 </div>
                 <div className="flex items-center justify-between mt-0.5 text-xs text-muted">
                   <span className="truncate">{formatCwd(session.cwd)}</span>

@@ -4,7 +4,7 @@
  */
 
 import { promises as fs } from 'fs';
-import { join, dirname } from 'path';
+import { join } from 'path';
 import { app } from 'electron';
 import { use, create, MemvidError } from '@memvid/sdk';
 import { log } from '../logger.js';
@@ -94,6 +94,25 @@ export interface MemoryStats {
 }
 
 /**
+ * 延迟函数
+ */
+function delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * 检查错误是否是锁定错误
+ */
+function isLockError(error: any): boolean {
+    const errorMessage = error?.message || String(error);
+    return errorMessage.includes('lock') ||
+           errorMessage.includes('locked') ||
+           errorMessage.includes('os error 32') ||
+           errorMessage.includes('os error 33') ||
+           errorMessage.includes('process cannot access');
+}
+
+/**
  * 清理临时目录中的锁文件
  */
 async function cleanupLockFiles(): Promise<void> {
@@ -165,6 +184,34 @@ async function cleanupLockFiles(): Promise<void> {
 }
 
 /**
+ * 带重试的操作
+ */
+async function withRetry<T>(
+    operation: () => Promise<T>,
+    options: { maxRetries?: number; retryDelay?: number; onRetry?: (attempt: number, error: any) => void } = {}
+): Promise<T> {
+    const maxRetries = options.maxRetries ?? 3;
+    const retryDelay = options.retryDelay ?? 500;
+
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+            return await operation();
+        } catch (error) {
+            if (attempt < maxRetries && isLockError(error)) {
+                options.onRetry?.(attempt + 1, error);
+                log.warn(`[memvid-store] Lock error on attempt ${attempt + 1}/${maxRetries + 1}, retrying in ${retryDelay}ms...`);
+                await delay(retryDelay);
+                // 再次清理锁文件
+                await cleanupLockFiles();
+                continue;
+            }
+            throw error;
+        }
+    }
+    throw new Error('Unexpected error in withRetry');
+}
+
+/**
  * Memvid 存储类
  */
 class MemvidStore {
@@ -176,18 +223,18 @@ class MemvidStore {
     }
 
     /**
-     * 初始化记忆存储
+     * 初始化记忆存储（带重试机制）
      */
     async initialize(): Promise<void> {
-        try {
-            log.info(`[memvid-store] Initializing memory at: ${this.filePath}`);
+        log.info(`[memvid-store] Initializing memory at: ${this.filePath}`);
 
-            // 首先清理可能的遗留锁文件
-            await cleanupLockFiles();
+        // 首先清理可能的遗留锁文件
+        await cleanupLockFiles();
 
-            // 首先确保目录存在
-            await ensureMemvidDir();
+        // 首先确保目录存在
+        await ensureMemvidDir();
 
+        return withRetry(async () => {
             // 检查文件是否存在
             const fileExists = await fs.access(this.filePath).then(() => true).catch(() => false);
             log.info(`[memvid-store] Memory file exists: ${fileExists}`);
@@ -203,10 +250,13 @@ class MemvidStore {
             }
 
             log.info('[memvid-store] Memory initialized successfully');
-        } catch (error) {
-            log.error('[memvid-store] Failed to initialize memory:', error);
-            throw error;
-        }
+        }, {
+            maxRetries: 5,
+            retryDelay: 1000,
+            onRetry: (attempt) => {
+                log.warn(`[memvid-store] Initialization attempt ${attempt} failed with lock error, retrying...`);
+            }
+        });
     }
 
     /**
