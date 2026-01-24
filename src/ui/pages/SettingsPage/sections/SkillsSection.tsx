@@ -5,6 +5,13 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import type { SkillConfig } from "../../../electron.d";
+// Radix UI Tooltip components
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@radix-ui/react-tooltip";
 
 type ViewMode = 'list' | 'create';
 
@@ -231,20 +238,21 @@ if __name__ == '__main__':
   };
 
   return (
-    <section className="space-y-6">
-      <header>
-        <h1 className="text-2xl font-semibold text-ink-900">{t('skills.title')}</h1>
-        <p className="mt-2 text-sm text-muted">
-          {t('skills.description')}
-        </p>
-      </header>
+    <TooltipProvider delayDuration={200}>
+      <section className="space-y-6">
+        <header>
+          <h1 className="text-2xl font-semibold text-ink-900">{t('skills.title')}</h1>
+          <p className="mt-2 text-sm text-muted">
+            {t('skills.description')}
+          </p>
+        </header>
 
       {viewMode === 'create' ? (
         // 创建技能表单 - 左右分栏，中间分隔线
         <div className="flex">
           {/* 左侧：表单编辑区 - 占50% */}
           <div className="w-1/2 pr-6 space-y-6 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 220px)' }}>
-            <div className="space-y-2">
+            <div className="grid gap-1.5">
               <label className="text-xs font-medium text-muted">技能名称</label>
               <input
                 type="text"
@@ -256,7 +264,7 @@ if __name__ == '__main__':
               <p className="text-xs text-muted-light">只能包含字母、数字、连字符和下划线</p>
             </div>
 
-            <div className="space-y-2">
+            <div className="grid gap-1.5">
               <label className="text-xs font-medium text-muted">技能描述</label>
               <input
                 type="text"
@@ -267,10 +275,10 @@ if __name__ == '__main__':
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="grid gap-1.5">
               <label className="text-xs font-medium text-muted">技能指导</label>
               <textarea
-                className="rounded-xl border border-ink-900/10 bg-surface-secondary px-4 py-2.5 text-sm text-ink-800 placeholder:text-muted-light focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/20 transition-colors min-h-[120px] resize-y"
+                className="w-full rounded-xl border border-ink-900/10 bg-surface-secondary px-4 py-2.5 text-sm text-ink-800 placeholder:text-muted-light focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/20 transition-colors min-h-[120px] resize-y whitespace-pre-wrap"
                 placeholder="描述 AI 如何执行这个技能..."
                 value={skillPrompt}
                 onChange={(e) => setSkillPrompt(e.target.value)}
@@ -279,7 +287,7 @@ if __name__ == '__main__':
 
             {/* 程序脚本配置 */}
             <div className="p-4 rounded-xl border border-ink-900/10 bg-surface-secondary space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="grid gap-1.5">
                 <label className="text-xs font-medium text-muted">程序脚本（可选）</label>
                 <select
                   className="text-xs rounded-lg border border-ink-900/10 bg-surface px-3 py-1.5 text-ink-800 focus:border-accent focus:outline-none"
@@ -303,7 +311,7 @@ if __name__ == '__main__':
                   <div className="grid gap-1.5">
                     <label className="text-xs font-medium text-muted">脚本内容</label>
                     <textarea
-                      className="rounded-xl border border-ink-900/10 bg-surface px-3 py-2 text-xs font-mono text-ink-800 placeholder:text-muted-light focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/20 transition-colors min-h-[150px] resize-y font-mono"
+                      className="w-full rounded-xl border border-ink-900/10 bg-surface px-3 py-2 text-xs font-mono text-ink-800 placeholder:text-muted-light focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/20 transition-colors min-h-[150px] resize-y font-mono"
                       placeholder={`// ${scriptType} 脚本内容...`}
                       value={scriptContent}
                       onChange={(e) => setScriptContent(e.target.value)}
@@ -314,7 +322,7 @@ if __name__ == '__main__':
                     <label className="text-xs font-medium text-muted">脚本路径（可选）</label>
                     <input
                       type="text"
-                      className="rounded-xl border border-ink-900/10 bg-surface px-3 py-2 text-xs text-ink-800 placeholder:text-muted-light focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/20 transition-colors"
+                      className="w-full rounded-xl border border-ink-900/10 bg-surface px-3 py-2 text-xs text-ink-800 placeholder:text-muted-light focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/20 transition-colors"
                       placeholder="/path/to/script.js"
                       value={scriptPath}
                       onChange={(e) => setScriptPath(e.target.value)}
@@ -339,14 +347,14 @@ if __name__ == '__main__':
 
             <div className="flex gap-3">
               <button
-                className="flex-1 rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-white shadow-soft hover:bg-accent-hover transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex-1 rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-white shadow-soft hover:bg-accent-hover transition-colors disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
                 onClick={handleCreateSkill}
                 disabled={saving}
               >
                 {saving ? '保存中...' : '保存技能'}
               </button>
               <button
-                className="rounded-xl border border-ink-900/10 bg-surface px-4 py-2.5 text-sm text-ink-700 hover:bg-surface-tertiary transition-colors"
+                className="rounded-xl border border-ink-900/10 bg-surface px-4 py-2.5 text-sm text-ink-700 hover:bg-surface-tertiary transition-colors cursor-pointer"
                 onClick={() => setViewMode('list')}
               >
                 取消
@@ -359,12 +367,19 @@ if __name__ == '__main__':
             <div className="sticky top-0 space-y-6">
               <div className="flex items-center justify-between pb-2">
                 <h3 className="text-sm font-medium text-ink-900">配置预览</h3>
-                <button
-                  className="text-xs text-muted hover:text-accent"
-                  onClick={() => setShowPreview(!showPreview)}
-                >
-                  {showPreview ? '隐藏' : '显示'}
-                </button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      className="text-xs text-muted hover:text-accent cursor-pointer"
+                      onClick={() => setShowPreview(!showPreview)}
+                    >
+                      {showPreview ? '隐藏' : '显示'}
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-ink-900 text-white text-xs px-3 py-1.5 rounded-md shadow-lg">
+                    <p>{showPreview ? '隐藏预览' : '显示预览'}</p>
+                  </TooltipContent>
+                </Tooltip>
               </div>
 
               {showPreview && (
@@ -475,15 +490,21 @@ ${previewData.script ? `
                         <p className="mt-1 text-xs text-muted-light font-mono">{skill.script.path}</p>
                       )}
                     </div>
-                    <button
-                      className="text-xs text-muted hover:text-error p-1"
-                      onClick={() => handleDeleteSkill(skill.name)}
-                      title="删除技能"
-                    >
-                      <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M18 6L6 18M6 6l12 12" />
-                      </svg>
-                    </button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          className="text-xs text-muted hover:text-error p-1 cursor-pointer"
+                          onClick={() => handleDeleteSkill(skill.name)}
+                        >
+                          <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M18 6L6 18M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent className="bg-ink-900 text-white text-xs px-3 py-1.5 rounded-md shadow-lg">
+                        <p>删除此技能</p>
+                      </TooltipContent>
+                    </Tooltip>
                   </div>
                 </div>
               ))}
@@ -492,13 +513,13 @@ ${previewData.script ? `
 
           <div className="flex gap-3">
             <button
-              className="flex-1 py-3 rounded-xl bg-accent text-sm font-medium text-white shadow-soft hover:bg-accent-hover transition-colors"
+              className="flex-1 py-3 rounded-xl bg-accent text-sm font-medium text-white shadow-soft hover:bg-accent-hover transition-colors cursor-pointer"
               onClick={() => setViewMode('create')}
             >
               创建新技能
             </button>
             <button
-              className="py-3 px-6 rounded-xl border border-ink-900/10 bg-surface text-sm text-muted hover:bg-surface-tertiary hover:text-ink-700 transition-colors"
+              className="py-3 px-6 rounded-xl border border-ink-900/10 bg-surface text-sm text-muted hover:bg-surface-tertiary hover:text-ink-700 transition-colors cursor-pointer"
               onClick={handleOpenDirectory}
             >
               打开目录
@@ -513,5 +534,6 @@ ${previewData.script ? `
         </>
       )}
     </section>
+    </TooltipProvider>
   );
 }
