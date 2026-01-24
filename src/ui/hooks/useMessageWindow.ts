@@ -48,7 +48,7 @@ function calculateVisibleStartIndex(
 }
 
 export function useMessageWindow(
-    messages: StreamMessage[],
+    messages: StreamMessage[] | undefined,
     permissionRequests: PermissionRequest[],
     sessionId: string | null
 ): MessageWindowState {
@@ -56,7 +56,9 @@ export function useMessageWindow(
     const [isLoadingHistory, setIsLoadingHistory] = useState(false);
     const prevSessionIdRef = useRef<string | null>(null);
 
-    const userInputIndices = useMemo(() => getUserInputIndices(messages), [messages]);
+    // 空值保护：确保 messages 始终是数组
+    const safeMessages = messages || [];
+    const userInputIndices = useMemo(() => getUserInputIndices(safeMessages), [safeMessages]);
     const totalUserInputs = userInputIndices.length;
 
     // Reset window state on session change
@@ -69,13 +71,13 @@ export function useMessageWindow(
     }, [sessionId]);
 
     const { visibleMessages, visibleStartIndex } = useMemo(() => {
-        if (messages.length === 0) {
+        if (safeMessages.length === 0) {
             return { visibleMessages: [], visibleStartIndex: 0 };
         }
 
-        const startIndex = calculateVisibleStartIndex(messages, visibleUserInputCount);
+        const startIndex = calculateVisibleStartIndex(safeMessages, visibleUserInputCount);
 
-        const visible: IndexedMessage[] = messages
+        const visible: IndexedMessage[] = safeMessages
             .slice(startIndex)
             .map((message, idx) => ({
                 originalIndex: startIndex + idx,
@@ -83,7 +85,7 @@ export function useMessageWindow(
             }));
 
         return { visibleMessages: visible, visibleStartIndex: startIndex };
-    }, [messages, visibleUserInputCount, permissionRequests.length]);
+    }, [safeMessages, visibleUserInputCount, permissionRequests.length]);
 
     const hasMoreHistory = visibleStartIndex > 0;
 
@@ -113,10 +115,10 @@ export function useMessageWindow(
         visibleMessages,
         hasMoreHistory,
         isLoadingHistory,
-        isAtBeginning: !hasMoreHistory && messages.length > 0,
+        isAtBeginning: !hasMoreHistory && safeMessages.length > 0,
         loadMoreMessages,
         resetToLatest,
-        totalMessages: messages.length,
+        totalMessages: safeMessages.length,
         totalUserInputs,
         visibleUserInputs,
     };

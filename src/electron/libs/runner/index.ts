@@ -16,7 +16,7 @@ import { addLanguagePreference } from "../../utils/language-detector.js";
 import { getMemoryToolConfig } from "../../utils/memory-tools.js";
 
 import { PerformanceMonitor } from "./performance-monitor.js";
-import { triggerAutoMemoryAnalysis, clearMemoryGuidanceCache } from "./memory-manager.js";
+import { triggerAutoMemoryAnalysis } from "./memory-manager.js";
 import { createPermissionHandler, handleToolUseEvent } from "./permission-handler.js";
 import { clearMcpServerCache } from "../../managers/mcp-server-manager.js";
 
@@ -32,8 +32,9 @@ export function clearRunnerCache(): void {
   // 使用 MCP 服务器管理器清除缓存
   clearMcpServerCache();
 
-  // 清除记忆提示缓存
-  clearMemoryGuidanceCache();
+  // 注意：记忆配置缓存不再需要清除
+  // SDK 通过 Memory MCP 自动处理记忆功能
+  // 清除配置缓存会导致记忆功能意外返回默认禁用状态
 }
 
 // 重新导出类型
@@ -75,10 +76,14 @@ export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
 
   // Start the query in the background
   (async () => {
+    // 在 try 块外部声明变量，便于 catch 块访问
+    let config: Awaited<ReturnType<typeof getCachedApiConfig>> = null;
+    let claudeCodePath: string | undefined = undefined;
+
     try {
       // 1. 获取并验证 API 配置（使用预加载的缓存）
       log.debug(`[Runner] Fetching API config...`);
-      const config = await getCachedApiConfig();
+      config = await getCachedApiConfig();
 
       if (!config) {
         log.error(`[Runner] No API config found for session ${session.id}`);
@@ -147,9 +152,16 @@ export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
       // AI 可以通过 Memory MCP 工具主动检索记忆
       // 记忆工具会自动出现在工具列表中，AI 可以自然发现并使用
       // 对于阿里云，不使用 CLI 进程模式，避免兼容性问题
-      const claudeCodePath = (config.apiType === 'alibaba') ? undefined : getClaudeCodePath();
+      claudeCodePath = (config.apiType === 'alibaba') ? undefined : getClaudeCodePath();
 
       log.info(`[Runner] CLI mode: ${claudeCodePath ? 'enabled' : 'disabled (HTTP API mode)'} for provider: ${config.apiType}`);
+
+      // 验证阿里云配置
+      if (config.apiType === 'alibaba') {
+        log.info('[Runner] Using Alibaba cloud API mode - CLI disabled by design');
+      } else if (!claudeCodePath) {
+        log.warn('[Runner] CLI path not found, falling back to HTTP API mode');
+      }
 
       const q = query({
         prompt: prompt,  // SDK 直接处理斜杠命令
@@ -234,13 +246,21 @@ export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
       }
     } catch (error) {
       const errorName = (error as Error).name;
-      const errorMessage = (error as Error).message;
       if (errorName === "AbortError") {
         // 会话被中止，不视为错误
         log.info(`[Runner] Session ${session.id} aborted by user`);
         return;
       }
-      log.error(`[Runner] Error in session ${session.id}:`, error);
+      // 详细的错误日志记录
+      const errorDetails = {
+        name: errorName,
+        message: (error as Error).message,
+        stack: (error as Error).stack,
+        sessionId: session.id,
+        apiType: config?.apiType,
+        claudeCodePath: claudeCodePath ?? 'undefined (HTTP API mode)',
+      };
+      log.error(`[Runner] Error in session ${session.id}:`, errorDetails);
       onEvent({
         type: "session.status",
         payload: { sessionId: session.id, status: "error", title: session.title, error: String(error) }
