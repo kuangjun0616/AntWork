@@ -767,12 +767,19 @@ export function MemorySection() {
                     }}
                     autoFocus
                   />
-                  <button
-                    className="px-3 py-2 rounded-xl bg-accent text-white text-sm hover:bg-accent-hover transition-colors"
-                    onClick={handleAddCategory}
-                  >
-                    添加
-                  </button>
+                  <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          className="px-3 py-2 rounded-xl bg-accent text-white text-sm hover:bg-accent-hover transition-colors cursor-pointer"
+                          onClick={handleAddCategory}
+                        >
+                          添加
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent className="bg-ink-900 text-white text-xs px-2 py-1 rounded-md">
+                        添加新分类
+                      </TooltipContent>
+                    </Tooltip>
                 </div>
               )}
 
@@ -872,14 +879,21 @@ export function MemorySection() {
                       }}
                       autoFocus
                     />
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          className="px-3 py-2 rounded-xl bg-accent text-white text-sm hover:bg-accent-hover transition-colors cursor-pointer"
+                          onClick={handleAddSettingsTag}
+                        >
+                          添加
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent className="bg-ink-900 text-white text-xs px-2 py-1 rounded-md">
+                        添加新标签
+                      </TooltipContent>
+                    </Tooltip>
                     <button
-                      className="px-3 py-2 rounded-xl bg-accent text-white text-sm hover:bg-accent-hover transition-colors"
-                      onClick={handleAddSettingsTag}
-                    >
-                      添加
-                    </button>
-                    <button
-                      className="px-3 py-2 rounded-xl border border-ink-900/10 text-sm text-ink-700 hover:bg-ink-900/5 transition-colors"
+                      className="px-3 py-2 rounded-xl border border-ink-900/10 text-sm text-ink-700 hover:bg-ink-900/5 transition-colors cursor-pointer"
                       onClick={() => {
                         setShowSettingsTagInput(false);
                         setNewSettingsTag('');
@@ -1143,12 +1157,19 @@ export function MemorySection() {
                       onChange={(e) => setNewTag(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleAddTag()}
                     />
-                    <button
-                      className="px-3 py-2 rounded-xl bg-accent text-white text-sm hover:bg-accent-hover transition-colors"
-                      onClick={handleAddTag}
-                    >
-                      添加
-                    </button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          className="px-3 py-2 rounded-xl bg-accent text-white text-sm hover:bg-accent-hover transition-colors cursor-pointer"
+                          onClick={handleAddTag}
+                        >
+                          添加
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent className="bg-ink-900 text-white text-xs px-2 py-1 rounded-md">
+                        添加新标签
+                      </TooltipContent>
+                    </Tooltip>
                   </div>
                 )}
 
@@ -1310,12 +1331,19 @@ export function MemorySection() {
                     onChange={(e) => setNewEditTag(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleAddEditTag()}
                   />
-                  <button
-                    className="px-3 py-2 rounded-xl bg-accent text-white text-sm hover:bg-accent-hover transition-colors"
-                    onClick={handleAddEditTag}
-                  >
-                    添加
-                  </button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        className="px-3 py-2 rounded-xl bg-accent text-white text-sm hover:bg-accent-hover transition-colors cursor-pointer"
+                        onClick={handleAddEditTag}
+                      >
+                        添加
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent className="bg-ink-900 text-white text-xs px-2 py-1 rounded-md">
+                      添加新标签
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
               )}
 
@@ -1350,7 +1378,7 @@ export function MemorySection() {
                 {editSaving ? '保存中...' : '保存更改'}
               </button>
               <button
-                className="px-4 py-2.5 rounded-xl border border-ink-900/10 text-sm text-ink-700 hover:bg-ink-900/5 transition-colors"
+                className="px-4 py-2.5 rounded-xl border border-ink-900/10 text-sm text-ink-700 hover:bg-ink-900/5 transition-colors cursor-pointer"
                 onClick={handleCancelEdit}
               >
                 取消

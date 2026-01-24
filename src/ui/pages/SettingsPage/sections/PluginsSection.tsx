@@ -101,7 +101,7 @@ export function PluginsSection() {
 
       <div className="flex gap-3">
         <button
-          className="flex-1 py-3 rounded-xl bg-accent text-sm font-medium text-white shadow-soft hover:bg-accent-hover transition-colors"
+          className="flex-1 py-3 rounded-xl bg-accent text-sm font-medium text-white shadow-soft hover:bg-accent-hover transition-colors cursor-pointer"
           onClick={async () => {
             // 打开插件目录创建新插件
             try {
@@ -117,7 +117,7 @@ export function PluginsSection() {
           创建新插件
         </button>
         <button
-          className="py-3 px-6 rounded-xl border border-ink-900/10 bg-surface text-sm text-muted hover:bg-surface-tertiary hover:text-ink-700 transition-colors"
+          className="py-3 px-6 rounded-xl border border-ink-900/10 bg-surface text-sm text-muted hover:bg-surface-tertiary hover:text-ink-700 transition-colors cursor-pointer"
           onClick={async () => {
             // 打开插件目录
             try {

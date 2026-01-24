@@ -56,7 +56,10 @@ function formatFullDateTime(timestamp: number): string {
 /**
  * 截断会话 ID，只显示前 12 个字符
  */
-function truncateSessionId(sessionId: string): string {
+function truncateSessionId(sessionId: string | undefined | null): string {
+	if (!sessionId) {
+		return "-";
+	}
 	return sessionId.length > 12 ? `${sessionId.slice(0, 12)}...` : sessionId;
 }
 

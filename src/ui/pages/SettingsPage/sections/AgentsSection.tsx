@@ -483,7 +483,7 @@ export function AgentsSection() {
               {saving ? '保存中...' : '保存全局配置'}
             </button>
             <button
-              className="rounded-xl border border-ink-900/10 bg-surface px-4 py-2.5 text-sm text-ink-700 hover:bg-surface-tertiary transition-colors"
+              className="rounded-xl border border-ink-900/10 bg-surface px-4 py-2.5 text-sm text-ink-700 hover:bg-surface-tertiary transition-colors cursor-pointer"
               onClick={handleResetGlobalConfig}
               disabled={saving}
             >
@@ -718,7 +718,7 @@ export function AgentsSection() {
               {saving ? '保存中...' : '保存编排配置'}
             </button>
             <button
-              className="rounded-xl border border-ink-900/10 bg-surface px-4 py-2.5 text-sm text-ink-700 hover:bg-surface-tertiary transition-colors"
+              className="rounded-xl border border-ink-900/10 bg-surface px-4 py-2.5 text-sm text-ink-700 hover:bg-surface-tertiary transition-colors cursor-pointer"
               onClick={handleResetOrchestrationConfig}
               disabled={saving}
             >
@@ -734,10 +734,10 @@ export function AgentsSection() {
           <h2 className="text-lg font-medium text-ink-900">自定义 Agents</h2>
           {viewMode === 'list' && (
             <button
-              className="rounded-xl bg-accent px-4 py-2 text-sm font-medium text-white shadow-soft hover:bg-accent-hover transition-colors"
+              className="rounded-xl bg-accent px-4 py-2 text-sm font-medium text-white shadow-soft hover:bg-accent-hover transition-colors cursor-pointer"
               onClick={() => setViewMode('create')}
             >
-              + 新建 Agent
+              创建新 Agent
             </button>
           )}
         </div>
@@ -940,7 +940,7 @@ export function AgentsSection() {
                   {saving ? '保存中...' : (viewMode === 'create' ? '创建 Agent' : '保存修改')}
                 </button>
                 <button
-                  className="rounded-xl border border-ink-900/10 bg-surface px-4 py-2.5 text-sm text-ink-700 hover:bg-surface-tertiary transition-colors"
+                  className="rounded-xl border border-ink-900/10 bg-surface px-4 py-2.5 text-sm text-ink-700 hover:bg-surface-tertiary transition-colors cursor-pointer"
                   onClick={handleCancelEdit}
                   disabled={saving}
                 >
