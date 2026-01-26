@@ -1,6 +1,7 @@
 /**
  * MCP 配置存储模块
- * 读写 ~/.claude/settings.json 中的 mcpServers 配置
+ * 读写 ~/.qwen/settings.json 中的 mcpServers 配置
+ * 按照 Qwen Code SDK 规范实现
  */
 
 import { promises as fs } from "fs";
@@ -33,27 +34,26 @@ export interface McpServerConfig {
 }
 
 /**
- * Claude settings.json 结构（部分）
+ * Qwen settings.json 结构（部分）
+ * 按照 Qwen Code SDK 规范定义
  */
-interface ClaudeSettings {
+interface QwenSettings {
   mcpServers?: Record<string, McpServerConfig>;
   env?: Record<string, string>;
-  enabledPlugins?: Record<string, boolean>;
-  hooks?: any;
-  permissions?: any;
 }
 
 /**
- * 获取 Claude settings.json 文件路径
+ * 获取 Qwen settings.json 文件路径
+ * 按照 Qwen Code SDK 规范，配置文件存储在 ~/.qwen/settings.json
  */
 function getSettingsPath(): string {
-  return join(homedir(), '.claude', 'settings.json');
+  return join(homedir(), '.qwen', 'settings.json');
 }
 
 /**
- * 确保 .claude 目录存在（异步）
+ * 确保 .qwen 目录存在（异步）
  */
-async function ensureClaudeDir(): Promise<void> {
+async function ensureQwenDir(): Promise<void> {
   const settingsPath = getSettingsPath();
   const dir = dirname(settingsPath);
   try {
@@ -64,18 +64,17 @@ async function ensureClaudeDir(): Promise<void> {
 }
 
 /**
- * 读取 Claude settings.json（异步）
+ * 读取 Qwen settings.json（异步）
  */
-async function readSettings(): Promise<ClaudeSettings> {
+async function readSettings(): Promise<QwenSettings> {
   const settingsPath = getSettingsPath();
   try {
     await fs.access(settingsPath);
   } catch {
     // 文件不存在，返回默认配置
-    const defaultSettings: ClaudeSettings = {
+    const defaultSettings: QwenSettings = {
       mcpServers: {},
       env: {},
-      enabledPlugins: {},
     };
     return defaultSettings;
   }
@@ -96,11 +95,11 @@ async function readSettings(): Promise<ClaudeSettings> {
 }
 
 /**
- * 写入 Claude settings.json（异步）
+ * 写入 Qwen settings.json（异步）
  */
-async function writeSettings(settings: ClaudeSettings): Promise<void> {
+async function writeSettings(settings: QwenSettings): Promise<void> {
   try {
-    await ensureClaudeDir();
+    await ensureQwenDir();
     const settingsPath = getSettingsPath();
     await fs.writeFile(settingsPath, JSON.stringify(settings, null, 2), "utf8");
     log.info("[mcp-store] Settings saved successfully");

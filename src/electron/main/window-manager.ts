@@ -3,7 +3,7 @@
  * 负责创建和配置应用主窗口
  */
 
-import { BrowserWindow, globalShortcut } from "electron";
+import { BrowserWindow, globalShortcut, net } from "electron";
 import { isDev, DEV_PORT } from "../util.js";
 import { getPreloadPath, getUIPath, getIconPath } from "../pathResolver.js";
 import { cleanup } from "./lifecycle.js";
@@ -18,9 +18,53 @@ export function getMainWindow(): BrowserWindow | null {
 }
 
 /**
+ * 等待 Vite 服务器准备好
+ */
+async function waitForViteServer(): Promise<void> {
+    const maxRetries = 30; // 最多等待 30 秒
+    const retryDelay = 1000; // 每次重试间隔 1 秒
+
+    for (let i = 0; i < maxRetries; i++) {
+        try {
+            // 使用 Electron 的 net 模块进行 HTTP 请求
+            const isReady = await new Promise<boolean>((resolve) => {
+                const request = net.request({
+                    method: 'GET',
+                    url: `http://localhost:${DEV_PORT}`
+                });
+
+                request.on('response', (response) => {
+                    resolve(response.statusCode >= 200 && response.statusCode < 400);
+                });
+
+                request.on('error', () => {
+                    resolve(false);
+                });
+
+                request.end();
+            });
+
+            if (isReady) {
+                console.log('[Window] Vite server is ready');
+                return;
+            }
+        } catch (error) {
+            // 服务器还没准备好，继续等待
+        }
+        
+        if (i === 0) {
+            console.log('[Window] Waiting for Vite server to start...');
+        }
+        
+        await new Promise(resolve => setTimeout(resolve, retryDelay));
+    }
+    throw new Error('Vite server failed to start within 30 seconds');
+}
+
+/**
  * 创建主窗口
  */
-export function createMainWindow(): BrowserWindow {
+export async function createMainWindow(): Promise<BrowserWindow> {
     mainWindow = new BrowserWindow({
         width: 1200,
         height: 800,
@@ -30,7 +74,7 @@ export function createMainWindow(): BrowserWindow {
             preload: getPreloadPath(),
             // 安全配置
             contextIsolation: true,     // 启用上下文隔离
-            sandbox: true,               // 启用沙箱模式
+            sandbox: false,              // 暂时禁用沙箱模式以解决兼容性问题
             nodeIntegration: false,      // 禁用 node 集成
             nodeIntegrationInWorker: false,
             webSecurity: true,           // 启用 web 安全
@@ -46,6 +90,8 @@ export function createMainWindow(): BrowserWindow {
 
     // 加载页面
     if (isDev()) {
+        // 等待 Vite 服务器准备好
+        await waitForViteServer();
         mainWindow.loadURL(`http://localhost:${DEV_PORT}`);
     } else {
         mainWindow.loadFile(getUIPath());

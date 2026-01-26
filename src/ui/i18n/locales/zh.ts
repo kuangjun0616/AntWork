@@ -275,11 +275,13 @@ export default {
 			commandRequired: "stdio 类型服务器必须指定命令",
 			urlRequired: "该类型服务器必须指定 URL",
 			invalidUrl: "URL 格式无效",
+			invalidJson: "JSON 配置格式无效，请检查语法",
+			configMustBeObject: "配置必须是一个 JSON 对象",
 			saveSuccess: "保存成功",
 		},
 		confirmDelete: "确定要删除 MCP 服务器 \"{{name}}\" 吗？",
-		hint: "提示：MCP 服务器配置存储在 ~/.claude/settings.json 中。SDK 会自动启动配置的 MCP 服务器并将工具注册到会话中。",
-		hintPath: "~/.claude/settings.json",
+		hint: "提示：MCP 服务器配置存储在 ~/.qwen/settings.json 中。SDK 会自动启动配置的 MCP 服务器并将工具注册到会话中。",
+		hintPath: "~/.qwen/settings.json",
 	},
 
 	skills: {

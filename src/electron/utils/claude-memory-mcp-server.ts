@@ -3,7 +3,7 @@
  * 实现 memory_20250818 工具类型的标准命令
  */
 
-import { createSdkMcpServer, tool } from "@anthropic-ai/claude-agent-sdk";
+import { createSdkMcpServer, tool } from "@qwen-code/sdk";
 import { z } from "zod";
 import { handleMemoryToolCommand } from "./claude-memory-tool.js";
 import { log } from "../logger.js";
@@ -24,9 +24,9 @@ export async function createClaudeMemoryToolServer(): Promise<any> {
           "view",
           "显示目录内容或文件内容",
           {
-            path: z.string().describe("要查看的路径（如 /memories 或 /memories/notes.txt）"),
-            view_range: z.tuple([z.number(), z.number()]).optional().describe("可选：查看特定行范围 [start, end]"),
-          },
+            path: z.string().describe("要查看的路径（如 /memories 或 /memories/notes.txt）") as any,
+            view_range: z.tuple([z.number(), z.number()]).optional().describe("可选：查看特定行范围 [start, end]") as any,
+          } as any,
           async (args) => {
             log.info("[Claude Memory Tool] view called:", args);
             try {
@@ -49,9 +49,9 @@ export async function createClaudeMemoryToolServer(): Promise<any> {
           "create",
           "创建新文件",
           {
-            path: z.string().describe("文件路径（如 /memories/notes.txt）"),
-            file_text: z.string().describe("文件内容"),
-          },
+            path: z.string().describe("文件路径（如 /memories/notes.txt）") as any,
+            file_text: z.string().describe("文件内容") as any,
+          } as any,
           async (args) => {
             log.info("[Claude Memory Tool] create called:", args);
             try {
@@ -74,10 +74,10 @@ export async function createClaudeMemoryToolServer(): Promise<any> {
           "str_replace",
           "替换文件中的文本",
           {
-            path: z.string().describe("文件路径"),
-            old_str: z.string().describe("要替换的旧文本"),
-            new_str: z.string().describe("新文本"),
-          },
+            path: z.string().describe("文件路径") as any,
+            old_str: z.string().describe("要替换的旧文本") as any,
+            new_str: z.string().describe("新文本") as any,
+          } as any,
           async (args) => {
             log.info("[Claude Memory Tool] str_replace called:", args);
             try {
@@ -100,10 +100,10 @@ export async function createClaudeMemoryToolServer(): Promise<any> {
           "insert",
           "在指定行插入文本",
           {
-            path: z.string().describe("文件路径"),
-            insert_line: z.number().describe("插入位置的行号"),
-            insert_text: z.string().describe("要插入的文本"),
-          },
+            path: z.string().describe("文件路径") as any,
+            insert_line: z.number().describe("插入位置的行号") as any,
+            insert_text: z.string().describe("要插入的文本") as any,
+          } as any,
           async (args) => {
             log.info("[Claude Memory Tool] insert called:", args);
             try {
@@ -126,8 +126,8 @@ export async function createClaudeMemoryToolServer(): Promise<any> {
           "delete",
           "删除文件或目录",
           {
-            path: z.string().describe("要删除的文件或目录路径"),
-          },
+            path: z.string().describe("要删除的文件或目录路径") as any,
+          } as any,
           async (args) => {
             log.info("[Claude Memory Tool] delete called:", args);
             try {
@@ -150,9 +150,9 @@ export async function createClaudeMemoryToolServer(): Promise<any> {
           "rename",
           "重命名或移动文件/目录",
           {
-            old_path: z.string().describe("源路径"),
-            new_path: z.string().describe("目标路径"),
-          },
+            old_path: z.string().describe("源路径") as any,
+            new_path: z.string().describe("目标路径") as any,
+          } as any,
           async (args) => {
             log.info("[Claude Memory Tool] rename called:", args);
             try {

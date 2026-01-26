@@ -62,7 +62,7 @@ function setupApplicationMenu(): void {
 /**
  * 应用就绪时的初始化
  */
-app.on("ready", () => {
+app.on("ready", async () => {
     // 1. 设置错误处理（必须在其他操作之前）
     setupErrorHandling();
 
@@ -80,8 +80,8 @@ app.on("ready", () => {
     // 5. 设置生命周期事件监听器
     setupLifecycleEventHandlers();
 
-    // 6. 创建主窗口
-    createMainWindow();
+    // 6. 创建主窗口（等待 Vite 服务器准备好）
+    await createMainWindow();
 
     // 7. 注册所有 IPC 处理器
     registerIpcHandlers();

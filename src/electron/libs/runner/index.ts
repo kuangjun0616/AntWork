@@ -3,21 +3,22 @@
  * 负责协调 Claude SDK 会话的执行
  */
 
-import { query, type SDKMessage } from "@anthropic-ai/claude-agent-sdk";
+import { query, type SDKMessage } from "@qwen-code/sdk";
 import type { RunnerOptions, RunnerHandle, MemoryConfig } from "./types.js";
 
 import {
   buildEnvForConfig,
-  getClaudeCodePath
-} from "../../services/claude-settings.js";
+  getQwenCodePath
+} from "../../services/qwen-settings.js";
 import { getCachedApiConfig } from "../../managers/sdk-config-cache.js";
 import { getEnhancedEnv } from "../../utils/util.js";
 import { addLanguagePreference } from "../../utils/language-detector.js";
 import { getMemoryToolConfig } from "../../utils/memory-tools.js";
+import { getAILanguagePreference } from "../../services/language-preference-store.js";
 
 import { PerformanceMonitor } from "./performance-monitor.js";
 import { triggerAutoMemoryAnalysis } from "./memory-manager.js";
-import { createPermissionHandler, handleToolUseEvent } from "./permission-handler.js";
+import { createPermissionHandler, handleToolUseEvent, mapPermissionMode } from "./permission-handler.js";
 import { clearMcpServerCache } from "../../managers/mcp-server-manager.js";
 
 const DEFAULT_CWD = process.cwd();
@@ -104,9 +105,14 @@ export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
       };
       perfMonitor.measure('Environment Setup');
 
-      // 3. 处理提示词（添加语言偏好，斜杠命令由 SDK 直接处理）
-      const enhancedPrompt = addLanguagePreference(prompt);
-      const languageHint = enhancedPrompt !== prompt ? enhancedPrompt.split('\n\n')[0] : undefined;
+      // 3. 处理提示词（使用用户设置的语言偏好）
+      // ✅ 获取用户在设置中选择的 AI 回复语言
+      const userLanguage = getAILanguagePreference();
+      
+      // ✅ 使用用户设置的语言强制添加语言偏好
+      const enhancedPrompt = addLanguagePreference(prompt, userLanguage);
+      
+      log.debug(`[Runner] Using user-preferred AI language: ${userLanguage}`);
 
       // 4. 获取记忆配置并发送初始状态
       const memConfig = getMemoryToolConfig() as MemoryConfig & { autoStore: boolean };
@@ -133,26 +139,54 @@ export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
       }
       perfMonitor.measure('Memory MCP Server Loading');
 
-      // 6. 获取语言提示（轻量级，只包含语言偏好）
-      const languagePrompt = languageHint;
+      // 6. 加载外部 MCP 服务器配置（从 ~/.qwen/settings.json）
+      perfMonitor.mark('External MCP Servers Loading');
+      const { getMcpServers } = await import("../../managers/mcp-server-manager.js");
+      const externalMcpServers = await getMcpServers();
+      log.info(`[Runner] Loaded ${Object.keys(externalMcpServers).length} external MCP server configs`);
+      // 详细记录每个 MCP 服务器的名称（避免序列化循环引用）
+      for (const [name, config] of Object.entries(externalMcpServers)) {
+        log.debug(`[Runner] MCP Server "${name}": command=${config.command}, args=${config.args?.join(' ') || 'none'}`);
+      }
+      perfMonitor.measure('External MCP Servers Loading');
 
       // 7. 确定权限模式（使用最严格的默认值）
-      const permissionMode: 'default' | 'acceptEdits' | 'bypassPermissions' | 'plan' | 'delegate' | 'dontAsk' =
+      const claudePermissionMode: 'default' | 'acceptEdits' | 'bypassPermissions' | 'plan' | 'delegate' | 'dontAsk' =
         "default";  // 使用最严格的默认模式，防止权限绕过
+      
+      // 映射到 Qwen SDK 的权限模式
+      const qwenPermissionMode = mapPermissionMode(claudePermissionMode);
 
-      log.debug(`[Runner] Permission mode: ${permissionMode}`);
+      log.debug(`[Runner] Permission mode: ${claudePermissionMode} → ${qwenPermissionMode}`);
 
-      // 8. 记录会话启动完成
+      // 8. 合并所有 MCP 服务器配置
+      const allMcpServers: Record<string, any> = {
+        // Memory MCP 服务器（如果启用）
+        ...(memoryMcpServer ? { 'memory-tools': memoryMcpServer } : {}),
+        // 外部 MCP 服务器（从 settings.json 读取）
+        ...externalMcpServers,
+      };
+
+      log.info(`[Runner] Total MCP servers to load: ${Object.keys(allMcpServers).length}`);
+      if (Object.keys(allMcpServers).length > 0) {
+        log.debug(`[Runner] MCP server names:`, Object.keys(allMcpServers));
+        // 注意：不序列化完整配置，因为可能包含循环引用
+        log.debug(`[Runner] MCP servers loaded successfully`);
+      } else {
+        log.warn(`[Runner] No MCP servers to load!`);
+      }
+
+      // 9. 记录会话启动完成
       perfMonitor.measureTotal();
 
-      // 9. 创建并执行查询
+      // 10. 创建并执行查询
       log.info(`[Runner] Starting SDK query for session ${session.id}`);
 
       // ⚡ 渐进式加载优化：不自动注入记忆上下文
       // AI 可以通过 Memory MCP 工具主动检索记忆
       // 记忆工具会自动出现在工具列表中，AI 可以自然发现并使用
       // 对于阿里云，不使用 CLI 进程模式，避免兼容性问题
-      claudeCodePath = (config.apiType === 'alibaba') ? undefined : getClaudeCodePath();
+      claudeCodePath = (config.apiType === 'alibaba') ? undefined : getQwenCodePath();
 
       log.info(`[Runner] CLI mode: ${claudeCodePath ? 'enabled' : 'disabled (HTTP API mode)'} for provider: ${config.apiType}`);
 
@@ -164,30 +198,32 @@ export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
       }
 
       const q = query({
-        prompt: prompt,  // SDK 直接处理斜杠命令
+        // ✅ 使用增强后的 prompt（包含用户设置的语言偏好）
+        prompt: enhancedPrompt,
         options: {
           cwd: session.cwd ?? DEFAULT_CWD,
-          resume: resumeSessionId,
+          // ❌ Qwen SDK 不支持 resume 参数，会话恢复功能已移除
+          // resume: resumeSessionId,
           abortController,
           env: mergedEnv,
           // 阿里云不传递 CLI 路径，使用纯 HTTP API 模式
-          ...(claudeCodePath ? { pathToClaudeCodeExecutable: claudeCodePath } : {}),
-          permissionMode,
+          // ✅ 参数名更新：pathToClaudeCodeExecutable → pathToQwenExecutable
+          ...(claudeCodePath ? { pathToQwenExecutable: claudeCodePath } : {}),
+          // ✅ 使用映射后的 Qwen 权限模式
+          permissionMode: qwenPermissionMode,
           includePartialMessages: true,
-          // ⭐ 设置 settingSources 让 SDK 自动加载 ~/.claude/settings.json
-          // SDK 将自动处理：enabledPlugins, mcpServers, agents, permissions, hooks 等
-          // 这样就不需要手动扫描和转换配置了
-          settingSources: ['user'],
-          // 系统提示（只包含语言偏好，轻量级）
-          ...(languagePrompt ? { extraArgs: { 'append-system-prompt': languagePrompt } } : {}),
-          // Memory MCP 服务器（自定义的，需要显式传递，因为不在 settings.json 中）
-          ...(memoryMcpServer ? { mcpServers: { 'memory-tools': memoryMcpServer } as any } : {}),
+          // ❌ Qwen SDK 不支持 settingSources 参数
+          // settingSources: ['user'],
+          // ❌ Qwen SDK 不支持 extraArgs 参数，语言偏好提示已移除
+          // 注意：如需添加系统提示，应该在 prompt 中直接包含
+          // ✅ 动态传递所有 MCP 服务器配置（包括 Memory 和外部服务器）
+          ...(Object.keys(allMcpServers).length > 0 ? { mcpServers: allMcpServers as any } : {}),
           // 权限处理
           canUseTool: createPermissionHandler(session, sendPermissionRequest)
         }
       });
 
-      // 12. 处理消息流
+      // 11. 处理消息流
       log.debug(`[Runner] Starting message loop for session ${session.id}`);
       let messageCount = 0;
       for await (const message of q) {
@@ -229,7 +265,7 @@ export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
         }
       }
 
-      // 13. 查询正常完成 - 触发自动记忆分析（异步执行，不阻塞会话完成）
+      // 12. 查询正常完成 - 触发自动记忆分析（异步执行，不阻塞会话完成）
       log.info(`[Runner] Message loop completed for session ${session.id}, total messages: ${messageCount}`);
       if (session.status === "running") {
         if (memConfig.enabled && memConfig.autoStore) {

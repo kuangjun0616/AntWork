@@ -3,7 +3,7 @@
  * 使用 SDK MCP 功能注册记忆工具
  */
 
-import { createSdkMcpServer, tool } from "@anthropic-ai/claude-agent-sdk";
+import { createSdkMcpServer, tool } from "@qwen-code/sdk";
 import { z } from "zod";
 import { memorySearch, memoryStore, memoryAsk, getMemoryToolConfig } from "./memory-tools.js";
 import { log } from "../logger.js";
@@ -27,15 +27,15 @@ export async function createMemoryMcpServer(): Promise<any> {
           "memory_search",
           "从长期记忆中搜索相关信息。用于查找之前存储的项目信息、技术决策、用户偏好等。",
           {
-            query: z.string().describe("搜索关键词或问题"),
-            k: z.number().optional().default(6).describe("返回结果数量，默认6"),
-          },
+            query: z.string().describe("搜索关键词或问题") as any,
+            k: z.number().optional().default(6).describe("返回结果数量，默认6") as any,
+          } as any,
           async (args) => {
             log.info("[Memory MCP] memory_search called:", args);
             try {
               const result = await memorySearch(
-                args.query,
-                args.k ?? memConfig.defaultK
+                args.query as string,
+                (args.k as number | undefined) ?? memConfig.defaultK
               );
               return {
                 content: [{ type: "text", text: result }],
@@ -55,17 +55,17 @@ export async function createMemoryMcpServer(): Promise<any> {
           "memory_store",
           "将重要信息存储到长期记忆。用于记录项目决策、技术方案、用户偏好等重要信息。",
           {
-            title: z.string().describe("信息标题（简短描述）"),
-            text: z.string().describe("信息详细内容"),
-            label: z.enum(["project", "preference", "technical", "context", "custom"]).optional().default("custom").describe("分类标签"),
-          },
+            title: z.string().describe("信息标题（简短描述）") as any,
+            text: z.string().describe("信息详细内容") as any,
+            label: z.enum(["project", "preference", "technical", "context", "custom"]).optional().default("custom").describe("分类标签") as any,
+          } as any,
           async (args) => {
             log.info("[Memory MCP] memory_store called:", args);
             try {
               const result = await memoryStore(
-                args.title,
-                args.text,
-                args.label ?? "custom"
+                args.title as string,
+                args.text as string,
+                (args.label as any) ?? "custom"
               );
               return {
                 content: [{ type: "text", text: result }],
@@ -85,15 +85,15 @@ export async function createMemoryMcpServer(): Promise<any> {
           "memory_ask",
           "基于记忆的问答。使用 RAG（检索增强生成）技术，根据记忆内容回答问题。",
           {
-            question: z.string().describe("要回答的问题"),
-            k: z.number().optional().default(6).describe("检索相关记忆的数量，默认6"),
-          },
+            question: z.string().describe("要回答的问题") as any,
+            k: z.number().optional().default(6).describe("检索相关记忆的数量，默认6") as any,
+          } as any,
           async (args) => {
             log.info("[Memory MCP] memory_ask called:", args);
             try {
               const result = await memoryAsk(
-                args.question,
-                args.k ?? memConfig.defaultK
+                args.question as string,
+                (args.k as number | undefined) ?? memConfig.defaultK
               );
               return {
                 content: [{ type: "text", text: result }],

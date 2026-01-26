@@ -276,11 +276,13 @@ export default {
 			commandRequired: "stdio type servers must specify a command",
 			urlRequired: "This server type must specify a URL",
 			invalidUrl: "Invalid URL format",
+			invalidJson: "Invalid JSON configuration format, please check syntax",
+			configMustBeObject: "Configuration must be a JSON object",
 			saveSuccess: "Saved successfully",
 		},
 		confirmDelete: "Are you sure you want to delete MCP server \"{{name}}\"?",
-		hint: "Hint: MCP server configurations are stored in ~/.claude/settings.json. SDK will automatically start configured MCP servers and register tools to the session.",
-		hintPath: "~/.claude/settings.json",
+		hint: "Hint: MCP server configurations are stored in ~/.qwen/settings.json. SDK will automatically start configured MCP servers and register tools to the session.",
+		hintPath: "~/.qwen/settings.json",
 	},
 
 	skills: {

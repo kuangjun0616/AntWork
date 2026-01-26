@@ -50,6 +50,13 @@ export function usePromptActions(sendEvent: (event: ClientEvent) => void) {
     if (!prompt.trim()) return;
 
     if (!activeSessionId) {
+      // 安全检查：确保 window.electron 已加载
+      if (!window.electron) {
+        log.error("window.electron is not available");
+        setGlobalError(t("errors.failedToGetSessionTitle"));
+        return;
+      }
+
       let title = "";
       try {
         setPendingStart(true);

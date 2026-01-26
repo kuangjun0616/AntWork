@@ -4,7 +4,7 @@
 
 import type { Session } from "../../storage/session-store.js";
 import type { ServerEvent } from "../../types.js";
-import type { PermissionResult } from "@anthropic-ai/claude-agent-sdk";
+import type { PermissionResult } from "@qwen-code/sdk";
 
 /**
  * Runner 运行选项

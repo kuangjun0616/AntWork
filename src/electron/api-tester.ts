@@ -21,57 +21,116 @@ export interface TestResult {
 }
 
 /**
+ * 检测厂商类型（基于 Base URL）
+ */
+function detectProviderType(baseURL: string): 'anthropic' | 'openai' {
+  const url = baseURL.toLowerCase();
+  
+  // OpenAI 兼容的厂商列表
+  const openaiProviders = [
+    'api.deepseek.com',
+    'api.openai.com',
+    'api.moonshot.cn',
+    'dashscope.aliyuncs.com/compatible-mode', // 阿里云百炼
+  ];
+  
+  for (const provider of openaiProviders) {
+    if (url.includes(provider)) {
+      return 'openai';
+    }
+  }
+  
+  // 默认使用 Anthropic 格式
+  return 'anthropic';
+}
+
+/**
  * 智能检测 Base URL 是否已包含完整路径
- * 所有支持的厂商都使用 Anthropic 格式
+ * 根据厂商类型使用不同的 API 格式
  */
 function buildApiEndpoint(config: ApiConfig): string {
   const baseUrl = config.baseURL.replace(/\/+$/, ''); // 移除尾部斜杠
+  const providerType = detectProviderType(baseUrl);
 
   // 使用正则检查 URL 是否以特定路径结尾（完整端点）
   const endsWithPath = (pattern: string) => new RegExp(`${pattern}/?$`).test(baseUrl);
 
-  // 如果 URL 包含完整的 API 端点路径（如 /messages），直接使用
-  if (endsWithPath('/messages')) {
+  // 如果 URL 已包含完整的 API 端点路径，直接使用
+  if (endsWithPath('/messages') || endsWithPath('/chat/completions')) {
     log.info('URL ends with complete API endpoint, using as-is', { baseURL: baseUrl });
     return baseUrl;
   }
 
-  // 如果已有 /v1，只添加 /messages
-  if (endsWithPath('/v1')) return `${baseUrl}/messages`;
+  // 阿里云百炼特殊处理：compatible-mode/v1 使用 OpenAI 格式
+  if (baseUrl.includes('dashscope.aliyuncs.com/compatible-mode/v1')) {
+    log.info('Alibaba DashScope compatible-mode detected, using OpenAI format', { baseURL: baseUrl });
+    return `${baseUrl}/chat/completions`;
+  }
 
-  // 默认添加 /v1/messages（Anthropic 格式）
-  return `${baseUrl}/v1/messages`;
+  // 根据厂商类型构建端点
+  if (providerType === 'openai') {
+    // OpenAI 格式：/v1/chat/completions
+    if (endsWithPath('/v1')) return `${baseUrl}/chat/completions`;
+    return `${baseUrl}/v1/chat/completions`;
+  } else {
+    // Anthropic 格式：/v1/messages
+    if (endsWithPath('/v1')) return `${baseUrl}/messages`;
+    return `${baseUrl}/v1/messages`;
+  }
 }
 
 /**
  * 构造 API 请求体
- * 所有支持的厂商都使用 Anthropic 格式
+ * 根据厂商类型使用不同的格式
  */
 function buildApiRequestBody(config: ApiConfig): any {
-  // 所有支持的厂商（anthropic、zhipu、deepseek、alibaba、custom）都使用 Anthropic 格式
-  return {
-    model: config.model,
-    max_tokens: 10,
-    messages: [{ role: 'user', content: 'Hi' }]
-  };
+  const providerType = detectProviderType(config.baseURL);
+  
+  if (providerType === 'openai') {
+    // OpenAI 格式
+    return {
+      model: config.model,
+      max_tokens: 10,
+      messages: [{ role: 'user', content: 'Hi' }]
+    };
+  } else {
+    // Anthropic 格式
+    return {
+      model: config.model,
+      max_tokens: 10,
+      messages: [{ role: 'user', content: 'Hi' }]
+    };
+  }
 }
 
 /**
  * 构造 API 请求头
- * 所有支持的厂商都使用 Anthropic 格式
+ * 根据厂商类型使用不同的格式
  */
 function buildApiHeaders(config: ApiConfig): Record<string, string> {
-  // 所有支持的厂商（anthropic、zhipu、deepseek、alibaba、custom）都使用 Anthropic 格式请求头
-  return {
-    'Content-Type': 'application/json',
-    'x-api-key': config.apiKey,
-    'anthropic-version': '2023-06-01'
-  };
+  const providerType = detectProviderType(config.baseURL);
+  
+  if (providerType === 'openai') {
+    // OpenAI 格式：使用 Authorization Bearer
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${config.apiKey}`
+    };
+  } else {
+    // Anthropic 格式：使用 x-api-key
+    return {
+      'Content-Type': 'application/json',
+      'x-api-key': config.apiKey,
+      'anthropic-version': '2023-06-01'
+    };
+  }
 }
 
 export async function testApiConnection(config: ApiConfig): Promise<TestResult> {
   const startTime = Date.now();
   const apiEndpoint = buildApiEndpoint(config);
+  const requestHeaders = buildApiHeaders(config);
+  const requestBody = buildApiRequestBody(config);
 
   log.info('Testing API connection', {
     baseURL: config.baseURL,
@@ -79,6 +138,14 @@ export async function testApiConnection(config: ApiConfig): Promise<TestResult> 
     model: config.model,
     apiEndpoint
   });
+
+  // 打印详细的请求信息
+  log.info('=== API Test Request Details ===');
+  log.info(`URL: ${apiEndpoint}`);
+  log.info('Method: POST');
+  log.info(`Headers: ${JSON.stringify(requestHeaders, null, 2)}`);
+  log.info(`Body: ${JSON.stringify(requestBody, null, 2)}`);
+  log.info('================================');
 
   try {
     // 验证配置
@@ -93,18 +160,28 @@ export async function testApiConnection(config: ApiConfig): Promise<TestResult> 
     // 构造请求
     const response = await fetch(apiEndpoint, {
       method: 'POST',
-      headers: buildApiHeaders(config),
-      body: JSON.stringify(buildApiRequestBody(config))
+      headers: requestHeaders,
+      body: JSON.stringify(requestBody)
     });
 
     const responseTime = Date.now() - startTime;
 
+    // 打印响应状态
+    log.info('=== API Test Response Details ===');
+    log.info(`Status: ${response.status} ${response.statusText}`);
+    log.info(`Response Time: ${responseTime} ms`);
+
     if (response.ok) {
       const data = await response.json();
+      
+      // 打印成功响应体
+      log.info(`Response Body: ${JSON.stringify(data, null, 2)}`);
+      log.info('=================================');
 
       // 检查 API 返回的错误
       if (data.error) {
         const errorMsg = typeof data.error === 'string' ? data.error : data.error.message || JSON.stringify(data.error);
+        log.error('API returned error:', errorMsg);
         return {
           success: false,
           message: "API 返回错误",
@@ -113,6 +190,7 @@ export async function testApiConnection(config: ApiConfig): Promise<TestResult> 
         };
       }
 
+      log.info('✅ API test successful');
       return {
         success: true,
         message: "连接成功",
@@ -158,13 +236,26 @@ export async function testApiConnection(config: ApiConfig): Promise<TestResult> 
       // 尝试读取错误响应体以获取更多信息
       try {
         const errorData = await response.json();
+        
+        // 打印错误响应体
+        log.error(`Error Response Body: ${JSON.stringify(errorData, null, 2)}`);
+        log.info('=================================');
+        
         if (errorData.error) {
           details += `\n${typeof errorData.error === 'string' ? errorData.error : errorData.error.message || JSON.stringify(errorData.error)}`;
         }
-      } catch {
-        // 忽略 JSON 解析错误
+      } catch (parseError) {
+        // 如果无法解析 JSON，尝试读取文本
+        try {
+          const errorText = await response.text();
+          log.error('Error Response Text:', errorText);
+          log.info('=================================');
+        } catch {
+          log.error('Failed to read error response');
+        }
       }
 
+      log.error(`❌ API test failed: ${message}`);
       return { success: false, message, details, responseTime };
     }
   } catch (error: any) {
@@ -199,7 +290,9 @@ export async function testApiConnection(config: ApiConfig): Promise<TestResult> 
     }
 
     // 其他错误
-    log.error('API test error', error);
+    log.error('=== API Test Exception ===');
+    log.error('Error:', error);
+    log.error('==========================');
     return {
       success: false,
       message: "测试失败",

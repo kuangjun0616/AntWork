@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import type { PermissionResult } from "@anthropic-ai/claude-agent-sdk";
+import type { PermissionResult } from "@qwen-code/sdk";
 import type { PermissionRequest } from "../store/useAppStore";
 
 interface DeletionConfirmDialogProps {

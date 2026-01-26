@@ -28,11 +28,31 @@
  * - 会话中止时自动清理所有待处理的权限请求
  */
 
-import type { PermissionResult } from "@anthropic-ai/claude-agent-sdk";
+import type { PermissionResult } from "@qwen-code/sdk";
 import { checkIfDeletionOperation } from "../../../shared/deletion-detection.js";
 import { RUNNER_TIMEOUT } from "../../config/constants.js";
 import type { Session } from "../../storage/session-store.js";
 import type { ServerEvent } from "../../types.js";
+
+/**
+ * 权限模式映射：Claude SDK → Qwen SDK
+ * 
+ * Claude SDK 和 Qwen SDK 的权限模式名称略有不同，此函数负责映射
+ */
+export function mapPermissionMode(
+  claudeMode: 'default' | 'acceptEdits' | 'bypassPermissions' | 'plan' | 'delegate' | 'dontAsk'
+): 'default' | 'plan' | 'auto-edit' | 'yolo' {
+  const modeMap = {
+    'default': 'default',
+    'acceptEdits': 'auto-edit',
+    'bypassPermissions': 'yolo',
+    'plan': 'plan',
+    'delegate': 'yolo',
+    'dontAsk': 'yolo',
+  } as const;
+  
+  return modeMap[claudeMode];
+}
 
 /**
  * 创建权限请求回调函数

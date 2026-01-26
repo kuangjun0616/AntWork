@@ -6,7 +6,7 @@ import type {
   SDKMessage,
   SDKResultMessage,
   SDKUserMessage
-} from "@anthropic-ai/claude-agent-sdk";
+} from "@qwen-code/sdk";
 import type { StreamMessage } from "../types";
 import type { PermissionRequest } from "../store/useAppStore";
 import MDContent from "../render/markdown";
@@ -114,7 +114,7 @@ const SessionResult = ({ message }: { message: SDKResultMessage }) => {
         </div>
         <div className="flex flex-wrap items-center gap-2 text-[14px]">
           <span className="font-normal">{t('events.usage')}</span>
-          <span className="inline-flex items-center rounded-full bg-accent/10 px-2.5 py-0.5 text-accent text-[13px]">{t('events.cost')} ${formatUsd(message.total_cost_usd)}</span>
+          <span className="inline-flex items-center rounded-full bg-accent/10 px-2.5 py-0.5 text-accent text-[13px]">{t('events.cost')} ${formatUsd((message as any).total_cost_usd)}</span>
           <span className="inline-flex items-center rounded-full bg-surface-tertiary px-2.5 py-0.5 text-ink-700 text-[13px]">{t('events.input')} {formatMillions(message.usage?.input_tokens)}</span>
           <span className="inline-flex items-center rounded-full bg-surface-tertiary px-2.5 py-0.5 text-ink-700 text-[13px]">{t('events.output')} {formatMillions(message.usage?.output_tokens)}</span>
         </div>
@@ -141,35 +141,36 @@ const ToolResult = ({ messageContent }: { messageContent: ToolResultContent }) =
   const isFirstRender = useRef(true);
   let lines: string[] = [];
 
-  if (messageContent.type !== "tool_result") return null;
+  if (typeof messageContent === 'string' || (messageContent as any).type !== "tool_result") return null;
 
-  const toolUseId = messageContent.tool_use_id;
-  const status: ToolStatus = messageContent.is_error ? "error" : "success";
-  const isError = messageContent.is_error;
+  const toolUseId = (messageContent as any).tool_use_id;
+  const status: ToolStatus = (messageContent as any).is_error ? "error" : "success";
+  const isError = (messageContent as any).is_error;
 
-  if (messageContent.is_error) {
-    lines = [extractTagContent(String(messageContent.content), "tool_use_error") || String(messageContent.content)];
+  if ((messageContent as any).is_error) {
+    lines = [extractTagContent(String((messageContent as any).content), "tool_use_error") || String((messageContent as any).content)];
   } else {
     try {
-      if (Array.isArray(messageContent.content)) {
+      const content = (messageContent as any).content;
+      if (Array.isArray(content)) {
         // 检查是否是带 text 属性的对象数组
-        const hasTextProperty = messageContent.content.length > 0 &&
-          messageContent.content[0] && typeof messageContent.content[0] === 'object' &&
-          'text' in messageContent.content[0];
+        const hasTextProperty = content.length > 0 &&
+          content[0] && typeof content[0] === 'object' &&
+          'text' in content[0];
 
         if (hasTextProperty) {
-          lines = messageContent.content.map((item: any) => item.text || "").join("\n").split("\n");
+          lines = content.map((item: any) => item.text || "").join("\n").split("\n");
         } else {
           // 纯数组（如资源列表），格式化为易读形式
-          const formatted = JSON.stringify(messageContent.content, null, 2);
+          const formatted = JSON.stringify(content, null, 2);
           lines = formatted.split("\n");
         }
-      } else if (typeof messageContent.content === 'object' && messageContent.content !== null) {
+      } else if (typeof content === 'object' && content !== null) {
         // 对象类型，格式化显示
-        const formatted = JSON.stringify(messageContent.content, null, 2);
+        const formatted = JSON.stringify(content, null, 2);
         lines = formatted.split("\n");
       } else {
-        lines = String(messageContent.content).split("\n");
+        lines = String(content).split("\n");
       }
     } catch { lines = [JSON.stringify(messageContent, null, 2)]; }
   }
@@ -422,16 +423,18 @@ export function MessageCard({
 
   if (sdkMessage.type === "user") {
     const contents = sdkMessage.message.content;
-    return (
-      <>
-        {contents.map((content: ToolResultContent, idx: number) => {
-          if (content.type === "tool_result") {
-            return <ToolResult key={idx} messageContent={content} />;
-          }
-          return null;
-        })}
-      </>
-    );
+    if (Array.isArray(contents)) {
+      return (
+        <>
+          {contents.map((content: any, idx: number) => {
+            if (content.type === "tool_result") {
+              return <ToolResult key={idx} messageContent={content} />;
+            }
+            return null;
+          })}
+        </>
+      );
+    }
   }
 
   return null;

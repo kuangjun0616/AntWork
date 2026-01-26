@@ -145,9 +145,9 @@ class SdkConfigCacheManager {
    * 监听配置文件变化，触发增量更新
    */
   private startWatching(): void {
-    const settingsPath = join(homedir(), '.claude', 'settings.json');
-    const pluginsDir = join(homedir(), '.claude', 'plugins');
-    const agentsDir = join(app.getPath('userData'), 'agents');
+    const settingsPath = join(homedir(), '.qwen', 'settings.json');
+    const pluginsDir = join(homedir(), '.qwen', 'plugins');
+    const agentsDir = join(homedir(), '.qwen', 'agents');
     const apiConfigPath = join(app.getPath('userData'), 'api-config.json');
 
     // 监听 settings.json（包含 MCP 服务器、权限、钩子等配置）

@@ -2,24 +2,31 @@
  * Memory SDK 集成模块
  * 将自定义记忆功能深度集成到 SDK 的记忆系统中
  *
- * 实现：
+ * 注意：Qwen SDK 暂不支持 Hook 功能，此模块已禁用
+ * 原 Claude SDK 支持的功能：
  * - SessionStart Hook: 自动检索相关记忆并注入上下文
  * - SessionEnd Hook: 自动分析会话并存储摘要
  *
  * @author Alan
  * @copyright AGCPA v3.0
- * @updated 2025-01-24
+ * @updated 2025-01-26
  */
 
-import type {
-  HookCallback,
-  SessionStartHookInput,
-  SessionEndHookInput,
-  HookJSONOutput,
-  BaseHookInput
-} from "@anthropic-ai/claude-agent-sdk";
+// Qwen SDK 暂不支持 Hook 功能，相关类型已注释
+// import type {
+//   HookCallback,
+//   SessionStartHookInput,
+//   SessionEndHookInput,
+//   HookJSONOutput,
+//   BaseHookInput
+// } from "@qwen-code/sdk";
 import { memorySearch, memoryStore, getMemoryToolConfig } from "./memory-tools.js";
 import { log } from "../logger.js";
+
+// 临时类型定义，用于保持代码结构
+type HookCallback = any;
+type SessionStartHookInput = any;
+type SessionEndHookInput = any;
 
 /**
  * 创建 SessionStart Hook - 自动注入记忆上下文

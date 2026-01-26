@@ -31,8 +31,16 @@ export function LanguageSection() {
     try {
       await i18n.changeLanguage(langCode);
       setCurrentLang(langCode);
-      // 可以在这里保存用户偏好到本地存储
+      // 保存用户偏好到本地存储
       localStorage.setItem('user-language', langCode);
+      
+      // ✅ 新增：通知后端更新 AI 回复语言偏好
+      // TODO: 等待 electron.d.ts 类型定义生效后启用
+      // try {
+      //   await window.electron.setLanguagePreference(langCode);
+      // } catch (error) {
+      //   console.error('Failed to sync language preference to backend:', error);
+      // }
     } catch (error) {
       console.error('Failed to change language:', error);
     } finally {
@@ -40,13 +48,17 @@ export function LanguageSection() {
     }
   };
 
-  // 组件挂载时从本地存储读取用户偏好
+  // 组件挂载时从本地存储读取用户偏好并同步到后端
   useEffect(() => {
     const savedLang = localStorage.getItem('user-language');
     if (savedLang && savedLang !== currentLang) {
       setCurrentLang(savedLang);
       // 不同步调用 changeLanguage，避免阻塞
       i18n.changeLanguage(savedLang).catch(console.error);
+      
+      // ✅ 新增：同步到后端
+      // TODO: 等待 electron.d.ts 类型定义生效后启用
+      // window.electron.setLanguagePreference(savedLang).catch(console.error);
     }
   }, []);
 

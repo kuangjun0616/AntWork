@@ -25,12 +25,22 @@ export function StartSessionModal({
   const [recentCwds, setRecentCwds] = useState<string[]>([]);
 
   useEffect(() => {
+    // 安全检查：确保 window.electron 已加载
+    if (!window.electron) {
+      console.warn('[StartSessionModal] window.electron is not available yet');
+      return;
+    }
+
     window.electron.getRecentCwds()
       .then(setRecentCwds)
       .catch((err) => log.error("Failed to load recent CWDs", err));
   }, []);
 
   const handleSelectDirectory = async () => {
+    if (!window.electron) {
+      log.error("window.electron is not available");
+      return;
+    }
     const result = await window.electron.selectDirectory();
     if (result) onCwdChange(result);
   };

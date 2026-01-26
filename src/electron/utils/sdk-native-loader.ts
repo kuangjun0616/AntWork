@@ -61,7 +61,7 @@ export interface SdkNativeConfig {
  * 获取插件目录
  */
 function getPluginsDir(): string {
-  return join(homedir(), '.claude', 'plugins');
+  return join(homedir(), '.qwen', 'plugins');
 }
 
 /**
@@ -75,7 +75,7 @@ function getAgentsDir(): string {
  * 获取 settings.json 路径
  */
 function getSettingsPath(): string {
-  return join(homedir(), '.claude', 'settings.json');
+  return join(homedir(), '.qwen', 'settings.json');
 }
 
 /**
@@ -145,7 +145,7 @@ async function scanPluginsDir(dir: string, dirName: string): Promise<SdkPluginCo
 
 /**
  * 加载插件列表
- * SDK 自动处理 ~/.claude/skills/，我们只加载 ~/.claude/plugins/
+ * SDK 自动处理 ~/.qwen/skills/，我们只加载 ~/.qwen/plugins/
  * 降级机制：目录不存在 → 从 settings.json 读取 → 空列表
  */
 async function loadPlugins(): Promise<SdkPluginConfig[]> {

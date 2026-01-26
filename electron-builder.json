@@ -7,13 +7,7 @@
         "dist-electron/**/*",
         "dist-react/**/*",
         "templateIcon.ico",
-        "node_modules/@anthropic-ai/claude-agent-sdk/sdk.mjs",
-        "node_modules/@anthropic-ai/claude-agent-sdk/cli.js",
-        "node_modules/@anthropic-ai/claude-agent-sdk/package.json",
-        "node_modules/@anthropic-ai/claude-agent-sdk/resvg.wasm",
-        "node_modules/@anthropic-ai/claude-agent-sdk/tree-sitter.wasm",
-        "node_modules/@anthropic-ai/claude-agent-sdk/tree-sitter-bash.wasm",
-        "node_modules/@anthropic-ai/claude-agent-sdk/vendor/**/*",
+        "node_modules/@qwen-code/sdk/**/*",
         "node_modules/@anthropic-ai/tokenizer/**/*",
         "node_modules/@memvid/sdk/**/*",
         "node_modules/better-sqlite3/**/*",
@@ -32,7 +26,7 @@
     "asarUnpack": [
         "node_modules/better-sqlite3/build/**/*.node",
         "node_modules/@memvid/sdk/**/*.node",
-        "node_modules/@anthropic-ai/claude-agent-sdk/**/*"
+        "node_modules/@qwen-code/sdk/**/*"
     ],
     "icon": "./templateIcon.ico",
     "mac": {

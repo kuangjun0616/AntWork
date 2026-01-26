@@ -1,9 +1,10 @@
-import { BrowserWindow, app } from "electron";
+import { BrowserWindow, app, ipcMain } from "electron";
 import type { ClientEvent, ServerEvent } from "./types.js";
 import type { RunnerHandle } from "./libs/runner.js";
 import { SessionStore } from './storage/session-store.js';
 import { join } from "path";
 import { log } from "./logger.js";
+import { setAILanguagePreference, getAILanguagePreference } from "./services/language-preference-store.js";
 import {
   handleSessionList,
   handleSessionHistory,
@@ -166,6 +167,37 @@ export function cleanupAllSessions(): void {
     sessions.close();
     log.info('Session store closed');
   }
+}
+
+/**
+ * 注册语言偏好相关的 IPC 处理器
+ * 必须在应用初始化时调用
+ */
+export function registerLanguageHandlers(): void {
+  // 设置 AI 回复语言偏好
+  ipcMain.handle('language:set-preference', async (_event, language: string) => {
+    try {
+      setAILanguagePreference(language);
+      log.info(`[IPC] Language preference updated: ${language}`);
+      return { success: true };
+    } catch (error) {
+      log.error('[IPC] Failed to set language preference:', error);
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
+  // 获取当前 AI 回复语言偏好
+  ipcMain.handle('language:get-preference', async () => {
+    try {
+      const language = getAILanguagePreference();
+      return { success: true, language };
+    } catch (error) {
+      log.error('[IPC] Failed to get language preference:', error);
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
+  log.info('[IPC] Language preference handlers registered');
 }
 
 export { sessions };

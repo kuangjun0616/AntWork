@@ -4,6 +4,8 @@
  */
 
 import { log } from '../logger.js';
+import { setAILanguagePreference } from '../services/language-preference-store.js';
+import { registerLanguageHandlers } from '../ipc-handlers.js';
 
 /**
  * 初始化所有应用服务（在应用启动时执行）
@@ -13,15 +15,19 @@ export async function initializeAppServices(): Promise<void> {
   log.info('[AppInit] Initializing app services...');
   const startTime = Date.now();
 
+  // 注册语言偏好 IPC 处理器（必须在主进程中注册）
+  registerLanguageHandlers();
+
   // 并行初始化各项服务（使用 Promise.allSettled 确保稳定）
   const results = await Promise.allSettled([
     initializeSdkConfigCache(),
     prewarmMcpServers(),
+    initializeLanguagePreference(),
   ]);
 
   // 记录初始化结果
   results.forEach((result, index) => {
-    const serviceName = ['SDK Config Cache', 'MCP Servers'][index];
+    const serviceName = ['SDK Config Cache', 'MCP Servers', 'Language Preference'][index];
     if (result.status === 'fulfilled') {
       log.info(`[AppInit] ✓ ${serviceName} initialized`);
     } else {
@@ -59,5 +65,19 @@ async function prewarmMcpServers(): Promise<void> {
     log.info(`[AppInit] MCP configs loaded: ${Object.keys(servers).length} servers`);
   } catch (error) {
     log.warn('[AppInit] MCP config loading failed (non-critical):', error);
+  }
+}
+
+/**
+ * 初始化语言偏好设置
+ * 默认使用中文，后续会通过前端 IPC 调用更新
+ */
+async function initializeLanguagePreference(): Promise<void> {
+  try {
+    // 设置默认语言为中文
+    setAILanguagePreference('zh');
+    log.info('[AppInit] Language preference initialized (default: zh)');
+  } catch (error) {
+    log.warn('[AppInit] Language preference initialization failed (non-critical):', error);
   }
 }

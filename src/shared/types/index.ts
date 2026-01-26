@@ -3,7 +3,7 @@
  * 前后端共享的 TypeScript 类型
  */
 
-import type { SDKMessage, PermissionResult } from "@anthropic-ai/claude-agent-sdk";
+import type { SDKMessage, PermissionResult } from "@qwen-code/sdk";
 
 // ==================== 消息类型 ====================
 

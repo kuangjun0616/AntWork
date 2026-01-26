@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { PermissionResult } from "@anthropic-ai/claude-agent-sdk";
+import type { PermissionResult } from "@qwen-code/sdk";
 import { BrainIcon } from "./components/BrainIcon";
 import { useIPC } from "./hooks/useIPC";
 import { useMessageWindow } from "./hooks/useMessageWindow";
@@ -218,6 +218,15 @@ function App() {
   // 启动时检查 API 配置
   useEffect(() => {
     if (!apiConfigChecked) {
+      // 安全检查：确保 window.electron 已加载
+      if (!window.electron) {
+        console.warn('[App] window.electron is not available yet, retrying...');
+        const timer = setTimeout(() => {
+          setApiConfigChecked(false);
+        }, 100);
+        return () => clearTimeout(timer);
+      }
+
       window.electron.checkApiConfig().then((result) => {
         setApiConfigChecked(true);
         if (!result.hasConfig) {
@@ -352,6 +361,11 @@ function App() {
     useAppStore.getState().renameSession(sessionId, newTitle);
 
     // 然后同步到后端数据库
+    if (!window.electron) {
+      log.error("window.electron is not available");
+      return;
+    }
+
     try {
       await window.electron.renameSession(sessionId, newTitle);
     } catch (error) {

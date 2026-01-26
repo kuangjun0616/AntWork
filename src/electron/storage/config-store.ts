@@ -856,8 +856,8 @@ export async function fetchModelList(config: ApiConfig): Promise<string[] | null
     });
 
     // 检查 baseURL 是否已经包含完整路径
-    // 包含 /anthropic 的厂商通常不提供 /v1/models 端点
-    const hasFullPath = /\/(anthropic|v1)(\/|$)/.test(config.baseURL);
+    // 包含 /anthropic 或 compatible-mode/v1 的厂商通常不提供 /v1/models 端点
+    const hasFullPath = /\/(anthropic|compatible-mode\/v1)(\/|$)/.test(config.baseURL);
 
     if (hasFullPath) {
       log.info('[config-store] Base URL 已包含完整路径，使用预定义模型列表');

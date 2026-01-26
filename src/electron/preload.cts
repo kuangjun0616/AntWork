@@ -212,7 +212,10 @@ electron.contextBridge.exposeInMainWorld("electron", {
     deleteClaudeConfig: () =>
         ipcInvoke("delete-claude-config"),
     openClaudeDirectory: () =>
-        ipcInvoke("open-claude-directory")
+        ipcInvoke("open-claude-directory"),
+    // Language Preference 操作
+    setLanguagePreference: (language: string) =>
+        invoke("language:set-preference", language)
 })
 
 function ipcInvoke<Key extends keyof EventPayloadMapping>(key: Key, ...args: any[]): Promise<EventPayloadMapping[Key]> {

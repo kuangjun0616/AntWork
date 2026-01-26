@@ -283,6 +283,8 @@ export interface ElectronAPI {
   getSessionHistory: (sessionId: string) => Promise<any>;
   recoverSession: (sessionId: string) => Promise<{ success: boolean; error?: string; sessionId?: string }>;
   deleteSession: (sessionId: string) => Promise<{ success: boolean; error?: string }>;
+  /** Language Preference 操作 */
+  setLanguagePreference: (language: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 declare global {

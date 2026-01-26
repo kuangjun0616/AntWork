@@ -443,7 +443,7 @@ function registerAgentsHandlers(): void {
 
     // 打开 Agents 目录
     ipcMain.handle("open-agents-directory", async () => {
-        const agentsDir = path.join(homedir(), '.claude', 'agents');
+        const agentsDir = path.join(homedir(), '.qwen', 'agents');
         await shell.openPath(agentsDir);
         return { success: true };
     });
@@ -529,14 +529,14 @@ function registerSkillsHandlers(): void {
 
     // 打开 Skills 目录
     ipcMain.handle("open-skills-directory", async () => {
-        const skillsDir = path.join(homedir(), '.claude', 'skills');
+        const skillsDir = path.join(homedir(), '.qwen', 'skills');
         await shell.openPath(skillsDir);
         return { success: true };
     });
 
     // 打开 Plugins 目录
     ipcMain.handle("open-plugins-directory", async () => {
-        const pluginsDir = path.join(homedir(), '.claude', 'plugins');
+        const pluginsDir = path.join(homedir(), '.qwen', 'plugins');
         await shell.openPath(pluginsDir);
         return { success: true };
     });

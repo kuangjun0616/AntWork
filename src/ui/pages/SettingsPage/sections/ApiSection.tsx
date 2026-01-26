@@ -80,6 +80,10 @@ export function ApiSection() {
   // 加载支持的厂商列表
   useEffect(() => {
     const loadProviders = async () => {
+      if (!window.electron) {
+        console.warn('[ApiSection] window.electron is not available yet');
+        return;
+      }
       setLoadingProviders(true);
       try {
         const providerList = await window.electron.getSupportedProviders();
@@ -95,6 +99,10 @@ export function ApiSection() {
 
   // 加载所有配置列表
   const loadAllConfigs = async () => {
+    if (!window.electron) {
+      console.warn('[ApiSection] window.electron is not available');
+      return;
+    }
     setLoadingConfigs(true);
     try {
       const configs = await window.electron.getAllApiConfigs();
@@ -115,6 +123,10 @@ export function ApiSection() {
 
   // 加载当前配置
   useEffect(() => {
+    if (!window.electron) {
+      console.warn('[ApiSection] window.electron is not available yet');
+      return;
+    }
     setLoading(true);
     window.electron.getApiConfig()
       .then((config) => {
@@ -160,6 +172,10 @@ export function ApiSection() {
   useEffect(() => {
     const loadProviderModels = async () => {
       if (!apiType) return;
+      if (!window.electron) {
+        console.warn('[ApiSection] window.electron is not available');
+        return;
+      }
       try {
         const providerConfig = await window.electron.getProviderConfig(apiType);
         setBaseURL(providerConfig.baseURL);
@@ -183,6 +199,10 @@ export function ApiSection() {
 
   // 监听服务器事件（模型列表和模型限制）
   useEffect(() => {
+    if (!window.electron) {
+      console.warn('[ApiSection] window.electron is not available yet');
+      return;
+    }
     const unsubscribe = window.electron.onServerEvent((event: ServerEvent) => {
       if (event.type === "api.modelList") {
         setLoadingModels(false);
@@ -209,6 +229,10 @@ export function ApiSection() {
   // 动态获取模型列表
   const fetchDynamicModelList = async () => {
     if (!apiKey.trim() || !baseURL.trim()) {
+      return;
+    }
+    if (!window.electron) {
+      log.error("window.electron is not available");
       return;
     }
     setLoadingModels(true);
@@ -302,6 +326,11 @@ export function ApiSection() {
       if (advancedParams.maxTokens !== undefined) configToSave.maxTokens = advancedParams.maxTokens;
       if (advancedParams.topP !== undefined) configToSave.topP = advancedParams.topP;
 
+      if (!window.electron) {
+        setError(t("errors.electronNotAvailable", "系统未就绪，请稍后重试"));
+        return;
+      }
+
       const result = await window.electron.saveApiConfig(configToSave);
 
       if (result.success) {
@@ -310,18 +339,23 @@ export function ApiSection() {
         if (successTimerRef.current) {
           clearTimeout(successTimerRef.current);
         }
-        successTimerRef.current = setTimeout(() => setSuccess(false), 2000);
+        // 3秒后自动清除成功提示
+        successTimerRef.current = setTimeout(() => {
+          setSuccess(false);
+        }, 3000);
 
         // 保存成功后刷新配置列表（如果在列表视图）
         if (viewMode === 'list') {
           await loadAllConfigs();
         } else {
           // 如果在表单视图，后台刷新列表数据以便切换时显示最新
-          window.electron.getAllApiConfigs().then(configs => {
-            setAllConfigs(configs);
-          }).catch(err => {
-            log.error("Failed to refresh configs after save", err);
-          });
+          if (window.electron) {
+            window.electron.getAllApiConfigs().then(configs => {
+              setAllConfigs(configs);
+            }).catch(err => {
+              log.error("Failed to refresh configs after save", err);
+            });
+          }
         }
       } else {
         setError(result.error || t("errors.failedToSaveConfig"));
