@@ -96,7 +96,7 @@ export default {
 			title: "Bug Report",
 			description: "Submit issue reports on GitHub",
 			link: "Go to GitHub",
-			url: "https://github.com/Pan519/AICowork",
+			url: "https://github.com/BrainPicker-L/AICowork",
 		},
 		featureRequest: {
 			title: "Feature Request",
@@ -146,9 +146,10 @@ export default {
 		viewList: "View Configuration List",
 		addConfig: "Add Configuration",
 		configName: {
-			label: "Configuration Name",
-			placeholder: "My Config",
+			label: "Configuration Alias",
+			placeholder: "e.g., Xita-DeepSeek-R1, Company Account, Personal Account, etc.",
 			test: "Test Config",
+			hint: "Set an easy-to-identify alias for this configuration to manage multiple configs",
 		},
 		baseUrl: {
 			label: "Base URL",
@@ -162,6 +163,7 @@ export default {
 			label: "API Type",
 			anthropic: "Anthropic",
 			openai: "OpenAI Compatible",
+			xita: "Xita (AntChat)",
 		},
 		model: {
 			label: "Model Name",
@@ -494,6 +496,7 @@ export default {
 		failedToSaveConfig: "Failed to save configuration",
 		sessionStillRunning: "Session is still running. Please wait for it to finish.",
 		workingDirectoryRequired: "Working Directory is required to start a session.",
+		promptRequired: "Prompt is required to start a session.",
 		failedToGetSessionTitle: "Failed to get session title.",
 	},
 

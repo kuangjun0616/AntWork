@@ -95,7 +95,7 @@ export default {
 			title: "Bug 报告",
 			description: "在 GitHub 上提交问题报告",
 			link: "前往 GitHub",
-			url: "https://github.com/Pan519/AICowork",
+			url: "https://github.com/BrainPicker-L/AICowork",
 		},
 		featureRequest: {
 			title: "功能建议",
@@ -145,9 +145,10 @@ export default {
 		viewList: "查看配置列表",
 		addConfig: "添加配置",
 		configName: {
-			label: "配置名称",
-			placeholder: "我的配置",
+			label: "配置别名",
+			placeholder: "例如：矽塔-DeepSeek-R1、公司账号、个人账号等",
 			test: "测试配置",
+			hint: "为此配置设置一个易于识别的别名，方便管理多个配置",
 		},
 		baseUrl: {
 			label: "基础 URL",
@@ -161,6 +162,7 @@ export default {
 			label: "API 类型",
 			anthropic: "Anthropic",
 			openai: "OpenAI 兼容",
+			xita: "矽塔 (AntChat)",
 		},
 		model: {
 			label: "模型名称",
@@ -494,6 +496,7 @@ export default {
 		failedToSaveConfig: "保存配置失败",
 		sessionStillRunning: "会话仍在运行中。请等待其完成。",
 		workingDirectoryRequired: "启动会话需要工作目录。",
+		promptRequired: "启动会话需要提示词。",
 		failedToGetSessionTitle: "获取会话标题失败。",
 	},
 

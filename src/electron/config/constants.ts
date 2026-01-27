@@ -94,6 +94,7 @@ export type ApiProvider =
   | 'moonshot'         // 月之暗面 (Kimi)
   | 'n1n'              // N1N.AI
   | 'minimax'          // MiniMax
+  | 'xita'             // 矽塔 (AntChat)
   // 自定义（用户自行负责兼容性）
   | 'custom';          // 自定义 Anthropic 兼容 API
 
@@ -125,6 +126,7 @@ export const PROVIDER_COMPATIBILITY: Record<ApiProvider, {
   moonshot: { format: 'anthropic', recommended: true, note: '月之暗面 Anthropic 兼容端点' },
   minimax: { format: 'anthropic', recommended: true, note: 'MiniMax Anthropic 兼容端点' },
   n1n: { format: 'anthropic', recommended: true, note: 'N1N.AI Anthropic 兼容端点' },
+  xita: { format: 'anthropic', recommended: true, note: '矽塔 AntChat Anthropic 兼容端点' },
 
   // 自定义（用户自行负责兼容性）
   custom: { format: 'anthropic', recommended: true, note: '自定义 Anthropic 兼容端点' },

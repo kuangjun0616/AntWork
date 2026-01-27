@@ -441,21 +441,24 @@ export function ApiSection() {
 
   // 新建配置
   const handleNewConfig = async () => {
+    // 清空所有表单状态
     setConfigId("");
     setConfigName("");
     setApiKey("");
+    setBaseURL(""); // 确保清空 baseURL
     setModel("");
     setResourceName("");
     setDeploymentName("");
     setAdvancedParams({ temperature: undefined, maxTokens: undefined, topP: undefined });
     setError(null);
+    setSuccess(false); // 清空成功提示
     setTestResult(null);
     setModelLimits(null);
     setDynamicModels([]);
 
-    // 加载默认厂商配置
+    // 加载默认厂商配置（矽塔）
     try {
-      const defaultApiType = "anthropic";
+      const defaultApiType = "xita";
       setApiType(defaultApiType);
       const providerConfig = await window.electron.getProviderConfig(defaultApiType);
       setBaseURL(providerConfig.baseURL);
@@ -605,6 +608,21 @@ export function ApiSection() {
                     {providers.find((p) => p.id === apiType)?.description}
                   </span>
                 )}
+              </label>
+
+              {/* 配置别名 */}
+              <label className="grid gap-1.5">
+                <span className="text-xs font-medium text-muted">{t("api.configName.label")}</span>
+                <input
+                  type="text"
+                  className="rounded-xl border border-ink-900/10 bg-surface-secondary px-4 py-2.5 text-sm text-ink-800 placeholder:text-muted-light focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/20 transition-colors"
+                  placeholder={t("api.configName.placeholder")}
+                  value={configName}
+                  onChange={(e) => setConfigName(e.target.value)}
+                />
+                <span className="text-xs text-muted-light">
+                  {t("api.configName.hint", "为此配置设置一个易于识别的别名，方便管理多个配置")}
+                </span>
               </label>
 
               {/* Azure 专用字段 */}
@@ -895,6 +913,48 @@ export function ApiSection() {
                         </p>
                       </div>
                       <div className="flex items-center gap-1">
+                        {/* 测试连接按钮 */}
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              className="text-xs text-info hover:text-info-hover p-1 rounded hover:bg-surface-tertiary transition-colors cursor-pointer"
+                              onClick={async () => {
+                                // 使用配置信息进行测试
+                                setTesting(true);
+                                try {
+                                  const result = await window.electron.testApiConnection({
+                                    id: config.id,
+                                    name: config.name,
+                                    apiKey: config.apiKey,
+                                    baseURL: config.baseURL,
+                                    model: config.model,
+                                    apiType: config.apiType as any,
+                                    resourceName: config.resourceName,
+                                    deploymentName: config.deploymentName,
+                                  });
+                                  // 显示测试结果（可以考虑添加一个临时的提示）
+                                  if (result.success) {
+                                    alert(`${t("api.actions.test")} - ${config.name}\n\n✅ ${result.message}\n${result.details || ''}\n${t("api.responseTime", { time: result.responseTime })}`);
+                                  } else {
+                                    alert(`${t("api.actions.test")} - ${config.name}\n\n❌ ${result.message}\n${result.details || ''}`);
+                                  }
+                                } catch (err) {
+                                  alert(`${t("api.actions.test")} - ${config.name}\n\n❌ ${t("api.testFailed")}\n${err instanceof Error ? err.message : String(err)}`);
+                                } finally {
+                                  setTesting(false);
+                                }
+                              }}
+                            >
+                              <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent className="bg-ink-900 text-white text-xs px-3 py-1.5 rounded-md shadow-lg">
+                            <p>{t("api.actions.test")}</p>
+                          </TooltipContent>
+                        </Tooltip>
+
                         {/* 设为当前按钮 */}
                         <Tooltip>
                           <TooltipTrigger asChild>

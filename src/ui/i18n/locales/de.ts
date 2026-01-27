@@ -97,7 +97,7 @@ export default {
 			title: "Fehlerbericht",
 			description: "Fehler auf GitHub melden",
 			link: "Zu GitHub gehen",
-			url: "https://github.com/Pan519/AICowork",
+			url: "https://github.com/BrainPicker-L/AICowork",
 		},
 		featureRequest: {
 			title: "Funktionswunsch",

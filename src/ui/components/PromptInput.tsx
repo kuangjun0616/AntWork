@@ -91,14 +91,44 @@ export function usePromptActions(sendEvent: (event: ClientEvent) => void) {
 
   /**
    * 从模态框开始会话
+   * 注意：这个函数总是创建新会话，不管当前是否有活跃会话
    */
-  const handleStartFromModal = useCallback(() => {
+  const handleStartFromModal = useCallback(async () => {
     if (!cwd.trim()) {
       setGlobalError(t("errors.workingDirectoryRequired"));
       return;
     }
-    handleSend();
-  }, [cwd, handleSend, setGlobalError, t]);
+    
+    if (!prompt.trim()) {
+      setGlobalError(t("errors.promptRequired"));
+      return;
+    }
+
+    // 安全检查：确保 window.electron 已加载
+    if (!window.electron) {
+      log.error("window.electron is not available");
+      setGlobalError(t("errors.failedToGetSessionTitle"));
+      return;
+    }
+
+    let title = "";
+    try {
+      setPendingStart(true);
+      title = await window.electron.generateSessionTitle(prompt);
+    } catch (error) {
+      log.error("Failed to generate session title", error);
+      setPendingStart(false);
+      setGlobalError(t("errors.failedToGetSessionTitle"));
+      return;
+    }
+    
+    // 总是创建新会话，即使当前有活跃会话
+    sendEvent({
+      type: "session.start",
+      payload: { title, prompt, cwd: cwd.trim() || undefined, allowedTools: DEFAULT_ALLOWED_TOOLS }
+    });
+    setPrompt("");
+  }, [cwd, prompt, sendEvent, setGlobalError, setPendingStart, setPrompt, t]);
 
   return { prompt, setPrompt, isRunning, handleSend, handleStop, handleStartFromModal };
 }

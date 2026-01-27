@@ -91,7 +91,7 @@ export default {
 			title: "Rapport de Bug",
 			description: "Soumettre des rapports de problmes sur GitHub",
 			link: "Aller sur GitHub",
-			url: "https://github.com/Pan519/AICowork",
+			url: "https://github.com/BrainPicker-L/AICowork",
 		},
 		featureRequest: {
 			title: "Demande de Fonctionnalit",

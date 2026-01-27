@@ -82,7 +82,7 @@ export default {
 			title: "Bug 報告",
 			description: "在 GitHub 上提交問題報告",
 			link: "前往 GitHub",
-			url: "https://github.com/Pan519/AICowork",
+			url: "https://github.com/BrainPicker-L/AICowork",
 		},
 		featureRequest: {
 			title: "功能建議",

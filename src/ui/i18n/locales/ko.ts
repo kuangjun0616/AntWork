@@ -91,7 +91,7 @@ export default {
 			title: "버그 보고",
 			description: "GitHub에서 문제 보고서 제출",
 			link: "GitHub로 이동",
-			url: "https://github.com/Pan519/AICowork",
+			url: "https://github.com/BrainPicker-L/AICowork",
 		},
 		featureRequest: {
 			title: "기능 요청",

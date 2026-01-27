@@ -91,7 +91,7 @@ export default {
 			title: "バグ報告",
 			description: "GitHub で問題を報告する",
 			link: "GitHub へ移動",
-			url: "https://github.com/Pan519/AICowork",
+			url: "https://github.com/BrainPicker-L/AICowork",
 		},
 		featureRequest: {
 			title: "機能リクエスト",

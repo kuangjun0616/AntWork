@@ -6,11 +6,11 @@
 ### 您的全天候 AI 办公伙伴，让工作效率翻倍
 
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](LICENSE.txt)
-[![Version](https://img.shields.io/badge/version-0.1.0-orange.svg)](https://github.com/Pan519/AICowork/releases)
+[![Version](https://img.shields.io/badge/version-0.1.0-orange.svg)](https://github.com/BrainPicker-L/AICowork/releases)
 [![Electron](https://img.shields.io/badge/Electron-39.2.7-9FEAF9.svg)](https://www.electronjs.org/)
 [![React](https://img.shields.io/badge/React-19.2.3-61DAFB.svg)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6.svg)](https://www.typescriptlang.org/)
-[![Stars](https://img.shields.io/github/stars/Pan519/AICowork?style=social)](https://github.com/Pan519/AICowork/stargazers)
+[![Stars](https://img.shields.io/github/stars/Pan519/AICowork?style=social)](https://github.com/BrainPicker-L/AICowork/stargazers)
 
 [English](./README_EN.md) | 简体中文 | [功能演示](#-功能演示) | [快速开始](#-快速开始) | [文档中心](#-文档中心) | [贡献指南](#-贡献指南)
 
@@ -233,7 +233,7 @@
 
 ### 方式一：下载安装包（推荐）⭐
 
-从 [GitHub Releases](https://github.com/Pan519/AICowork/releases) 下载：
+从 [GitHub Releases](https://github.com/BrainPicker-L/AICowork/releases) 下载：
 
 | 平台 | 文件名 | 大小 |
 |:---|:---|:---|
@@ -253,7 +253,7 @@ Linux:   chmod +x AICowork-*.AppImage && ./AICowork-*.AppImage
 
 ```bash
 # 1. 克隆仓库
-git clone https://github.com/Pan519/AICowork.git
+git clone https://github.com/BrainPicker-L/AICowork.git
 cd AICowork
 
 # 2. 安装 pnpm（如未安装）
@@ -684,7 +684,7 @@ pnpm build
 
 ### 更多问题？
 
-查看 [常见问题文档](./docs/用户使用手册.md#常见问题) 或提交 [Issue](https://github.com/Pan519/AICowork/issues)。
+查看 [常见问题文档](./docs/用户使用手册.md#常见问题) 或提交 [Issue](https://github.com/BrainPicker-L/AICowork/issues)。
 
 ---
 
@@ -736,9 +736,9 @@ AGPL-3.0 是一个强 copyleft 自由软件许可证，与 GPL 类似，但额�
 ### 📧 其他联系方式
 
 - **作者**: Alan, Muprprpr
-- **项目地址**: [https://github.com/Pan519/AICowork](https://github.com/Pan519/AICowork)
-- **问题反馈**: [GitHub Issues](https://github.com/Pan519/AICowork/issues)
-- **功能建议**: [GitHub Discussions](https://github.com/Pan519/AICowork/discussions)
+- **项目地址**: [https://github.com/BrainPicker-L/AICowork](https://github.com/BrainPicker-L/AICowork)
+- **问题反馈**: [GitHub Issues](https://github.com/BrainPicker-L/AICowork/issues)
+- **功能建议**: [GitHub Discussions](https://github.com/BrainPicker-L/AICowork/discussions)
 
 ---
 

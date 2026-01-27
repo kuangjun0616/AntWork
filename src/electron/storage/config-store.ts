@@ -309,7 +309,7 @@ export function validateApiConfig(config: ApiConfig): ValidationResult {
   // 验证 apiType（只验证是否在支持的厂商列表中）
   const validProviders: ApiProvider[] = [
     'anthropic', 'zhipu', 'deepseek', 'alibaba',
-    'qiniu', 'moonshot', 'n1n', 'minimax', 'custom',
+    'qiniu', 'moonshot', 'n1n', 'minimax', 'xita', 'custom',
   ];
 
   if (!validProviders.includes(config.apiType as ApiProvider)) {
@@ -773,14 +773,29 @@ export async function fetchModelLimits(config: ApiConfig): Promise<ApiConfig['mo
       messages: [{ role: 'user', content: 'Hi' }],
     };
 
+    // 根据厂商类型构建请求头
+    const isOpenAICompatible = config.baseURL.toLowerCase().includes('antchat.alipay.com') ||
+                               config.baseURL.toLowerCase().includes('api.deepseek.com') ||
+                               config.baseURL.toLowerCase().includes('api.openai.com') ||
+                               config.baseURL.toLowerCase().includes('api.moonshot.cn') ||
+                               config.baseURL.toLowerCase().includes('dashscope.aliyuncs.com/compatible-mode');
+    
+    const headers = isOpenAICompatible
+      ? {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${config.apiKey}`,
+          ...config.customHeaders,
+        }
+      : {
+          'Content-Type': 'application/json',
+          'x-api-key': config.apiKey,
+          'anthropic-version': '2023-06-01',
+          ...config.customHeaders,
+        };
+
     const response = await fetch(testUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': config.apiKey,
-        'anthropic-version': '2023-06-01',
-        ...config.customHeaders,
-      },
+      headers,
       body: JSON.stringify(testBody),
     });
 
@@ -929,6 +944,12 @@ export function getSupportedProviders(): Array<{
 }> {
   return [
     {
+      id: 'xita',
+      name: '矽塔 (AntChat)',
+      description: '矽塔 AntChat - 支持多种主流模型，兼容 Anthropic 格式',
+      icon: '🏔️',
+    },
+    {
       id: 'anthropic',
       name: 'Anthropic (Claude)',
       description: '官方 Anthropic API，支持 Claude 系列模型',
@@ -1015,6 +1036,7 @@ function getProviderDescription(provider: ApiProvider): string {
     moonshot: '月之暗面 Kimi - Anthropic 兼容端点，支持 128K、32K、8K 等长文本模型',
     n1n: 'N1N.AI 国内合规专线，支持 Anthropic 格式',
     minimax: 'MiniMax - Anthropic 兼容端点，支持 MiniMax-M2.1 等模型',
+    xita: '矽塔 AntChat - Anthropic 兼容端点，支持 DeepSeek-R1、Claude、GPT-4o 等模型',
     custom: '自定义 API，需兼容 Anthropic 格式',
   };
 

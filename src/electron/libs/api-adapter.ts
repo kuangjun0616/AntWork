@@ -35,7 +35,7 @@ const providerDefaultsCache = new Map<ApiProvider, {
  * 所有厂商都与 Claude Agent SDK 原生兼容
  */
 const RECOMMENDED_PROVIDERS: Set<ApiProvider> = new Set([
-  'anthropic', 'zhipu', 'deepseek', 'alibaba', 'qiniu', 'moonshot', 'n1n', 'minimax', 'custom'
+  'anthropic', 'zhipu', 'deepseek', 'alibaba', 'qiniu', 'moonshot', 'n1n', 'minimax', 'xita', 'custom'
 ]);
 
 /**
@@ -84,6 +84,11 @@ const PROVIDER_DEFAULTS: Record<ApiProvider, { baseURL: string; models: string[]
     baseURL: 'https://api.minimaxi.com/anthropic',
     models: ['MiniMax-M2.1', 'MiniMax-M2.1-lightning', 'MiniMax-M2'],
     defaultModel: 'MiniMax-M2.1',
+  },
+  xita: {
+    baseURL: 'https://antchat.alipay.com',
+    models: ['DeepSeek-R1', 'DeepSeek-V3', 'claude-sonnet-4-20250514', 'gpt-4o'],
+    defaultModel: 'DeepSeek-R1',
   },
   // 自定义
   custom: {

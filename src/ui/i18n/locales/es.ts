@@ -91,7 +91,7 @@ export default {
 			title: "Reporte de Error",
 			description: "Enve reportes de problemas en GitHub",
 			link: "Ir a GitHub",
-			url: "https://github.com/Pan519/AICowork",
+			url: "https://github.com/BrainPicker-L/AICowork",
 		},
 		featureRequest: {
 			title: "Solicitud de Caracterstica",
