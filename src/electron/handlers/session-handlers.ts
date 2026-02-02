@@ -144,11 +144,13 @@ export function handleSessionContinue(
     }
   }
 
-  // If session has no claudeSessionId, treat this as the first prompt
-  if (!session.claudeSessionId) {
-    log.session(sessionId, "Starting session (no claudeSessionId)", { title: session.title });
-    const startTime = Date.now();
-
+  // ✅ 检查是否已有运行中的 runner
+  const existingHandle = runnerHandles.get(sessionId);
+  
+  if (existingHandle) {
+    // ✅ 已有 runner，直接添加新的用户输入到队列
+    log.session(sessionId, "Adding user input to existing session");
+    
     sessions.updateSession(sessionId, { status: "running", lastPrompt: prompt });
     emit({
       type: "session.status",
@@ -160,39 +162,15 @@ export function handleSessionContinue(
       payload: { sessionId, prompt }
     });
 
-    runClaude({
-      prompt,
-      session,
-      resumeSessionId: session.claudeSessionId,
-      onEvent: emit,
-      onSessionUpdate: (updates) => {
-        sessions.updateSession(sessionId, updates);
-      }
-    })
-      .then((handle) => {
-        runnerHandles.set(sessionId, handle);
-        const duration = Date.now() - startTime;
-        log.performance(`Session ${sessionId} start`, duration);
-      })
-      .catch((error) => {
-        log.error(`Session ${sessionId} failed to start`, error);
-        sessions.updateSession(sessionId, { status: "error" });
-        emit({
-          type: "session.status",
-          payload: {
-            sessionId,
-            status: "error",
-            title: session.title,
-            cwd: session.cwd,
-            error: String(error)
-          }
-        });
-      });
-
+    // ✅ 向队列添加新输入，触发 generator yield
+    existingHandle.addUserInput(prompt);
     return;
   }
 
-  // Normal continue with existing session
+  // ✅ 没有 runner，创建新的（第一次对话）
+  log.session(sessionId, "Starting new session");
+  const startTime = Date.now();
+
   sessions.updateSession(sessionId, { status: "running", lastPrompt: prompt });
   emit({
     type: "session.status",
@@ -215,8 +193,11 @@ export function handleSessionContinue(
   })
     .then((handle) => {
       runnerHandles.set(sessionId, handle);
+      const duration = Date.now() - startTime;
+      log.performance(`Session ${sessionId} start`, duration);
     })
     .catch((error) => {
+      log.error(`Session ${sessionId} failed to start`, error);
       sessions.updateSession(sessionId, { status: "error" });
       emit({
         type: "session.status",

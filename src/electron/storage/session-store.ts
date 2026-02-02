@@ -294,3 +294,39 @@ export class SessionStore {
     this.db.close();
   }
 }
+
+// ========== SessionStore 实例管理 ==========
+
+/**
+ * 全局 SessionStore 实例
+ * 用于在 runner 中访问会话历史
+ */
+let sessionStoreInstance: SessionStore | null = null;
+
+/**
+ * 初始化 SessionStore 实例
+ * 应在应用启动时调用
+ * 
+ * @param dbPath - 数据库文件路径
+ * @returns SessionStore 实例
+ */
+export function initSessionStore(dbPath: string): SessionStore {
+  if (!sessionStoreInstance) {
+    sessionStoreInstance = new SessionStore(dbPath);
+  }
+  return sessionStoreInstance;
+}
+
+/**
+ * 获取 SessionStore 实例
+ * 用于在 runner 等模块中访问会话历史
+ * 
+ * @returns SessionStore 实例
+ * @throws 如果 SessionStore 未初始化则抛出错误
+ */
+export function getSessionStore(): SessionStore {
+  if (!sessionStoreInstance) {
+    throw new Error('SessionStore not initialized. Call initSessionStore first.');
+  }
+  return sessionStoreInstance;
+}

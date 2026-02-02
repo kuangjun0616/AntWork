@@ -3,8 +3,9 @@
  * 负责协调 Claude SDK 会话的执行
  */
 
-import { query, type SDKMessage } from "@qwen-code/sdk";
+import { query, type SDKMessage, type SDKUserMessage } from "@qwen-code/sdk";
 import type { RunnerOptions, RunnerHandle, MemoryConfig } from "./types.js";
+import { UserInputQueue } from "../user-input-queue.js";
 
 import {
   buildEnvForConfig,
@@ -22,6 +23,64 @@ import { createPermissionHandler, handleToolUseEvent, mapPermissionMode } from "
 import { clearMcpServerCache } from "../../managers/mcp-server-manager.js";
 
 const DEFAULT_CWD = process.cwd();
+
+// ========== 历史消息处理 ==========
+
+/**
+ * 创建持久的对话流生成器
+ * 这个 generator 会一直运行，持续从队列中读取用户输入并 yield
+ * SDK 会自动通过 session_id 维护对话历史
+ * 
+ * 参考：https://github.com/QwenLM/qwen-code-examples/blob/main/sdk/demo/cli-chatbot.ts
+ * 
+ * @param inputQueue - 用户输入队列
+ * @param sdkSessionId - SDK 会话 ID
+ * @param initialPrompt - 第一个用户输入
+ * @returns AsyncIterable<SDKUserMessage> 格式的消息流
+ */
+async function* createConversationStream(
+  inputQueue: any,
+  sdkSessionId: string,
+  initialPrompt: string
+): AsyncIterable<SDKUserMessage> {
+  const { log } = await import("../../logger.js");
+  
+  // ✅ 先 yield 第一个消息
+  log.info(`[Runner] Yielding initial prompt for session ${sdkSessionId}`);
+  yield {
+    type: 'user',
+    uuid: crypto.randomUUID(),
+    session_id: sdkSessionId,
+    message: {
+      role: 'user',
+      content: initialPrompt
+    },
+    parent_tool_use_id: null
+  };
+
+  // ✅ 持续等待后续的用户输入
+  while (true) {
+    log.info(`[Runner] Waiting for next user input for session ${sdkSessionId}`);
+    const nextPrompt = await inputQueue.getNextInput();
+    
+    if (nextPrompt === null) {
+      log.info(`[Runner] Input queue closed for session ${sdkSessionId}`);
+      break;
+    }
+    
+    log.info(`[Runner] Yielding next prompt for session ${sdkSessionId}`);
+    yield {
+      type: 'user',
+      uuid: crypto.randomUUID(),
+      session_id: sdkSessionId,
+      message: {
+        role: 'user',
+        content: nextPrompt
+      },
+      parent_tool_use_id: null
+    };
+  }
+}
 
 // ========== 全局缓存 - 跨会话复用 ==========
 
@@ -52,6 +111,9 @@ export { triggerAutoMemoryAnalysis } from "./memory-manager.js";
 export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
   const { prompt, session, resumeSessionId, onEvent, onSessionUpdate } = options;
   const abortController = new AbortController();
+  
+  // ✅ 在函数顶层创建 inputQueue，确保 return 语句可以访问
+  const inputQueue = new UserInputQueue();
 
   // 开始性能监控
   const perfMonitor = new PerformanceMonitor();
@@ -217,9 +279,23 @@ export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
       }
       // ========== 结束：API 请求信息记录 ==========
 
+      // ✅ 判断是新会话还是继续会话
+      const isNewSession = session.claudeSessionId === undefined;
+      
+      let sdkSessionId: string;
+      if (isNewSession) {
+        // 新会话：生成新的 session_id
+        sdkSessionId = crypto.randomUUID();
+        log.info(`[Runner] Creating new session with SDK session: ${sdkSessionId}`);
+      } else {
+        // 继续会话：使用已有的 session_id
+        sdkSessionId = session.claudeSessionId!;
+        log.info(`[Runner] Continuing session with SDK session: ${sdkSessionId}`);
+      }
+
       const q = query({
-        // ✅ 使用增强后的 prompt（包含用户设置的语言偏好）
-        prompt: enhancedPrompt,
+        // ✅ 使用持久的 generator，一直运行直到会话关闭
+        prompt: createConversationStream(inputQueue, sdkSessionId, enhancedPrompt),
         options: {
           cwd: session.cwd ?? DEFAULT_CWD,
           // ❌ Qwen SDK 不支持 resume 参数，会话恢复功能已移除
@@ -330,7 +406,16 @@ export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
   })();
 
   return {
-    abort: () => abortController.abort()
+    abort: () => {
+      log.info(`[Runner] Aborting session ${session.id}`);
+      inputQueue.close();  // ✅ 关闭队列
+      abortController.abort();
+    },
+    // ✅ 添加方法来接收新的用户输入
+    addUserInput: (prompt: string) => {
+      log.info(`[Runner] Adding user input to queue for session ${session.id}`);
+      inputQueue.addInput(prompt);
+    }
   };
 }
 

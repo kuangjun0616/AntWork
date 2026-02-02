@@ -50,7 +50,16 @@ export function usePromptActions(sendEvent: (event: ClientEvent) => void) {
   const handleSend = useCallback(async () => {
     if (!prompt.trim()) return;
 
+    // ✅ 添加调试日志
+    console.log('=== [PromptInput] handleSend called ===');
+    console.log('[PromptInput] activeSessionId:', activeSessionId);
+    console.log('[PromptInput] activeSession:', activeSession);
+    console.log('[PromptInput] sessions:', sessions);
+    console.log('[PromptInput] prompt:', prompt);
+
     if (!activeSessionId) {
+      console.log('[PromptInput] ❌ No activeSessionId - Creating new session');
+      
       // 安全检查：确保 window.electron 已加载
       if (!window.electron) {
         log.error("window.electron is not available");
@@ -62,6 +71,7 @@ export function usePromptActions(sendEvent: (event: ClientEvent) => void) {
       try {
         setPendingStart(true);
         title = await window.electron.generateSessionTitle(prompt);
+        console.log('[PromptInput] Generated title:', title);
       } catch (error) {
         log.error("Failed to generate session title", error);
         setPendingStart(false);
@@ -69,15 +79,21 @@ export function usePromptActions(sendEvent: (event: ClientEvent) => void) {
         return;
       }
       
+      console.log('[PromptInput] Sending session.start event');
       sendEvent({
         type: "session.start",
         payload: { title, prompt, cwd: cwd.trim() || undefined, allowedTools: DEFAULT_ALLOWED_TOOLS }
       });
     } else {
+      console.log('[PromptInput] ✅ Has activeSessionId - Continuing session:', activeSessionId);
+      
       if (activeSession?.status === "running") {
+        console.log('[PromptInput] ⚠️ Session is still running');
         setGlobalError(t("errors.sessionStillRunning"));
         return;
       }
+      
+      console.log('[PromptInput] Sending session.continue event');
       // 继续会话时，传递当前的工作目录（可能已经被用户修改）
       sendEvent({ 
         type: "session.continue", 
@@ -89,7 +105,7 @@ export function usePromptActions(sendEvent: (event: ClientEvent) => void) {
       });
     }
     setPrompt("");
-  }, [activeSession, activeSessionId, cwd, prompt, sendEvent, setGlobalError, setPendingStart, setPrompt, t]);
+  }, [activeSession, activeSessionId, cwd, prompt, sendEvent, setGlobalError, setPendingStart, setPrompt, sessions, t]);
 
   /**
    * 停止会话

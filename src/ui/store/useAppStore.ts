@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import type { ServerEvent, SessionStatus, StreamMessage } from "../types";
 
 export type PermissionRequest = {
@@ -83,39 +84,47 @@ function createSession(id: string): SessionView {
   return { id, title: "", status: "idle", messages: [], permissionRequests: [], hydrated: false };
 }
 
-export const useAppStore = create<AppState>((set, get) => ({
-  sessions: {},
-  activeSessionId: null,
-  prompt: "",
-  cwd: "",
-  pendingStart: false,
-  globalError: null,
-  sessionsLoaded: false,
-  showStartModal: false,
-  showSettingsModal: false,
-  historyRequested: new Set(),
-  apiConfigChecked: false,
-  selectedModelConfigId: null, // 新增：初始化为 null
+export const useAppStore = create<AppState>()(
+  persist(
+    (set, get) => ({
+      sessions: {},
+      activeSessionId: null,
+      prompt: "",
+      cwd: "",
+      pendingStart: false,
+      globalError: null,
+      sessionsLoaded: false,
+      showStartModal: false,
+      showSettingsModal: false,
+      historyRequested: new Set(),
+      apiConfigChecked: false,
+      selectedModelConfigId: null, // 新增：初始化为 null
 
-  // 新增：页面状态
-  currentPage: 'main',
-  settingsSection: 'api' as SettingsSection,
+      // 新增：页面状态
+      currentPage: 'main',
+      settingsSection: 'api' as SettingsSection,
 
-  setPrompt: (prompt) => set({ prompt }),
-  setCwd: (cwd) => set({ cwd }),
-  setPendingStart: (pendingStart) => set({ pendingStart }),
-  setGlobalError: (globalError) => set({ globalError }),
-  setShowStartModal: (showStartModal) => set({ showStartModal }),
-  setShowSettingsModal: (showSettingsModal) => set({ showSettingsModal }),
-  setActiveSessionId: (id) => set({ activeSessionId: id }),
-  setApiConfigChecked: (apiConfigChecked) => set({ apiConfigChecked }),
-  setSelectedModelConfigId: (configId) => set({ selectedModelConfigId: configId }), // 新增：设置方法
+      setPrompt: (prompt) => set({ prompt }),
+      setCwd: (cwd) => set({ cwd }),
+      setPendingStart: (pendingStart) => set({ pendingStart }),
+      setGlobalError: (globalError) => set({ globalError }),
+      setShowStartModal: (showStartModal) => set({ showStartModal }),
+      setShowSettingsModal: (showSettingsModal) => set({ showSettingsModal }),
+      setActiveSessionId: (id) => {
+        console.log('=== [useAppStore] setActiveSessionId called ===');
+        console.log('[useAppStore] Old activeSessionId:', get().activeSessionId);
+        console.log('[useAppStore] New activeSessionId:', id);
+        console.trace('[useAppStore] Stack trace:');
+        set({ activeSessionId: id });
+      },
+      setApiConfigChecked: (apiConfigChecked) => set({ apiConfigChecked }),
+      setSelectedModelConfigId: (configId) => set({ selectedModelConfigId: configId }), // 新增：设置方法
 
-  // 新增：页面切换方法
-  setCurrentPage: (currentPage) => set({ currentPage }),
-  setSettingsSection: (settingsSection) => set({ settingsSection }),
+      // 新增：页面切换方法
+      setCurrentPage: (currentPage) => set({ currentPage }),
+      setSettingsSection: (settingsSection) => set({ settingsSection }),
 
-  renameSession: (sessionId, newTitle) => {
+      renameSession: (sessionId, newTitle) => {
     set((state) => {
       const existing = state.sessions[sessionId];
       if (!existing) return {};
@@ -129,18 +138,18 @@ export const useAppStore = create<AppState>((set, get) => ({
           }
         }
       };
-    });
-  },
+      });
+      },
 
-  markHistoryRequested: (sessionId) => {
+      markHistoryRequested: (sessionId) => {
     set((state) => {
       const next = new Set(state.historyRequested);
       next.add(sessionId);
-      return { historyRequested: next };
-    });
-  },
+        return { historyRequested: next };
+      });
+      },
 
-  resolvePermissionRequest: (sessionId, toolUseId) => {
+      resolvePermissionRequest: (sessionId, toolUseId) => {
     set((state) => {
       const existing = state.sessions[sessionId];
       if (!existing) return {};
@@ -151,16 +160,16 @@ export const useAppStore = create<AppState>((set, get) => ({
             ...existing,
             permissionRequests: existing.permissionRequests.filter(req => req.toolUseId !== toolUseId)
           }
-        }
-      };
-    });
-  },
+          }
+        };
+      });
+      },
 
-  handleServerEvent: (event) => {
-    const state = get();
+          handleServerEvent: (event) => {
+        const state = get();
 
-    switch (event.type) {
-      case "session.list": {
+        switch (event.type) {
+          case "session.list": {
         const nextSessions: Record<string, SessionView> = {};
         for (const session of event.payload.sessions) {
           const existing = state.sessions[session.id] ?? createSession(session.id);
@@ -179,10 +188,9 @@ export const useAppStore = create<AppState>((set, get) => ({
         const hasSessions = event.payload.sessions.length > 0;
         set({ showStartModal: !hasSessions });
 
-        if (!hasSessions) {
-          get().setActiveSessionId(null);
-        }
-
+        // ✅ 只在首次加载且没有 activeSessionId 时才自动选择最新会话
+        // 不再在 session.list 中清空 activeSessionId，避免会话完成后刷新列表时错误清空
+        // activeSessionId 只应该由 session.deleted 事件清空
         if (!state.activeSessionId && event.payload.sessions.length > 0) {
           const sorted = [...event.payload.sessions].sort((a, b) => {
             const aTime = a.updatedAt ?? a.createdAt ?? 0;
@@ -193,18 +201,11 @@ export const useAppStore = create<AppState>((set, get) => ({
           if (latestSession) {
             get().setActiveSessionId(latestSession.id);
           }
-        } else if (state.activeSessionId) {
-          const stillExists = event.payload.sessions.some(
-            (session) => session.id === state.activeSessionId
-          );
-          if (!stillExists) {
-            get().setActiveSessionId(null);
-          }
         }
-        break;
-      }
+            break;
+          }
 
-      case "session.history": {
+          case "session.history": {
         const { sessionId, messages, status } = event.payload;
         set((state) => {
           const existing = state.sessions[sessionId] ?? createSession(sessionId);
@@ -214,12 +215,19 @@ export const useAppStore = create<AppState>((set, get) => ({
               [sessionId]: { ...existing, status, messages, hydrated: true }
             }
           };
-        });
-        break;
-      }
+          });
+            break;
+          }
 
-      case "session.status": {
+          case "session.status": {
         const { sessionId, status, title, cwd } = event.payload;
+        
+        console.log('=== [useAppStore] session.status event ===');
+        console.log('[useAppStore] sessionId:', sessionId);
+        console.log('[useAppStore] status:', status);
+        console.log('[useAppStore] current activeSessionId:', state.activeSessionId);
+        console.log('[useAppStore] pendingStart:', state.pendingStart);
+        
         set((state) => {
           const existing = state.sessions[sessionId] ?? createSession(sessionId);
           return {
@@ -236,14 +244,23 @@ export const useAppStore = create<AppState>((set, get) => ({
           };
         });
 
+        // ✅ 修复：确保 activeSessionId 被正确设置
         if (state.pendingStart) {
+          console.log('[useAppStore] pendingStart is true, setting activeSessionId to:', sessionId);
           get().setActiveSessionId(sessionId);
           set({ pendingStart: false, showStartModal: false });
         }
-        break;
-      }
+        // ✅ 新增：如果当前没有活跃会话，且这是一个新启动的会话，设置为活跃
+        else if (!state.activeSessionId && status === "running") {
+          console.log('[useAppStore] No activeSessionId and status is running, setting activeSessionId to:', sessionId);
+          get().setActiveSessionId(sessionId);
+        } else {
+          console.log('[useAppStore] Not setting activeSessionId (pendingStart:', state.pendingStart, ', activeSessionId:', state.activeSessionId, ', status:', status, ')');
+          }
+            break;
+          }
 
-      case "session.deleted": {
+          case "session.deleted": {
         const { sessionId } = event.payload;
         const state = get();
 
@@ -266,11 +283,11 @@ export const useAppStore = create<AppState>((set, get) => ({
             (a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0)
           );
           get().setActiveSessionId(remaining[0]?.id ?? null);
-        }
-        break;
-      }
+          }
+            break;
+          }
 
-      case "stream.message": {
+          case "stream.message": {
         const { sessionId, message } = event.payload;
         set((state) => {
           const existing = state.sessions[sessionId] ?? createSession(sessionId);
@@ -280,11 +297,11 @@ export const useAppStore = create<AppState>((set, get) => ({
               [sessionId]: { ...existing, messages: [...existing.messages, message] }
             }
           };
-        });
-        break;
-      }
+          });
+            break;
+          }
 
-      case "stream.user_prompt": {
+          case "stream.user_prompt": {
         const { sessionId, prompt } = event.payload;
         set((state) => {
           const existing = state.sessions[sessionId] ?? createSession(sessionId);
@@ -297,11 +314,11 @@ export const useAppStore = create<AppState>((set, get) => ({
               }
             }
           };
-        });
-        break;
-      }
+          });
+            break;
+          }
 
-      case "permission.request": {
+          case "permission.request": {
         const { sessionId, toolUseId, toolName, input } = event.payload;
         set((state) => {
           const existing = state.sessions[sessionId] ?? createSession(sessionId);
@@ -314,16 +331,16 @@ export const useAppStore = create<AppState>((set, get) => ({
               }
             }
           };
-        });
-        break;
-      }
+          });
+            break;
+          }
 
-      case "runner.error": {
-        set({ globalError: event.payload.message });
-        break;
-      }
+          case "runner.error": {
+            set({ globalError: event.payload.message });
+            break;
+          }
 
-      case "memory.status": {
+          case "memory.status": {
         const { sessionId, stored, title, message } = event.payload;
         set((state) => {
           const existing = state.sessions[sessionId] ?? createSession(sessionId);
@@ -339,11 +356,23 @@ export const useAppStore = create<AppState>((set, get) => ({
                   timestamp: Date.now()
                 }
               }
-            }
-          };
-        });
-        break;
+              }
+            };
+          });
+            break;
+          }
+        }
       }
+    }),
+    {
+      name: 'aicowork-app-storage',
+      partialize: (state) => ({
+        activeSessionId: state.activeSessionId,
+        cwd: state.cwd,
+        selectedModelConfigId: state.selectedModelConfigId,
+        currentPage: state.currentPage,
+        settingsSection: state.settingsSection,
+      }),
     }
-  }
-}));
+  )
+);

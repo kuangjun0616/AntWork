@@ -1,7 +1,7 @@
 import { BrowserWindow, app, ipcMain } from "electron";
 import type { ClientEvent, ServerEvent } from "./types.js";
 import type { RunnerHandle } from "./libs/runner.js";
-import { SessionStore } from './storage/session-store.js';
+import { SessionStore, initSessionStore } from './storage/session-store.js';
 import { join } from "path";
 import { log } from "./logger.js";
 import { setAILanguagePreference, getAILanguagePreference } from "./services/language-preference-store.js";
@@ -20,11 +20,16 @@ import type { ApiConfig } from './storage/config-store.js';
 let sessions: SessionStore;
 const runnerHandles = new Map<string, RunnerHandle>();
 
+/**
+ * 初始化 SessionStore
+ * 使用全局单例模式，确保 runner 也能访问同一个实例
+ */
 function initializeSessions() {
   if (!sessions) {
     const DB_PATH = join(app.getPath("userData"), "sessions.db");
     log.info(`Initializing session store at: ${DB_PATH}`);
-    sessions = new SessionStore(DB_PATH);
+    // 使用新的 initSessionStore 函数，确保全局单例
+    sessions = initSessionStore(DB_PATH);
   }
   return sessions;
 }

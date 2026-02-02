@@ -28,6 +28,8 @@ export type RunnerOptions = {
 export type RunnerHandle = {
   /** 中止当前运行 */
   abort: () => void;
+  /** 添加新的用户输入到队列 */
+  addUserInput: (prompt: string) => void;
 };
 
 /**
