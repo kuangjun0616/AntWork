@@ -9,10 +9,8 @@ import { AboutSection } from './sections/AboutSection';
 import { LanguageSection } from './sections/LanguageSection';
 import { ApiSection } from './sections/ApiSection';
 import { McpSection } from './sections/McpSection';
-import { PermissionsSection } from './sections/PermissionsSection';
-import { OutputSection } from './sections/OutputSection';
-import { RulesSection } from './sections/RulesSection';
-import { ClaudeMdSection } from './sections/ClaudeMdSection';
+import { SkillsSection } from './sections/SkillsSection';
+import { JarvisSection } from './sections/JarvisSection';
 
 interface SettingsContentProps {
   className?: string;
@@ -50,14 +48,10 @@ export function SettingsContent({ className }: SettingsContentProps) {
         return <ApiSection />;
       case 'mcp':
         return <McpSection />;
-      case 'permissions':
-        return <PermissionsSection />;
-      case 'output':
-        return <OutputSection />;
-      case 'rules':
-        return <RulesSection />;
-      case 'claudeMd':
-        return <ClaudeMdSection />;
+      case 'skills':
+        return <SkillsSection />;
+      case 'jarvis':
+        return <JarvisSection />;
       default:
         return (
           <PlaceholderSection

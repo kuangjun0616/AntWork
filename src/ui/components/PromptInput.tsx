@@ -233,18 +233,23 @@ export function PromptInput({ sendEvent, onSendMessage, disabled = false }: Prom
 
   /**
    * 处理键盘事件
-   * Enter 发送消息，Shift+Enter 换行
+   * Command+Enter (Mac) 或 Ctrl+Enter (Windows/Linux) 发送消息
+   * Enter 换行
    */
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (disabled && !isRunning) return;
-    if (e.key !== "Enter" || e.shiftKey) return;
-    e.preventDefault();
-    if (isRunning) {
-      handleStop();
-      return;
+    
+    // 只有按下 Command+Enter (Mac) 或 Ctrl+Enter (Windows/Linux) 才发送
+    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      if (isRunning) {
+        handleStop();
+        return;
+      }
+      onSendMessage?.();
+      handleSend();
     }
-    onSendMessage?.();
-    handleSend();
+    // Enter 键单独按下时换行（默认行为，不需要特殊处理）
   };
 
   /**
@@ -373,28 +378,37 @@ export function PromptInput({ sendEvent, onSendMessage, disabled = false }: Prom
               </select>
 
               {/* 发送/停止按钮 */}
-              <button
-                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors disabled:opacity-60 cursor-pointer ${
-                  isRunning
-                    ? "bg-error text-white hover:bg-error/90"
-                    : "bg-accent text-white hover:bg-accent-hover"
-                }`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleButtonClick();
-                }}
-                aria-label={isRunning ? t("promptInput.stopSession") : t("promptInput.sendPrompt")}
-              >
-                {isRunning ? (
-                  <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
-                    <rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" />
-                  </svg>
-                ) : (
-                  <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
-                    <path d="M3.4 20.6 21 12 3.4 3.4l2.8 7.2L16 12l-9.8 1.4-2.8 7.2Z" fill="currentColor" />
-                  </svg>
+              <div className="relative">
+                <button
+                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors disabled:opacity-60 cursor-pointer ${
+                    isRunning
+                      ? "bg-error text-white hover:bg-error/90"
+                      : "bg-accent text-white hover:bg-accent-hover"
+                  }`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleButtonClick();
+                  }}
+                  aria-label={isRunning ? t("promptInput.stopSession") : t("promptInput.sendPrompt")}
+                  title={isRunning ? t("promptInput.stopSession") : "⌘ + Enter"}
+                >
+                  {isRunning ? (
+                    <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
+                      <rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" />
+                    </svg>
+                  ) : (
+                    <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
+                      <path d="M3.4 20.6 21 12 3.4 3.4l2.8 7.2L16 12l-9.8 1.4-2.8 7.2Z" fill="currentColor" />
+                    </svg>
+                  )}
+                </button>
+                {/* 快捷键提示标识 */}
+                {!isRunning && (
+                  <div className="absolute -top-1 -right-1 flex items-center justify-center w-4 h-4 bg-surface border border-ink-900/10 rounded text-[9px] font-medium text-muted pointer-events-none">
+                    ⌘
+                  </div>
                 )}
-              </button>
+              </div>
             </div>
           </div>
         </div>

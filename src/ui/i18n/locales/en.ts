@@ -51,6 +51,7 @@ export default {
 			language: "Language",
 			api: "API Settings",
 			mcp: "MCP Settings",
+			skills: "Skills",
 			permissions: "Permissions",
 			output: "Output Styles",
 			rules: "Rules",

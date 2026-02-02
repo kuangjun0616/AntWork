@@ -95,7 +95,7 @@ import {
 // 导入 Skills 存储函数
 import {
   getSkillsList,
-  createSkill,
+  importSkill,
   deleteSkill,
   getSkillDetail,
 } from "../storage/skills-store.js";
@@ -521,15 +521,19 @@ function registerMemoryHandlers(): void {
  */
 function registerSkillsHandlers(): void {
     ipcMain.handle("get-skills-list", () => getSkillsList());
-    ipcMain.handle("create-skill", wrapIpcHandler("create-skill", async (_: unknown, config: any) => {
-        return await createSkill(config);
+    
+    // 导入技能（从指定目录复制到 ~/.qwen/skills/）
+    ipcMain.handle("import-skill", wrapIpcHandler("import-skill", async (_: unknown, sourcePath: string) => {
+        return await importSkill(sourcePath);
     }));
+    
     ipcMain.handle("delete-skill", wrapIpcHandler("delete-skill", async (_: unknown, skillName: string) => {
         return await deleteSkill(skillName);
     }));
+    
     ipcMain.handle("get-skill-detail", (_: unknown, skillName: string) => getSkillDetail(skillName));
 
-    // 打开 Skills 目录
+    // 打开 Skills 目录（SDK 标准位置）
     ipcMain.handle("open-skills-directory", async () => {
         const skillsDir = path.join(homedir(), '.qwen', 'skills');
         await shell.openPath(skillsDir);
@@ -644,6 +648,81 @@ function registerMcpHandlers(): void {
     });
 }
 
+// ==================== Jarvis 配置处理器 ====================
+
+/**
+ * 注册贾维斯配置相关 IPC 处理器
+ */
+function registerJarvisHandlers(): void {
+    // 导出贾维斯配置
+    ipcMain.handle("export-jarvis-config", wrapIpcHandler("export-jarvis-config", 
+        async (_: unknown, metadata: any, outputPath: string) => {
+            const { exportJarvisConfig } = await import("../storage/jarvis-store.js");
+            return await exportJarvisConfig(metadata, outputPath);
+        }
+    ));
+    
+    // 预览贾维斯配置
+    ipcMain.handle("preview-jarvis-config", wrapIpcHandler("preview-jarvis-config",
+        async (_: unknown, jarvisPath: string) => {
+            const { previewJarvisConfig } = await import("../storage/jarvis-store.js");
+            return await previewJarvisConfig(jarvisPath);
+        }
+    ));
+    
+    // 导入贾维斯配置
+    ipcMain.handle("import-jarvis-config", wrapIpcHandler("import-jarvis-config",
+        async (_: unknown, jarvisPath: string, options: any) => {
+            const { importJarvisConfig } = await import("../storage/jarvis-store.js");
+            return await importJarvisConfig(jarvisPath, options);
+        }
+    ));
+    
+    // 选择保存路径对话框
+    ipcMain.handle("save-jarvis-dialog", async () => {
+        const mainWindow = getMainWindow();
+        if (!mainWindow) {
+            throw new Error("Main window not available");
+        }
+
+        const result = await dialog.showSaveDialog(mainWindow, {
+            title: '保存贾维斯配置',
+            defaultPath: 'my-jarvis.jarvis',
+            filters: [
+                { name: 'Jarvis Config', extensions: ['jarvis'] }
+            ]
+        });
+
+        if (result.canceled) {
+            return null;
+        }
+
+        return result.filePath;
+    });
+    
+    // 选择打开文件对话框
+    ipcMain.handle("open-jarvis-dialog", async () => {
+        const mainWindow = getMainWindow();
+        if (!mainWindow) {
+            throw new Error("Main window not available");
+        }
+
+        const result = await dialog.showOpenDialog(mainWindow, {
+            title: '选择贾维斯配置文件',
+            filters: [
+                { name: 'Jarvis Config', extensions: ['jarvis'] }
+            ],
+            properties: ['openFile']
+        });
+
+        if (result.canceled) {
+            return null;
+        }
+
+        return result.filePaths[0];
+    });
+}
+
 // ==================== 主注册函数 ====================
 
 /**
@@ -662,6 +741,7 @@ export function registerIpcHandlers(): void {
     registerMemoryHandlers();
     registerSkillsHandlers();
     registerMcpHandlers();
+    registerJarvisHandlers();
 
     // 启动资源轮询
     const mainWindow = getMainWindow();

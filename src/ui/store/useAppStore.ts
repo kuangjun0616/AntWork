@@ -38,10 +38,8 @@ export type SettingsSection =
   | 'language'
   | 'api'
   | 'mcp'
-  | 'permissions'
-  | 'output'
-  | 'rules'
-  | 'claudeMd';
+  | 'skills'
+  | 'jarvis';
 
 interface AppState {
   sessions: Record<string, SessionView>;

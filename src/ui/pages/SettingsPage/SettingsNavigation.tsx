@@ -8,11 +8,9 @@ import {
   Info,
   Key,
   Plug,
-  Shield,
-  Palette,
   Languages,
-  FileText,
-  FileCode
+  Zap,
+  Package
 } from 'lucide-react';
 import type { SettingsSection } from '../../store/useAppStore';
 
@@ -38,17 +36,11 @@ const SETTINGS_SECTIONS: SectionDef[] = [
   // API 配置
   { id: 'api', icon: Key, group: 'api' },
   { id: 'mcp', icon: Plug, group: 'api' },
-
-  // 功能扩展
-  { id: 'rules', icon: FileText, group: 'features' },
-  { id: 'claudeMd', icon: FileCode, group: 'features' },
-
-  // 系统
-  { id: 'permissions', icon: Shield, group: 'system' },
-  { id: 'output', icon: Palette, group: 'system' },
+  { id: 'skills', icon: Zap, group: 'api' },
+  { id: 'jarvis', icon: Package, group: 'api' },
 ];
 
-const GROUP_ORDER: Array<SectionDef['group']> = ['general', 'api', 'features', 'system'];
+const GROUP_ORDER: Array<SectionDef['group']> = ['general', 'api'];
 
 export function SettingsNavigation({ activeSection, onSectionChange, className }: SettingsNavigationProps) {
   const { t } = useTranslation();

@@ -94,6 +94,66 @@ export interface SkillConfig {
   updatedAt?: number;
 }
 
+/** 贾维斯元信息 */
+export interface JarvisMetadata {
+  name: string;
+  description: string;
+  version: string;
+  author: string;
+  authorEmail?: string;
+  tags: string[];
+}
+
+/** MCP 服务器配置（扩展） */
+export interface JarvisMcpServerConfig extends McpServerConfig {
+  description?: string;
+  requiresUserInput?: Record<string, {
+    description: string;
+    type: 'text' | 'password';
+    required: boolean;
+  }>;
+}
+
+/** 贾维斯完整配置 */
+export interface JarvisConfig {
+  jarvis: JarvisMetadata & {
+    createdAt: string;
+    updatedAt: string;
+  };
+  mcpServers: Record<string, JarvisMcpServerConfig>;
+  skills: string[];
+  dependencies: {
+    npm: string[];
+    python: string[];
+  };
+  statistics: {
+    mcpServersCount: number;
+    skillsCount: number;
+    totalSize: string;
+  };
+}
+
+/** 贾维斯导入选项 */
+export interface ImportOptions {
+  skipExisting?: boolean;
+  overwrite?: boolean;
+  userInputs?: Record<string, Record<string, string>>;
+}
+
+/** 贾维斯导入结果 */
+export interface ImportResult {
+  success: boolean;
+  imported: {
+    mcpServers: string[];
+    skills: string[];
+  };
+  skipped: {
+    mcpServers: string[];
+    skills: string[];
+  };
+  errors: string[];
+}
+
 /** 技能标签 */
 export interface SkillTag {
   id: string;
@@ -237,7 +297,7 @@ export interface ElectronAPI {
   getMcpTemplates: () => Promise<Record<string, McpServerConfig>>;
   /** Skills 操作 */
   getSkillsList: () => Promise<SkillConfig[]>;
-  createSkill: (config: { name: string; description: string; prompt: string; script?: { type: 'javascript' | 'python'; content?: string; path?: string } }) => Promise<{ success: boolean; error?: string }>;
+  importSkill: (sourcePath: string) => Promise<{ success: boolean; error?: string }>;
   deleteSkill: (skillName: string) => Promise<{ success: boolean; error?: string }>;
   openSkillsDirectory: () => Promise<{ success: boolean; error?: string }>;
   openPluginsDirectory: () => Promise<{ success: boolean; error?: string }>;
@@ -299,6 +359,12 @@ export interface ElectronAPI {
   saveClaudeConfig: (content: string) => Promise<{ success: boolean; error?: string }>;
   deleteClaudeConfig: () => Promise<{ success: boolean; error?: string }>;
   openClaudeDirectory: () => Promise<{ success: boolean; error?: string }>;
+  /** Jarvis 配置操作 */
+  exportJarvisConfig: (metadata: JarvisMetadata, outputPath: string) => Promise<{ success: boolean; error?: string }>;
+  previewJarvisConfig: (jarvisPath: string) => Promise<{ success: boolean; config?: JarvisConfig; error?: string }>;
+  importJarvisConfig: (jarvisPath: string, options: ImportOptions) => Promise<ImportResult>;
+  saveJarvisDialog: () => Promise<string | null>;
+  openJarvisDialog: () => Promise<string | null>;
   /** Session Recovery 操作 */
   getSessionsList: () => Promise<SessionInfo[]>;
   getSessionHistory: (sessionId: string) => Promise<any>;

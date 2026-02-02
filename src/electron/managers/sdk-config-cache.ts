@@ -421,6 +421,7 @@ class SdkConfigCacheManager {
     }
   }
 
+
   /**
    * 添加配置变更监听器
    */
@@ -557,6 +558,7 @@ export async function getCachedMemoryMcpServer(): Promise<any> {
   const manager = getConfigCacheManager();
   return await manager.getMemoryMcpServer();
 }
+
 
 /**
  * 添加配置变更监听器

@@ -6,6 +6,15 @@ import { log } from './logger.js';
 export function setupGlobalErrorHandlers(): void {
   // 未捕获的 Promise rejection
   process.on('unhandledRejection', (reason: unknown, promise: Promise<unknown>) => {
+    // ✅ 特殊处理：EPIPE 错误（流式输出时客户端断开连接）
+    // SDK 的异步操作可能会抛出 EPIPE Promise rejection
+    if (reason instanceof Error && (reason.message.includes('EPIPE') || reason.message.includes('write EPIPE'))) {
+      log.warn('[GlobalError] EPIPE error in Promise (client disconnected during streaming)', {
+        message: reason.message,
+      });
+      return; // 忽略此错误，继续运行
+    }
+
     log.error('[GlobalError] Unhandled Promise Rejection', {
       reason: reason instanceof Error ? reason.message : String(reason),
       promise: promise.toString(),

@@ -52,9 +52,9 @@ export interface SkillConfig {
   updatedAt?: number;
 }
 
-// 获取技能目录路径
+// 获取技能目录路径（SDK 标准位置）
 function getSkillsDir(): string {
-  return join(homedir(), '.claude', 'skills');
+  return join(homedir(), '.qwen', 'skills');
 }
 
 // 获取技能文件路径（带安全验证）
@@ -227,92 +227,65 @@ export async function getSkillsList(): Promise<SkillConfig[]> {
 }
 
 /**
- * 创建新技能（使用原子操作防止并发竞争）
+ * 导入技能（从指定目录复制到 ~/.qwen/skills/）
  */
-export async function createSkill(config: SkillConfig): Promise<{ success: boolean; error?: string }> {
+export async function importSkill(sourcePath: string): Promise<{ success: boolean; error?: string }> {
   try {
     await ensureSkillsDir();
 
-    // 验证技能名称（validateSkillName 会检查空值）
-    const cleanName = validateSkillName(config.name);
+    // 获取源目录名称作为技能名称
+    const skillName = basename(sourcePath);
+    
+    // 验证技能名称
+    const cleanName = validateSkillName(skillName);
 
-    const skillDir = getSkillDirPath(cleanName);
-    const skillFile = getSkillFilePath(cleanName);
+    const targetDir = getSkillDirPath(cleanName);
 
-    // 使用原子操作：先写临时文件，再重命名
-    // 这样可以避免并发请求同时通过存在性检查的竞争条件
-    const tempFile = skillFile + '.tmp';
-
-    // 生成 SKILL.md 文件内容
-    const now = Date.now();
-    let content = `# ${cleanName}
-
-## 描述
-${config.description || '自定义技能'}
-
-## 指导
-${config.prompt || ''}
-
----
-*Created: ${new Date(now).toISOString()}*
-`;
-
-    // 如果有脚本配置，添加到 SKILL.md
-    if (config.script) {
-      const scriptSection = `
-## 脚本配置
-- **类型**: ${config.script.type}
-- **路径**: ${config.script.path || '(内嵌脚本)'}
-`;
-      content += scriptSection;
-    }
-
-    // 确保目录存在
-    await fs.mkdir(skillDir, { recursive: true });
-
-    // 先写入临时文件
-    await fs.writeFile(tempFile, content, 'utf-8');
-
-    // 原子性重命名：如果目标文件已存在会失败
+    // 检查目标目录是否已存在
     try {
-      await fs.rename(tempFile, skillFile);
-    } catch (renameError: any) {
-      // 删除临时文件
-      try {
-        await fs.unlink(tempFile);
-      } catch {
-        // 忽略删除临时文件的失败
-      }
-
-      if (renameError.code === 'EEXIST') {
-        return { success: false, error: '技能已存在' };
-      }
-      throw renameError;
+      await fs.access(targetDir);
+      return {
+        success: false,
+        error: `技能 "${cleanName}" 已存在`
+      };
+    } catch {
+      // 目标目录不存在，可以继续
     }
 
-    // 如果有脚本内容，写入脚本文件
-    if (config.script && config.script.content) {
-      const ext = config.script.type === 'javascript' ? 'js' : 'py';
-      const scriptFile = join(skillDir, `${cleanName}.${ext}`);
-      await fs.writeFile(scriptFile, config.script.content, 'utf-8');
-      log.info(`[skills-store] Script file created: ${scriptFile}`);
+    // 检查源目录是否包含 SKILL.md
+    const sourceSkillFile = join(sourcePath, 'SKILL.md');
+    try {
+      await fs.access(sourceSkillFile);
+    } catch {
+      return {
+        success: false,
+        error: '源目录中未找到 SKILL.md 文件'
+      };
     }
 
-    log.info(`[skills-store] Skill created: ${cleanName}`);
+    // 复制整个目录
+    await fs.cp(sourcePath, targetDir, { recursive: true });
 
+    log.info(`[skills-store] Skill imported: ${cleanName}`);
     return { success: true };
-  } catch (error: any) {
-    // 处理验证错误
-    if (error.message && error.message.includes('技能名称')) {
-      return { success: false, error: error.message };
-    }
-
-    log.error('[skills-store] Failed to create skill:', error);
+  } catch (error) {
+    log.error('[skills-store] Failed to import skill:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : '创建技能失败'
+      error: error instanceof Error ? error.message : String(error)
     };
   }
+}
+
+/**
+ * 创建新技能（已废弃，SDK 通过导入方式管理技能）
+ * @deprecated 使用 importSkill 代替
+ */
+export async function createSkill(_config: SkillConfig): Promise<{ success: boolean; error?: string }> {
+  return {
+    success: false,
+    error: '不支持创建技能，请使用导入功能'
+  };
 }
 
 /**

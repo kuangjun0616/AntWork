@@ -88,8 +88,8 @@ electron.contextBridge.exposeInMainWorld("electron", {
     // Skills 操作
     getSkillsList: () =>
         ipcInvoke("get-skills-list"),
-    createSkill: (config: { name: string; description: string; prompt: string; script?: { type: 'javascript' | 'python'; content?: string; path?: string } }) =>
-        ipcInvoke("create-skill", config),
+    importSkill: (sourcePath: string) =>
+        invoke("import-skill", sourcePath),
     deleteSkill: (skillName: string) =>
         ipcInvoke("delete-skill", skillName),
     openSkillsDirectory: () =>
@@ -217,6 +217,17 @@ electron.contextBridge.exposeInMainWorld("electron", {
         ipcInvoke("delete-claude-config"),
     openClaudeDirectory: () =>
         ipcInvoke("open-claude-directory"),
+    // Jarvis 配置操作
+    exportJarvisConfig: (metadata: any, outputPath: string) =>
+        invoke("export-jarvis-config", metadata, outputPath),
+    previewJarvisConfig: (jarvisPath: string) =>
+        invoke("preview-jarvis-config", jarvisPath),
+    importJarvisConfig: (jarvisPath: string, options: any) =>
+        invoke("import-jarvis-config", jarvisPath, options),
+    saveJarvisDialog: () =>
+        invoke("save-jarvis-dialog"),
+    openJarvisDialog: () =>
+        invoke("open-jarvis-dialog"),
     // Language Preference 操作
     setLanguagePreference: (language: string) =>
         invoke("language:set-preference", language)

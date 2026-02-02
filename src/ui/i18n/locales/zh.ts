@@ -50,6 +50,8 @@ export default {
 			language: "语言",
 			api: "API 设置",
 			mcp: "MCP 设置",
+			skills: "Skills 技能",
+			jarvis: "贾维斯配置",
 			permissions: "权限",
 			output: "输出样式",
 			rules: "规则",
