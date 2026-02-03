@@ -3,16 +3,16 @@
 <div align="center">
 
 # 🤖 AI 智能协作助手
-### 您的全天候 AI 办公伙伴，让工作效率翻倍
+### 基于 Qwen Code SDK 的现代化 AI 桌面应用
 
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](LICENSE.txt)
 [![Version](https://img.shields.io/badge/version-0.1.0-orange.svg)](https://github.com/BrainPicker-L/AICowork/releases)
 [![Electron](https://img.shields.io/badge/Electron-39.2.7-9FEAF9.svg)](https://www.electronjs.org/)
 [![React](https://img.shields.io/badge/React-19.2.3-61DAFB.svg)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6.svg)](https://www.typescriptlang.org/)
-[![Stars](https://img.shields.io/github/stars/Pan519/AICowork?style=social)](https://github.com/BrainPicker-L/AICowork/stargazers)
+[![Qwen Code SDK](https://img.shields.io/badge/Qwen_Code_SDK-0.1.3-FF6B6B.svg)](https://github.com/QwenLM/qwen-code)
 
-[English](./README_EN.md) | 简体中文 | [功能演示](#-功能演示) | [快速开始](#-快速开始) | [文档中心](#-文档中心) | [贡献指南](#-贡献指南)
+[English](./README_EN.md) | 简体中文 | [快速开始](#-快速开始) | [核心特性](#-核心特性) | [开发文档](./docs/开发者文档.md)
 
 </div>
 
@@ -20,61 +20,61 @@
 
 ## 📖 项目简介
 
-**AICowork** 是一款基于 Electron + React 19 + TypeScript 构建的现代化桌面 AI 智能协作助手。通过集成 60+ 主流 AI 服务商，提供强大的 AI 对话、本地知识库、技能扩展等核心能力，帮助用户在办公、学习、创作等多个场景中显著提升效率。
+**AICowork** 是一款基于 **[@qwen-code/sdk](https://github.com/QwenLM/qwen-code)** 构建的现代化 AI 智能协作桌面应用。采用 Electron + React 19 + TypeScript 技术栈，深度集成 Qwen Code SDK 的强大能力，为用户提供流畅、安全、可扩展的 AI 交互体验。
 
 ### 🎯 核心价值
 
-| 💡 **智能对话** | 基于大模型的自然语言交互，支持多厂商 API |
+| 💡 **SDK 驱动** | 基于 Qwen Code SDK，享受官方持续更新和优化 |
 |:---|:---|
-| 🧠 **记忆系统** | 本地向量知识库，AI 持久化记住重要信息 |
-| 🔧 **技能扩展** | 自定义技能 + MCP 协议，无限扩展 AI 能力 |
-| 🛡️ **隐私安全** | 数据本地存储，API Key 加密保护 |
+| 🧠 **记忆系统** | 集成 Memvid 向量存储，AI 持久化记住重要信息 |
+| 🔧 **MCP 协议** | 原生支持 Model Context Protocol，无限扩展能力 |
+| 🎨 **技能系统** | 自定义技能模板，快速复用常用提示词 |
+| 🛡️ **隐私安全** | 数据本地存储，API Key 加密，权限精细控制 |
 | 🌍 **多语言** | 支持 10+ 语言界面，全球化用户体验 |
-| ⚡ **高性能** | React 19 + 并发渲染，流畅的交互体验 |
 
 ### 🎯 适用场景
 
 ```
-💼 办公协作      📚 学习辅助      🎨 创意工作      📊 数据分析
-   └─ 文档撰写      └─ 知识问答      └─ 头脑风暴      └─ 报告生成
-   └─ 会议记录      └─ 要点总结      └─ 创意生成      └─ 趋势分析
-   └─ 邮件回复      └─ 概念解释      └─ 内容策划      └─ 数据解读
+💼 办公协作      📚 学习辅助      🎨 创意工作      💻 代码开发
+   └─ 文档撰写      └─ 知识问答      └─ 头脑风暴      └─ 代码生成
+   └─ 会议记录      └─ 要点总结      └─ 创意策划      └─ 代码审查
+   └─ 邮件回复      └─ 概念解释      └─ 内容创作      └─ Bug 修复
 ```
 
 ---
 
-## ✨ 功能特性
+## ✨ 核心特性
 
-### 1. 🤖 AI 对话系统
+### 1. 🚀 基于 Qwen Code SDK
 
-#### 多厂商 API 支持（60+）
+**为什么选择 Qwen Code SDK？**
 
-**国内厂商**
-- 智谱 AI (GLM)、DeepSeek、阿里云通义千问、百度文心一言
-- 腾讯混元、科大讯飞星火、华为云盘古、月之暗面
-- MiniMax、百川智能、七牛云
+- ✅ **官方支持**: 阿里云通义千问团队官方维护
+- ✅ **持续更新**: 跟随最新 AI 技术发展
+- ✅ **性能优化**: 针对代码场景深度优化
+- ✅ **协议支持**: 原生支持 MCP、Hooks、Agents 等高级特性
+- ✅ **多模型兼容**: 支持 OpenAI、Anthropic 等多种 API 格式
 
-**国外厂商**
-- OpenAI (GPT-4/GPT-3.5)、Google Gemini、Anthropic Claude
-- Cohere、Mistral AI、xAI (Grok)
+**SDK 核心能力**
 
-**本地部署**
-- Ollama、vLLM、LocalAI
+```typescript
+import { query } from "@qwen-code/sdk";
 
-**代理服务**
-- OpenRouter、N1N.AI
+// 流式对话
+for await (const message of query(userMessages, {
+  mcpServers: { /* MCP 服务器配置 */ },
+  hooks: { /* 生命周期钩子 */ },
+  agents: { /* 代理配置 */ }
+})) {
+  console.log(message);
+}
+```
 
-#### 对话能力
-- ✅ 多轮连续对话，上下文理解
-- ✅ 流式响应，实时打字效果
-- ✅ 会话管理，自动保存历史
-- ✅ 文档写作、润色、改写
-- ✅ 代码生成、审查、优化
-- ✅ 创意头脑风暴、内容策划
+### 2. 🧠 记忆系统 (Memvid)
 
-### 2. 🧠 记忆系统
+**本地向量知识库，让 AI 记住重要信息**
 
-**本地向量知识库，AI 记住重要信息**
+基于 [@memvid/sdk](https://github.com/memvid/memvid) 实现的持久化记忆系统：
 
 ```
 ┌─────────────────────────────────────┐
@@ -88,71 +88,119 @@
 ```
 
 **核心能力**
-- 📝 保存任意文本和元数据
+- 📝 保存任意文本和元数据到本地向量数据库
 - 🔍 智能语义搜索（基于向量相似度）
-- 💬 AI 自动调用相关知识
-- 📂 分类标签管理（project/preference/technical/context/custom）
-- 🔄 自动保存重要对话
-- 📊 记忆统计和时间线
+- 💬 AI 通过 MCP 工具自动检索相关记忆
+- 📂 分类标签管理（project/preference/technical/context）
+- 🔄 会话结束后自动分析并存储重要信息
+- 📊 记忆统计和时间线可视化
 
-### 3. 🔧 技能系统
-
-**扩展 AI 能力的自定义技能**
-
-```
-创建技能 → 定义提示词模板 → (可选) 添加脚本 → 使用 /skill-name 调用
-```
-
-**技能类型**
-- **提示词技能**: 纯文本模板，快速创建
-- **脚本技能**: 集成 JavaScript/Python 脚本
-- **标签分类**: 便于管理和搜索
-
-**示例技能**
-```markdown
-/code-review --file="src/App.tsx"
-/translator --target="English" --text="你好"
-/doc-generator --lang="python" --code="..."
-```
-
-### 4. 🌐 MCP 服务器集成
+### 3. 🌐 MCP 服务器集成
 
 **Model Context Protocol - 连接外部世界**
 
+完全兼容 [MCP 官方规范](https://modelcontextprotocol.io/)，支持 stdio、SSE、HTTP 等多种传输协议：
+
 ```
-内置模板:
-├─ GitHub: 访问代码仓库
-├─ Filesystem: 读取本地文件
-├─ SQLite: 查询数据库
-├─ Brave Search: 网络搜索
-└─ 自定义: 创建自己的 MCP 服务器
+内置 MCP 服务器:
+├─ Memory Tools: 记忆存储和检索
+├─ Skills Tools: 技能管理和调用
+└─ 自定义服务器: 支持任意 MCP 兼容服务器
+
+社区 MCP 服务器:
+├─ @modelcontextprotocol/server-github
+├─ @modelcontextprotocol/server-filesystem
+├─ @modelcontextprotocol/server-brave-search
+└─ 更多服务器持续增加...
 ```
 
-**集成能力**
-- 🔌 即插即用的服务器模板
-- ⚙️ 自定义命令和环境变量
-- 🧪 连接测试和错误诊断
-- 🔄 动态启用/禁用服务器
+**配置示例**
+```json
+{
+  "mcpServers": {
+    "github": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_TOKEN": "your-token"
+      }
+    }
+  }
+}
+```
 
-### 5. 🤖 代理系统
+### 4. 🔧 技能系统
+
+**快速复用常用提示词模板**
+
+技能存储在 `~/.qwen/skills/` 目录，每个技能是一个独立的文件夹：
+
+```
+~/.qwen/skills/
+├─ code-review/
+│  └─ SKILL.md          # 技能定义
+├─ translator/
+│  └─ SKILL.md
+└─ doc-generator/
+   ├─ SKILL.md
+   └─ doc-generator.js  # 可选脚本
+```
+
+**SKILL.md 格式**
+```markdown
+---
+name: code-review
+description: 代码审查助手
+---
+
+# 代码审查
+
+请对以下代码进行全面审查：
+
+1. 代码风格和规范
+2. 潜在的 Bug 和安全问题
+3. 性能优化建议
+4. 最佳实践建议
+
+代码：
+{{input}}
+```
+
+**使用方式**
+```
+/code-review --input="src/App.tsx"
+/translator --target="English" --text="你好"
+```
+
+### 5. 🤖 代理系统 (Agents)
 
 **创建专业领域的 AI 专家**
 
+基于 SDK 的 Agents 特性，支持多代理协作：
+
+```typescript
+// 代理配置示例
+{
+  "agents": {
+    "code-reviewer": {
+      "description": "代码审查专家",
+      "prompt": "你是一位经验丰富的代码审查专家...",
+      "tools": ["Read", "Edit"],
+      "model": "sonnet"
+    }
+  }
+}
 ```
-代理编排模式:
-├─ 并行模式: 多代理同时工作（适合独立任务）
-├─ 顺序模式: 按序执行（适合流程任务）
-└─ 动态模式: 智能选择（适合复杂场景）
-```
 
-**应用场景**
-- 👨‍💻 代码审查团队（风格 + 安全 + 性能）
-- 👔 文档编写团队（撰写 + 审校 + 发布）
-- 🔬 质量保证团队（测试 + 分析 + 报告）
+**编排模式**
+- 🔄 **并行模式**: 多代理同时工作（适合独立任务）
+- ⏭️ **顺序模式**: 按序执行（适合流程任务）
+- 🔁 **循环模式**: 循环执行（适合迭代优化）
+- 🎯 **交替模式**: 交替执行（适合对话场景）
 
-### 6. 🎨 丰富的斜杠命令
+### 6. 🎨 斜杠命令
 
-**快捷命令，效率翻倍**
+**SDK 原生支持的快捷命令**
 
 | 命令 | 功能 | 命令 | 功能 |
 |:---|:---|:---|:---|
@@ -160,16 +208,17 @@
 | `/new` | 新建会话 | `/memory` | 记忆管理 |
 | `/commit` | 创建 Git 提交 | `/review` | 代码审查 |
 | `/test` | 运行测试 | `/build` | 构建项目 |
-| `/mcp` | MCP 服务器 | `/agents` | 代理管理 |
+| `/mcp` | MCP 服务器管理 | `/agents` | 代理管理 |
 | `/settings` | 打开设置 | `/help` | 显示帮助 |
 
-### 7. 🛡️ 安全控制
+### 7. 🛡️ 安全与隐私
 
-- 🔐 **数据本地存储**: 所有数据保存在本地
-- 🔑 **API Key 加密**: 安全存储，永不泄露
-- ✅ **权限精细控制**: 控制工具使用权限
-- ⚠️ **敏感操作确认**: 危险操作需用户确认
-- 🚫 **CSP 安全策略**: 防止 XSS 攻击
+- 🔐 **数据本地存储**: 所有数据保存在本地，不上传云端
+- 🔑 **API Key 加密**: 使用系统密钥链安全存储
+- ✅ **权限精细控制**: 控制 AI 可以使用的工具
+- ⚠️ **敏感操作确认**: 删除、修改等危险操作需用户确认
+- 🚫 **CSP 安全策略**: 防止 XSS 攻击和代码注入
+- 🔍 **删除检测**: 自动识别删除命令，强制用户确认
 
 ---
 
@@ -177,63 +226,13 @@
 
 ### 前置要求
 
-- **操作系统**: Windows 10+, macOS 11+, Linux
+- **操作系统**: Windows 10+, macOS 11+, Linux (Ubuntu 20.04+)
+- **Node.js**: 18.0+ (仅开发环境需要)
 - **API Key**: 从支持的 AI 服务商获取
-
-### 三步上手
-
-#### Step 1: 获取 API Key
-
-```
-推荐服务商（免费额度充足）:
-┌─────────────┬──────────────────────┬──────────────┐
-│ 服务商      │  获取地址              │  免费额度     │
-├─────────────┼──────────────────────┼──────────────┤
-│ 智谱 AI     │ open.bigmodel.cn      │ 新用户 25元   │
-│ DeepSeek    │ platform.deepseek.com │ 每天 100万tokens│
-│ 通义千问     │ tongyi.aliyun.com     │ 新用户额度    │
-│ OpenAI      │ platform.openai.com   │ 需付费        │
-└─────────────┴──────────────────────┴──────────────┘
-```
-
-1. 选择服务商，注册/登录账号
-2. 进入控制台，创建 API Key
-3. 复制生成的 Key（格式：`sk-xxxx...`）
-
-#### Step 2: 配置应用
-
-```
-操作流程:
-1. 打开 AICowork
-2. 点击左下角 ⚙️ 设置
-3. 选择 "API 配置"
-4. 点击 "添加新配置"
-5. 填写配置信息:
-   - 配置名称: 如 "智谱 AI"
-   - API Key: 粘贴你的 Key
-   - API 厂商: 选择对应服务商
-   - 模型名称: 选择模型
-6. 点击 "保存配置"
-7. 点击 "设为激活" ✅
-8. 点击 "测试连接" ✅
-```
-
-#### Step 3: 开始对话
-
-```
-1. 点击左侧 "+ 新对话"
-2. 输入框输入: "你好，请帮我学习 Python"
-3. 按 Enter 发送
-4. 等待 AI 回复
-```
-
----
-
-## 📦 安装指南
 
 ### 方式一：下载安装包（推荐）⭐
 
-从 [GitHub Releases](https://github.com/BrainPicker-L/AICowork/releases) 下载：
+从 [GitHub Releases](https://github.com/BrainPicker-L/AICowork/releases) 下载最新版本：
 
 | 平台 | 文件名 | 大小 |
 |:---|:---|:---|
@@ -243,10 +242,387 @@
 | 🐧 **Linux** | `AICowork-0.1.0.AppImage` | ~150 MB |
 
 **安装步骤**
+```bash
+# Windows
+双击 .exe 文件，按提示安装
+
+# macOS
+打开 .dmg 文件，拖拽到 Applications
+
+# Linux
+chmod +x AICowork-*.AppImage
+./AICowork-*.AppImage
 ```
-Windows: 双击 .exe 文件，按提示安装
-macOS:   打开 .dmg 文件，拖拽到 Applications
-Linux:   chmod +x AICowork-*.AppImage && ./AICowork-*.AppImage
+
+### 方式二：从源码构建
+
+```bash
+# 1. 克隆项目
+git clone https://github.com/BrainPicker-L/AICowork.git
+cd AICowork
+
+# 2. 安装依赖
+pnpm install
+
+# 3. 启动开发服务器
+pnpm dev
+
+# 4. 构建应用（可选）
+pnpm dist
+```
+
+### 配置 API Key
+
+#### 方式一：通过 UI 配置（推荐）
+
+1. 启动应用后，点击左下角 ⚙️ **设置**
+2. 选择 **API 配置**
+3. 点击 **添加新配置**
+4. 填写配置信息：
+   - **配置名称**: 如 "智谱 AI"
+   - **API Key**: 粘贴你的 Key
+   - **Base URL**: API 地址
+   - **模型名称**: 选择模型
+5. 点击 **保存配置**
+6. 点击 **设为激活** ✅
+7. 点击 **测试连接** 验证配置
+
+#### 方式二：通过环境变量配置
+
+创建 `.env` 文件：
+
+```bash
+# OpenAI 格式
+OPENAI_API_KEY=sk-xxx
+OPENAI_BASE_URL=https://api.openai.com/v1
+OPENAI_MODEL=gpt-4
+
+# 或 Anthropic 格式
+ANTHROPIC_AUTH_TOKEN=sk-ant-xxx
+ANTHROPIC_BASE_URL=https://api.anthropic.com
+ANTHROPIC_MODEL=claude-3-5-sonnet-20241022
+```
+
+#### 方式三：通过配置文件
+
+创建 `~/.qwen/settings.json`：
+
+```json
+{
+  "env": {
+    "OPENAI_API_KEY": "sk-xxx",
+    "OPENAI_BASE_URL": "https://api.openai.com/v1",
+    "OPENAI_MODEL": "gpt-4"
+  }
+}
+```
+
+### 推荐的 AI 服务商
+
+| 服务商 | 获取地址 | 免费额度 | 推荐指数 |
+|:---|:---|:---|:---|
+| **智谱 AI** | [open.bigmodel.cn](https://open.bigmodel.cn) | 新用户 25元 | ⭐⭐⭐⭐⭐ |
+| **DeepSeek** | [platform.deepseek.com](https://platform.deepseek.com) | 每天 100万tokens | ⭐⭐⭐⭐⭐ |
+| **通义千问** | [tongyi.aliyun.com](https://tongyi.aliyun.com) | 新用户额度 | ⭐⭐⭐⭐ |
+| **OpenAI** | [platform.openai.com](https://platform.openai.com) | 需付费 | ⭐⭐⭐⭐⭐ |
+
+---
+
+## 📚 使用指南
+
+### 基础对话
+
+1. 点击左侧 **+ 新对话** 创建会话
+2. 在输入框输入问题
+3. 按 `Cmd+Enter` (macOS) 或 `Ctrl+Enter` (Windows/Linux) 发送
+4. 等待 AI 回复
+
+### 使用记忆系统
+
+**存储记忆**:
+```
+请记住：我们的项目使用 React 19 + TypeScript + Tailwind CSS
+```
+
+**检索记忆**:
+```
+我们项目用的什么技术栈？
+```
+
+AI 会自动检索相关记忆并回答。
+
+### 使用技能
+
+**查看可用技能**:
+```
+/skills
+```
+
+**使用技能**:
+```
+/code-review --input="src/App.tsx"
+/translator --target="English" --text="你好世界"
+```
+
+### 使用 MCP 服务器
+
+**配置 GitHub MCP**:
+
+1. 打开设置 → MCP 服务器
+2. 点击 **添加服务器**
+3. 选择 **GitHub** 模板
+4. 填写 GitHub Token
+5. 保存并启用
+
+**使用**:
+```
+请帮我查看 facebook/react 仓库的最新 issues
+```
+
+### 使用代理
+
+**配置代理**:
+
+1. 打开设置 → 代理管理
+2. 创建新代理
+3. 设置代理的专业领域和提示词
+4. 保存
+
+**使用**:
+```
+使用代码审查代理帮我审查这段代码...
+```
+
+---
+
+## 🎯 高级功能
+
+### 1. 多会话管理
+
+- 支持同时打开多个会话
+- 每个会话独立的上下文
+- 会话自动保存和恢复
+- 会话搜索和过滤
+
+### 2. 工作目录切换
+
+点击输入框上方的目录路径，可以切换工作目录：
+
+```
+~/projects/my-app → ~/projects/another-app
+```
+
+AI 将在新目录下执行命令和读取文件。
+
+### 3. 权限控制
+
+在设置中配置工具权限：
+
+- **自动批准**: 无需确认即可使用的工具
+- **需要确认**: 使用前需要用户确认
+- **禁止使用**: 完全禁止使用的工具
+
+### 4. 自定义提示词
+
+在设置中配置系统提示词，定制 AI 的行为风格。
+
+### 5. 多语言界面
+
+支持以下语言：
+
+- 🇨🇳 简体中文
+- 🇺🇸 English
+- 🇯🇵 日本語
+- 🇰🇷 한국어
+- 🇪🇸 Español
+- 🇫🇷 Français
+- 🇩🇪 Deutsch
+- 🇷🇺 Русский
+- 🇵🇹 Português
+- 🇨🇳 繁體中文
+
+---
+
+## 🛠️ 开发指南
+
+### 项目结构
+
+```
+AICowork/
+├─ src/
+│  ├─ electron/          # Electron 主进程
+│  │  ├─ main.ts        # 应用入口
+│  │  ├─ libs/          # 核心库（SDK Runner）
+│  │  ├─ managers/      # 管理器（MCP、配置）
+│  │  ├─ services/      # 服务层
+│  │  ├─ storage/       # 存储层
+│  │  └─ utils/         # 工具函数
+│  ├─ ui/               # React 渲染进程
+│  │  ├─ pages/         # 页面组件
+│  │  ├─ components/    # UI 组件
+│  │  ├─ store/         # Zustand 状态
+│  │  └─ i18n/          # 国际化
+│  └─ shared/           # 共享代码
+├─ docs/                # 文档
+└─ tests/               # 测试
+```
+
+### 开发命令
+
+```bash
+# 开发
+pnpm dev              # 启动开发服务器
+pnpm dev:vite         # 仅启动 Vite
+pnpm dev:electron     # 仅启动 Electron
+
+# 构建
+pnpm build            # 构建应用
+pnpm dist             # 打包应用
+
+# 测试
+pnpm test             # 运行测试
+pnpm test:watch       # 监听模式
+pnpm test:coverage    # 生成覆盖率报告
+
+# 代码检查
+pnpm lint             # ESLint 检查
+```
+
+### 技术栈
+
+- **前端**: React 19, TypeScript, Tailwind CSS, Zustand
+- **桌面**: Electron 39, Vite 7
+- **AI**: @qwen-code/sdk, @memvid/sdk, @modelcontextprotocol/sdk
+- **测试**: Vitest, Testing Library
+- **构建**: electron-builder
+
+详细开发文档请查看 [开发者文档](./docs/开发者文档.md)
+
+---
+
+## 📖 文档中心
+
+- [开发者文档](./docs/开发者文档.md) - 完整的开发指南
+- [架构设计文档](./docs/架构设计文档.md) - 系统架构设计
+- [用户使用手册](./docs/用户使用手册.md) - 详细使用教程
+- [API 参考文档](./docs/API参考文档.md) - API 接口文档
+- [插件开发指南](./docs/插件开发指南.md) - 插件开发教程
+
+---
+
+## 🤝 贡献指南
+
+我们欢迎所有形式的贡献！
+
+### 如何贡献
+
+1. Fork 本项目
+2. 创建特性分支：`git checkout -b feature/amazing-feature`
+3. 提交更改：`git commit -m 'Add amazing feature'`
+4. 推送分支：`git push origin feature/amazing-feature`
+5. 提交 Pull Request
+
+### 贡献类型
+
+- 🐛 **Bug 修复**: 修复已知问题
+- ✨ **新功能**: 添加新特性
+- 📝 **文档**: 改进文档
+- 🎨 **UI/UX**: 改进界面和体验
+- ⚡ **性能**: 性能优化
+- 🔧 **工具**: 开发工具改进
+
+### 代码规范
+
+- 使用 TypeScript
+- 遵循 ESLint 规则
+- 添加必要的注释
+- 编写单元测试
+
+### 提交规范
+
+```
+feat: 新功能
+fix: Bug 修复
+docs: 文档更新
+style: 代码格式
+refactor: 重构
+test: 测试
+chore: 构建/工具
+```
+
+---
+
+## 🐛 问题反馈
+
+遇到问题？请通过以下方式反馈：
+
+- **GitHub Issues**: [提交 Issue](https://github.com/BrainPicker-L/AICowork/issues)
+- **讨论区**: [GitHub Discussions](https://github.com/BrainPicker-L/AICowork/discussions)
+
+提交 Issue 时，请包含：
+
+1. 问题描述
+2. 复现步骤
+3. 预期行为
+4. 实际行为
+5. 系统信息（操作系统、版本等）
+6. 日志文件（如有）
+
+---
+
+## 📜 许可证
+
+本项目采用 [AGPL-3.0](./LICENSE.txt) 许可证。
+
+这意味着：
+
+- ✅ 可以自由使用、修改和分发
+- ✅ 可以用于商业用途
+- ⚠️ 修改后的代码必须开源
+- ⚠️ 网络服务也需要开源
+
+---
+
+## 🙏 致谢
+
+感谢以下开源项目：
+
+- [Qwen Code SDK](https://github.com/QwenLM/qwen-code) - AI 对话核心
+- [Memvid](https://github.com/memvid/memvid) - 向量记忆存储
+- [Model Context Protocol](https://modelcontextprotocol.io/) - MCP 协议
+- [Electron](https://www.electronjs.org/) - 跨平台桌面框架
+- [React](https://react.dev/) - UI 框架
+- [Tailwind CSS](https://tailwindcss.com/) - CSS 框架
+
+---
+
+## 📞 联系方式
+
+- **GitHub**: https://github.com/BrainPicker-L/AICowork
+- **Issues**: https://github.com/BrainPicker-L/AICowork/issues
+- **Discussions**: https://github.com/BrainPicker-L/AICowork/discussions
+
+---
+
+## 🌟 Star History
+
+如果这个项目对你有帮助，请给我们一个 ⭐ Star！
+
+[![Star History Chart](https://api.star-history.com/svg?repos=BrainPicker-L/AICowork&type=Date)](https://star-history.com/#BrainPicker-L/AICowork&Date)
+
+---
+
+<div align="center">
+
+**让 AI 成为你的智能协作伙伴 🚀**
+
+Made with ❤️ by AICowork Team
+
+</div>
+
+# Linux
+chmod +x AICowork-*.AppImage
+./AICowork-*.AppImage
 ```
 
 ### 方式二：从源码构建
