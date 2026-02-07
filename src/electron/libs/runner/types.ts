@@ -33,20 +33,6 @@ export type RunnerHandle = {
 };
 
 /**
- * 内存配置
- */
-export type MemoryConfig = {
-  /** 是否启用记忆功能 */
-  enabled: boolean;
-  /** 是否自动存储 */
-  autoStore: boolean;
-  /** 自动存储的分类 */
-  autoStoreCategories: string[];
-  /** 默认 K 值（检索数量） */
-  defaultK: number;
-};
-
-/**
  * 权限请求
  */
 export type PermissionRequest = {

@@ -10,7 +10,8 @@ import {
   Plug,
   Languages,
   Zap,
-  Package
+  Package,
+  Brain
 } from 'lucide-react';
 import type { SettingsSection } from '../../store/useAppStore';
 
@@ -20,11 +21,11 @@ interface SettingsNavigationProps {
   className?: string;
 }
 
-// 设置区域定义
+// 设置区域定义（分组：常规 / 连接与模型 / 工具与扩展 / 能力）
 interface SectionDef {
   id: SettingsSection;
   icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
-  group: 'general' | 'api' | 'features' | 'system';
+  group: 'general' | 'connection' | 'tools' | 'capabilities';
 }
 
 const SETTINGS_SECTIONS: SectionDef[] = [
@@ -33,14 +34,19 @@ const SETTINGS_SECTIONS: SectionDef[] = [
   { id: 'about', icon: Info, group: 'general' },
   { id: 'language', icon: Languages, group: 'general' },
 
-  // API 配置
-  { id: 'api', icon: Key, group: 'api' },
-  { id: 'mcp', icon: Plug, group: 'api' },
-  { id: 'skills', icon: Zap, group: 'api' },
-  { id: 'jarvis', icon: Package, group: 'api' },
+  // 连接与模型
+  { id: 'api', icon: Key, group: 'connection' },
+
+  // 工具与扩展
+  { id: 'mcp', icon: Plug, group: 'tools' },
+  { id: 'skills', icon: Zap, group: 'tools' },
+  { id: 'jarvis', icon: Package, group: 'tools' },
+
+  // 能力
+  { id: 'memory', icon: Brain, group: 'capabilities' },
 ];
 
-const GROUP_ORDER: Array<SectionDef['group']> = ['general', 'api'];
+const GROUP_ORDER: Array<SectionDef['group']> = ['general', 'connection', 'tools', 'capabilities'];
 
 export function SettingsNavigation({ activeSection, onSectionChange, className }: SettingsNavigationProps) {
   const { t } = useTranslation();

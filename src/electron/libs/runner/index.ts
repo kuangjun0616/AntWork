@@ -4,7 +4,7 @@
  */
 
 import { query, type SDKMessage, type SDKUserMessage } from "@qwen-code/sdk";
-import type { RunnerOptions, RunnerHandle, MemoryConfig } from "./types.js";
+import type { RunnerOptions, RunnerHandle } from "./types.js";
 import { UserInputQueue } from "../user-input-queue.js";
 
 import {
@@ -14,11 +14,9 @@ import {
 import { getCachedApiConfig } from "../../managers/sdk-config-cache.js";
 import { getEnhancedEnv } from "../../utils/util.js";
 import { addLanguagePreference } from "../../utils/language-detector.js";
-import { getMemoryToolConfig } from "../../utils/memory-tools.js";
 import { getAILanguagePreference } from "../../services/language-preference-store.js";
 
 import { PerformanceMonitor } from "./performance-monitor.js";
-import { triggerAutoMemoryAnalysis } from "./memory-manager.js";
 import { createPermissionHandler, handleToolUseEvent, mapPermissionMode } from "./permission-handler.js";
 import { clearMcpServerCache } from "../../managers/mcp-server-manager.js";
 
@@ -98,9 +96,8 @@ export function clearRunnerCache(): void {
 }
 
 // 重新导出类型
-export type { RunnerOptions, RunnerHandle, MemoryConfig } from "./types.js";
+export type { RunnerOptions, RunnerHandle } from "./types.js";
 export { PerformanceMonitor } from "./performance-monitor.js";
-export { triggerAutoMemoryAnalysis } from "./memory-manager.js";
 
 /**
  * 执行 Claude SDK 会话
@@ -176,33 +173,8 @@ export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
       
       log.debug(`[Runner] Using user-preferred AI language: ${userLanguage}`);
 
-      // 4. 获取记忆配置并发送初始状态
-      const memConfig = getMemoryToolConfig() as MemoryConfig & { autoStore: boolean };
-      if (memConfig.enabled) {
-        onEvent({
-          type: "memory.status",
-          payload: {
-            sessionId: session.id,
-            stored: false,
-            message: memConfig.autoStore ? "会话结束后自动分析" : "记忆功能已启用"
-          }
-        });
-      }
-
-      // 5. 获取 Memory MCP 服务器（自定义的，不在 settings.json 中）
-      perfMonitor.mark('Memory MCP Server Loading');
-      const { getCachedMemoryMcpServer } = await import("../../managers/sdk-config-cache.js");
-      let memoryMcpServer: any = null;
-      if (memConfig.enabled) {
-        memoryMcpServer = await getCachedMemoryMcpServer();
-        if (memoryMcpServer) {
-          log.debug(`[Runner] Memory MCP server loaded from cache`);
-        }
-      }
-      perfMonitor.measure('Memory MCP Server Loading');
-
-      // 6. 加载外部 MCP 服务器配置（从 ~/.qwen/settings.json）
-      perfMonitor.mark('External MCP Servers Loading');
+      // 4. 加载外部 MCP 服务器配置（从 ~/.qwen/settings.json）
+      perfMonitor.mark('MCP Servers Loading');
       const { getMcpServers } = await import("../../managers/mcp-server-manager.js");
       const externalMcpServers = await getMcpServers();
       log.info(`[Runner] Loaded ${Object.keys(externalMcpServers).length} external MCP server configs`);
@@ -210,7 +182,7 @@ export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
       for (const [name, config] of Object.entries(externalMcpServers)) {
         log.debug(`[Runner] MCP Server "${name}": command=${config.command}, args=${config.args?.join(' ') || 'none'}`);
       }
-      perfMonitor.measure('External MCP Servers Loading');
+      perfMonitor.measure('MCP Servers Loading');
 
       // 7. 确定权限模式（使用最严格的默认值）
       const claudePermissionMode: 'default' | 'acceptEdits' | 'bypassPermissions' | 'plan' | 'delegate' | 'dontAsk' =
@@ -221,11 +193,8 @@ export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
 
       log.debug(`[Runner] Permission mode: ${claudePermissionMode} → ${qwenPermissionMode}`);
 
-      // 8. 合并所有 MCP 服务器配置
+      // 5. 合并所有 MCP 服务器配置
       const allMcpServers: Record<string, any> = {
-        // Memory MCP 服务器（如果启用）
-        ...(memoryMcpServer ? { 'memory-tools': memoryMcpServer } : {}),
-        // 外部 MCP 服务器（从 settings.json 读取）
         ...externalMcpServers,
       };
 
@@ -238,15 +207,12 @@ export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
         log.warn(`[Runner] No MCP servers to load!`);
       }
 
-      // 9. 记录会话启动完成
+      // 6. 记录会话启动完成
       perfMonitor.measureTotal();
 
-      // 10. 创建并执行查询
+      // 7. 创建并执行查询
       log.info(`[Runner] Starting SDK query for session ${session.id}`);
 
-      // ⚡ 渐进式加载优化：不自动注入记忆上下文
-      // AI 可以通过 Memory MCP 工具主动检索记忆
-      // 记忆工具会自动出现在工具列表中，AI 可以自然发现并使用
       // 获取 CLI 路径
       claudeCodePath = getQwenCodePath();
 
@@ -316,7 +282,7 @@ export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
         }
       });
 
-      // 11. 处理消息流
+      // 8. 处理消息流
       log.debug(`[Runner] Starting message loop for session ${session.id}`);
       let messageCount = 0;
       for await (const message of q) {
@@ -344,7 +310,7 @@ export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
           if (assistantMsg.message && assistantMsg.message.content) {
             for (const content of assistantMsg.message.content) {
               if (content.type === "tool_use") {
-                await handleToolUseEvent(content.name, content.input, memConfig, session, onEvent);
+                await handleToolUseEvent(content.name, content.input, session, onEvent);
               }
             }
           }
@@ -363,16 +329,9 @@ export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
         }
       }
 
-      // 12. 查询正常完成 - 触发自动记忆分析（异步执行，不阻塞会话完成）
+      // 11. 查询正常完成
       log.info(`[Runner] Message loop completed for session ${session.id}, total messages: ${messageCount}`);
       if (session.status === "running") {
-        if (memConfig.enabled && memConfig.autoStore) {
-          // 异步执行记忆分析，不等待完成
-          triggerAutoMemoryAnalysis(session, prompt, memConfig, onEvent).catch((error) => {
-            log.error('[Auto Memory] Background analysis failed:', error);
-          });
-        }
-
         onEvent({
           type: "session.status",
           payload: { sessionId: session.id, status: "completed", title: session.title }

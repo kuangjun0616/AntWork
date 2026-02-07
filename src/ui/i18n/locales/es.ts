@@ -36,8 +36,11 @@ export default {
 		back: "Atrs",
 		sections: {
 			general: "General",
-			api: "Configuracin API",
-			features: "Caractersticas",
+			api: "Configuración API",
+			connection: "Conexión y modelo",
+			tools: "Herramientas y extensiones",
+			capabilities: "Capacidades",
+			features: "Características",
 			system: "Sistema",
 		},
 		navigation: {

@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { PermissionResult } from "@qwen-code/sdk";
-import { BrainIcon } from "./components/BrainIcon";
 import { useIPC } from "./hooks/useIPC";
 import { useMessageWindow } from "./hooks/useMessageWindow";
 import { useAppStore } from "./store/useAppStore";
@@ -79,16 +78,6 @@ function App() {
       log.error("Failed to extract partial message content", error);
       return "";
     }
-  };
-
-  // Helper function to get Brain icon color
-  const getBrainIconColor = (memoryStatus: any): 'error' | 'success' | 'info' | 'muted' | undefined => {
-    if (!memoryStatus) return undefined;
-    if (memoryStatus.message?.includes('失败') || memoryStatus.message?.includes('错误')) return 'error';
-    if (memoryStatus.stored) return 'success';
-    if (memoryStatus.message?.includes('存储') || memoryStatus.message?.includes('创建') || memoryStatus.message?.includes('写入')) return 'info';
-    if (memoryStatus.message?.includes('搜索') || memoryStatus.message?.includes('查询')) return 'success';
-    return 'muted';
   };
 
   // 超时检查逻辑
@@ -408,15 +397,6 @@ function App() {
           className="flex items-center justify-center gap-2 h-12 border-b border-ink-900/10 bg-surface-cream select-none"
           style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
         >
-          {/* 记忆状态指示器 - 主页面标题前面 */}
-          {activeSession?.memoryStatus ? (
-            <div
-              className="flex items-center"
-              title={activeSession.memoryStatus.message || '记忆状态'}
-            >
-              <BrainIcon className="h-3.5 w-3.5" color={getBrainIconColor(activeSession.memoryStatus)} />
-            </div>
-          ) : null}
           <span className="text-sm font-medium text-ink-700">{activeSession?.title || "AICowork"}</span>
         </div>
 

@@ -8,13 +8,6 @@ export type PermissionRequest = {
   input: unknown;
 };
 
-export type MemoryStatus = {
-  stored: boolean;
-  title?: string;
-  message?: string;
-  timestamp?: number;
-};
-
 export type SessionView = {
   id: string;
   title: string;
@@ -26,7 +19,6 @@ export type SessionView = {
   createdAt?: number;
   updatedAt?: number;
   hydrated: boolean;
-  memoryStatus?: MemoryStatus;
 };
 
 /**
@@ -39,7 +31,8 @@ export type SettingsSection =
   | 'api'
   | 'mcp'
   | 'skills'
-  | 'jarvis';
+  | 'jarvis'
+  | 'memory';
 
 interface AppState {
   sessions: Record<string, SessionView>;
@@ -338,27 +331,6 @@ export const useAppStore = create<AppState>()(
             break;
           }
 
-          case "memory.status": {
-        const { sessionId, stored, title, message } = event.payload;
-        set((state) => {
-          const existing = state.sessions[sessionId] ?? createSession(sessionId);
-          return {
-            sessions: {
-              ...state.sessions,
-              [sessionId]: {
-                ...existing,
-                memoryStatus: {
-                  stored,
-                  title,
-                  message,
-                  timestamp: Date.now()
-                }
-              }
-              }
-            };
-          });
-            break;
-          }
         }
       }
     }),

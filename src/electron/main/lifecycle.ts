@@ -8,7 +8,6 @@ import { execSync } from "child_process";
 import { isDev, DEV_PORT } from "../util.js";
 import { stopPolling } from "../test.js";
 import { cleanupAllSessions } from "../ipc-handlers.js";
-import { getMemvidStore } from "../storage/memvid-store.js";
 import { log } from "../logger.js";
 
 let cleanupComplete = false;
@@ -20,15 +19,6 @@ let cleanupComplete = false;
 export async function cleanup(): Promise<void> {
     if (cleanupComplete) return;
     cleanupComplete = true;
-
-    // 关闭 Memvid 连接
-    try {
-        const memvidStore = getMemvidStore();
-        await memvidStore.close();
-        log.info('[cleanup] Memvid store closed');
-    } catch (err) {
-        log.warn('[cleanup] Error closing Memvid store:', err);
-    }
 
     // 销毁 SDK 配置缓存（使用动态 import）
     try {

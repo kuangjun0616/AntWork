@@ -8,8 +8,6 @@ export {
   runClaude,
   clearRunnerCache,
   PerformanceMonitor,
-  triggerAutoMemoryAnalysis,
   type RunnerOptions,
   type RunnerHandle,
-  type MemoryConfig,
 } from "./runner/index.js";

@@ -173,32 +173,6 @@ electron.contextBridge.exposeInMainWorld("electron", {
         ipcInvoke("recover-session", sessionId),
     deleteSession: (sessionId: string) =>
         ipcInvoke("delete-session", sessionId),
-    // Memory 配置操作
-    memoryGetConfig: () =>
-        ipcInvoke("memory-get-config"),
-    memorySetConfig: (config: { enabled: boolean; autoStore: boolean; autoStoreCategories: string[]; searchMode: string; defaultK: number }) =>
-        ipcInvoke("memory-set-config", config),
-    // Memory 数据操作
-    memoryGetStats: () =>
-        ipcInvoke("memory-get-stats"),
-    memoryGetTimeline: (options?: { limit?: number; reverse?: boolean }) =>
-        ipcInvoke("memory-get-timeline", options),
-    memoryPutDocument: (input: any) =>
-        ipcInvoke("memory-put-document", input),
-    memoryFindDocuments: (query: string, options?: any) =>
-        ipcInvoke("memory-find-documents", query, options),
-    memoryAskQuestion: (question: string, options?: any) =>
-        ipcInvoke("memory-ask-question", question, options),
-    memoryGetDocument: (id: string) =>
-        ipcInvoke("memory-get-document", id),
-    memoryUpdateDocument: (id: string, updates: { title?: string; text?: string; label?: string; tags?: string[] }) =>
-        ipcInvoke("memory-update-document", id, updates),
-    memoryDeleteDocument: (id: string) =>
-        ipcInvoke("memory-delete-document", id),
-    memoryClear: () =>
-        ipcInvoke("memory-clear"),
-    memoryImportFile: (filePath: string) =>
-        ipcInvoke("memory-import-file", filePath),
     // Rules 操作
     getRulesList: () =>
         ipcInvoke("get-rules-list"),
@@ -228,6 +202,29 @@ electron.contextBridge.exposeInMainWorld("electron", {
         invoke("save-jarvis-dialog"),
     openJarvisDialog: () =>
         invoke("open-jarvis-dialog"),
+    // 记忆操作
+    getMemoryKinds: () =>
+        invoke("memory-get-kinds"),
+    getMemoryKind: (id: string) =>
+        invoke("memory-get-kind", id),
+    createMemoryKind: (kind: any) =>
+        invoke("memory-create-kind", kind),
+    updateMemoryKind: (id: string, patch: any) =>
+        invoke("memory-update-kind", id, patch),
+    deleteMemoryKind: (id: string) =>
+        invoke("memory-delete-kind", id),
+    getMemoryEntries: (kindId?: string, options?: { includeDeleted?: boolean }) =>
+        invoke("memory-get-entries", kindId, options),
+    getMemoryEntry: (id: string) =>
+        invoke("memory-get-entry", id),
+    createMemoryEntry: (entry: any) =>
+        invoke("memory-create-entry", entry),
+    updateMemoryEntry: (id: string, patch: any) =>
+        invoke("memory-update-entry", id, patch),
+    deleteMemoryEntry: (id: string, soft?: boolean) =>
+        invoke("memory-delete-entry", id, soft),
+    searchMemoryEntries: (params: any) =>
+        invoke("memory-search-entries", params),
     // Language Preference 操作
     setLanguagePreference: (language: string) =>
         invoke("language:set-preference", language)

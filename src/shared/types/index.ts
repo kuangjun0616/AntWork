@@ -55,8 +55,7 @@ export type ServerEvent =
   | { type: "permission.request"; payload: { sessionId: string; toolUseId: string; toolName: string; input: unknown } }
   | { type: "runner.error"; payload: { sessionId?: string; message: string } }
   | { type: "api.modelList"; payload: { models: string[] | null; error?: string } }
-  | { type: "api.modelLimits"; payload: { limits: { max_tokens?: number; min_tokens?: number } | null; error?: string } }
-  | { type: "memory.status"; payload: { sessionId: string; stored: boolean; title?: string; message?: string } };
+  | { type: "api.modelLimits"; payload: { limits: { max_tokens?: number; min_tokens?: number } | null; error?: string } };
 
 /**
  * 客户端 -> 服务端事件

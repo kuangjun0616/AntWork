@@ -9,7 +9,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@radix-ui/react-tooltip";
-import { BrainIcon } from "./BrainIcon";
 import { useAppStore } from "../store/useAppStore";
 
 interface SidebarProps {
@@ -26,15 +25,6 @@ export function Sidebar({
 }: SidebarProps) {
   const { t } = useTranslation();
 
-  // Helper function to get Brain icon color
-  const getBrainIconColor = (memoryStatus: any): 'error' | 'success' | 'info' | 'muted' | undefined => {
-    if (!memoryStatus) return undefined;
-    if (memoryStatus.message?.includes('失败') || memoryStatus.message?.includes('错误')) return 'error';
-    if (memoryStatus.stored) return 'success';
-    if (memoryStatus.message?.includes('存储') || memoryStatus.message?.includes('创建') || memoryStatus.message?.includes('写入')) return 'info';
-    if (memoryStatus.message?.includes('搜索') || memoryStatus.message?.includes('查询')) return 'success';
-    return 'muted';
-  };
   const sessions = useAppStore((state) => state.sessions);
   const activeSessionId = useAppStore((state) => state.activeSessionId);
   const setActiveSessionId = useAppStore((state) => state.setActiveSessionId);
@@ -168,16 +158,6 @@ export function Sidebar({
             <div className="flex items-center justify-between gap-2">
               <div className="flex flex-col min-w-0 flex-1 overflow-hidden">
                 <div className="flex items-center gap-1.5">
-                  {/* 记忆状态指示器 - 大脑图标，不同颜色表示不同状态 - 放在标题前面 */}
-                  {session.memoryStatus ? (
-                    <div className="flex items-center gap-1" title={session.memoryStatus.message || '记忆状态'}>
-                      <BrainIcon className="h-3.5 w-3.5" color={getBrainIconColor(session.memoryStatus)} />
-                    </div>
-                  ) : session.status === 'completed' ? (
-                    <div className="flex items-center gap-1" title="记忆未存储">
-                      <BrainIcon className="h-3.5 w-3.5" color="muted" />
-                    </div>
-                  ) : null}
                   <div className={`text-[12px] font-semibold ${session.status === "running" ? "text-info" : session.status === "completed" ? "text-success" : session.status === "error" ? "text-error" : "text-ink-800"}`}>
                     {session.title}
                   </div>

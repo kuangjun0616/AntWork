@@ -33,7 +33,7 @@ export function McpSection() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const [editingServer, setEditingServer] = useState<ServerListItem | null>(null);
+  const [, setEditingServer] = useState<ServerListItem | null>(null);
 
   // 展开/折叠状态
   const [expandedServers, setExpandedServers] = useState<Set<string>>(new Set());

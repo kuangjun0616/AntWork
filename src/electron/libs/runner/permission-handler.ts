@@ -140,73 +140,22 @@ export function createPermissionHandler(
  *
  * 用途：在工具被调用时发送相应的状态事件，用于 UI 更新和日志记录
  *
- * 处理的工具类型：
- * 1. Memory MCP 工具（memory_search, memory_store, memory_ask）
- * 2. Claude Memory Tool 命令（memory create 等）
- * 3. Bash 删除命令（用于日志记录）
+ * 处理的工具类型：Bash 删除命令（用于日志记录）
  *
- * @param toolName - 工具名称（如 "memory_search", "Bash"）
+ * @param toolName - 工具名称（如 "Bash"）
  * @param toolInput - 工具输入参数
- * @param memConfig - 记忆配置对象
  * @param session - 当前会话
  * @param onEvent - 事件回调函数，用于向前端发送事件
  */
 export async function handleToolUseEvent(
   toolName: string,
   toolInput: unknown,
-  memConfig: { enabled: boolean; autoStore?: boolean },
   session: Session,
   onEvent: (event: ServerEvent) => void
 ): Promise<void> {
   const { log } = await import("../../logger.js");
 
-  // ========== 1. Memory MCP 工具处理 ==========
-  if (memConfig.enabled) {
-    // 快速记忆工具（自定义 MCP 服务器提供的工具）
-    if (toolName === "memory_search" || toolName === "memory_store" || toolName === "memory_ask") {
-      // 使用 debug 级别记录，避免日志过多
-      log.debug(`[Memory Tool] ${toolName}`);
-
-      // 发送记忆状态事件到前端，用于显示进度提示
-      if (toolName === "memory_store") {
-        onEvent({
-          type: "memory.status",
-          payload: {
-            sessionId: session.id,
-            stored: false,
-            message: `正在存储记忆: ${(toolInput as Record<string, unknown>).title || '无标题'}`
-          }
-        });
-      } else if (toolName === "memory_search") {
-        onEvent({
-          type: "memory.status",
-          payload: {
-            sessionId: session.id,
-            stored: false,
-            message: `正在搜索记忆: ${(toolInput as Record<string, unknown>).query?.toString().substring(0, 30) || ''}...`
-          }
-        });
-      }
-    }
-    // Claude Memory Tool 命令（SDK 原生 memory 工具）
-    else if (toolName === "memory") {
-      log.debug(`[Memory Tool] memory command`);
-
-      const subCommand = (toolInput as Record<string, unknown>)?.command || (toolInput as Record<string, unknown>)?.subcommand;
-      if (subCommand === "create") {
-        onEvent({
-          type: "memory.status",
-          payload: {
-            sessionId: session.id,
-            stored: false,
-            message: `正在创建记忆文件`
-          }
-        });
-      }
-    }
-  }
-
-  // ========== 2. 删除操作日志记录 ==========
+  // ========== 删除操作日志记录 ==========
   // 记录检测到的删除操作，用于审计和调试
   if (toolName === "Bash") {
     const cmd = (toolInput as Record<string, unknown>)?.command;

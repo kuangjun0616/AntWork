@@ -91,10 +91,6 @@ export interface AgentConfig {
   allowedTools?: string[];
   /** 允许使用的 MCP 服务器列表 */
   allowedMcpServers?: string[];
-  /** 是否启用记忆 */
-  enableMemory?: boolean;
-  /** 记忆容量 */
-  memoryCapacity?: number;
   /** 创建时间 */
   createdAt?: number;
   /** 更新时间 */
@@ -275,8 +271,6 @@ function getBuiltinAgents(): AgentConfig[] {
       systemPrompt: 'You are a helpful AI assistant with general purpose capabilities.',
       maxSubAgents: 3,
       timeoutSeconds: 300,
-      enableMemory: true,
-      memoryCapacity: 100,
     },
     {
       id: 'explore',
@@ -286,8 +280,6 @@ function getBuiltinAgents(): AgentConfig[] {
       systemPrompt: 'You are an exploration specialist. Your role is to gather information systematically and comprehensively.',
       maxSubAgents: 5,
       timeoutSeconds: 600,
-      enableMemory: true,
-      memoryCapacity: 200,
     },
     {
       id: 'code',
@@ -297,8 +289,6 @@ function getBuiltinAgents(): AgentConfig[] {
       systemPrompt: 'You are a code specialist. Your role is to help with programming, debugging, and software development tasks.',
       maxSubAgents: 2,
       timeoutSeconds: 300,
-      enableMemory: true,
-      memoryCapacity: 150,
     },
   ];
 }
@@ -517,12 +507,6 @@ export function validateAgentConfig(config: AgentConfig): { valid: boolean; erro
   if (config.timeoutSeconds !== undefined) {
     if (typeof config.timeoutSeconds !== 'number' || config.timeoutSeconds < 30 || config.timeoutSeconds > 600) {
       errors.push('超时时间必须在 30-600 秒之间');
-    }
-  }
-
-  if (config.memoryCapacity !== undefined) {
-    if (typeof config.memoryCapacity !== 'number' || config.memoryCapacity < 10 || config.memoryCapacity > 1000) {
-      errors.push('记忆容量必须在 10-1000 之间');
     }
   }
 

@@ -131,8 +131,6 @@ export interface EventPayloadMapping {
         timeoutSeconds?: number;
         allowedTools?: string[];
         allowedMcpServers?: string[];
-        enableMemory?: boolean;
-        memoryCapacity?: number;
         createdAt?: number;
         updatedAt?: number;
     }>;
@@ -146,8 +144,6 @@ export interface EventPayloadMapping {
         timeoutSeconds?: number;
         allowedTools?: string[];
         allowedMcpServers?: string[];
-        enableMemory?: boolean;
-        memoryCapacity?: number;
         createdAt?: number;
         updatedAt?: number;
     } | null;
@@ -179,20 +175,6 @@ export interface EventPayloadMapping {
     "get-aggregation-strategy-description": string;
     // Output 渲染器选项
     "get-renderer-options": Array<{ value: string; label: string; description: string }>;
-    // Memory/Memvid 操作
-    "memory-put-document": { success: boolean; error?: string; id?: string };
-    "memory-put-documents": { success: boolean; error?: string; count?: number };
-    "memory-find-documents": { success: boolean; error?: string; results?: { hits: Array<{ id: string; score: number; doc: any }>; query: string; mode: string } };
-    "memory-ask-question": { success: boolean; error?: string; answer?: string; context?: string };
-    "memory-get-stats": { success: boolean; error?: string; stats?: { frame_count: number; size_bytes: number; has_lex_index: boolean; has_vec_index: boolean } };
-    "memory-get-timeline": { success: boolean; error?: string; entries?: any[] };
-    "memory-get-document": { success: boolean; error?: string; document?: any };
-    "memory-update-document": { success: boolean; error?: string };
-    "memory-delete-document": { success: boolean; error?: string };
-    "memory-clear": { success: boolean; error?: string };
-    "memory-get-config": { success: boolean; error?: string; config?: { enabled: boolean; autoStore: boolean; autoStoreCategories: string[]; searchMode: string; defaultK: number } };
-    "memory-set-config": { success: boolean; error?: string };
-    "memory-import-file": { success: boolean; error?: string; count?: number };
     // Rules 操作
     "get-rules-list": { success: boolean; error?: string; rules: Array<{ name: string; path: string; content: string; language: string; modified: number }> };
     "save-rule": { success: boolean; error?: string };

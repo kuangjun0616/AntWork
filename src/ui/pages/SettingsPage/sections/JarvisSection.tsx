@@ -129,15 +129,16 @@ export function JarvisSection() {
         if (skipped > 0) {
           message += `- 已跳过：${result.skipped.mcpServers.length} 个 MCP 服务器，${result.skipped.skills.length} 个技能（已存在）\n`;
         }
-        if (result.errors.length > 0) {
-          message += `- 错误：${result.errors.length} 个`;
+        const errs = result.errors ?? [];
+        if (errs.length > 0) {
+          message += `- 错误：${errs.length} 个`;
         }
         
         setSuccess(message);
         setPreviewConfig(null);
         setSelectedFilePath(null);
       } else {
-        setError(`导入失败：${result.errors.join('\n')}`);
+        setError(`导入失败：${(result.errors ?? []).join('\n')}`);
       }
     } catch (err) {
       setError('导入失败');

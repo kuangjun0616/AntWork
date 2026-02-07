@@ -24,8 +24,6 @@ interface AgentConfig {
   timeoutSeconds?: number;
   allowedTools?: string[];
   allowedMcpServers?: string[];
-  enableMemory?: boolean;
-  memoryCapacity?: number;
   createdAt?: number;
   updatedAt?: number;
 }
@@ -106,8 +104,6 @@ export function AgentsSection() {
     timeoutSeconds: 300,
     allowedTools: [] as string[],
     allowedMcpServers: [] as string[],
-    enableMemory: true,
-    memoryCapacity: 100,
   });
 
   // 加载配置（批量加载优化：单次 IPC 调用获取所有配置）
@@ -335,8 +331,6 @@ export function AgentsSection() {
           timeoutSeconds: detail.timeoutSeconds || 300,
           allowedTools: detail.allowedTools || [],
           allowedMcpServers: detail.allowedMcpServers || [],
-          enableMemory: detail.enableMemory ?? true,
-          memoryCapacity: detail.memoryCapacity || 100,
         });
         setViewMode('edit');
       }
@@ -356,8 +350,6 @@ export function AgentsSection() {
       timeoutSeconds: 300,
       allowedTools: [],
       allowedMcpServers: [],
-      enableMemory: true,
-      memoryCapacity: 100,
     });
   };
 
@@ -897,39 +889,6 @@ export function AgentsSection() {
                 </div>
               </div>
 
-              {/* 记忆设置 */}
-              <div className="pt-2">
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <div className="relative">
-                    <input
-                      type="checkbox"
-                      className="sr-only peer"
-                      checked={form.enableMemory}
-                      onChange={(e) => setForm({ ...form, enableMemory: e.target.checked })}
-                    />
-                    <div className="w-9 h-5 bg-ink-900/20 rounded-full peer-checked:bg-accent transition-colors"></div>
-                    <div className="absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform peer-checked:translate-x-4"></div>
-                  </div>
-                  <div>
-                    <span className="text-sm text-ink-700">启用记忆</span>
-                    <p className="text-xs text-muted">允许 Agent 记住之前的对话内容</p>
-                  </div>
-                </label>
-                {form.enableMemory && (
-                  <div className="mt-3 grid gap-1.5">
-                    <label className="text-xs font-medium text-muted">记忆容量</label>
-                    <input
-                      type="number"
-                      min="10"
-                      max="1000"
-                      value={form.memoryCapacity}
-                      onChange={(e) => setForm({ ...form, memoryCapacity: parseInt(e.target.value) || 100 })}
-                      className="rounded-xl border border-ink-900/10 bg-surface-secondary px-3 py-2 text-sm text-ink-800 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/20 transition-colors"
-                    />
-                  </div>
-                )}
-              </div>
-
               {/* 操作按钮 */}
               <div className="flex gap-3 pt-2">
                 <button
@@ -964,8 +923,6 @@ export function AgentsSection() {
                     systemPrompt: form.systemPrompt.substring(0, 100) + (form.systemPrompt.length > 100 ? '...' : ''),
                     maxSubAgents: form.maxSubAgents,
                     timeoutSeconds: form.timeoutSeconds,
-                    enableMemory: form.enableMemory,
-                    memoryCapacity: form.memoryCapacity,
                   }, null, 2)}
                 </pre>
               </div>

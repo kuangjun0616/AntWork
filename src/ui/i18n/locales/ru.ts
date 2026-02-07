@@ -37,6 +37,9 @@ export default {
 		sections: {
 			general: "Общие",
 			api: "Конфигурация API",
+			connection: "Подключение и модель",
+			tools: "Инструменты и расширения",
+			capabilities: "Возможности",
 			features: "Функции",
 			system: "Система",
 		},

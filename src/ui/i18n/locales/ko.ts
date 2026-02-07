@@ -37,6 +37,9 @@ export default {
 		sections: {
 			general: "일반",
 			api: "API 구성",
+			connection: "연결 및 모델",
+			tools: "도구 및 확장",
+			capabilities: "기능",
 			features: "기능 확장",
 			system: "시스템",
 		},

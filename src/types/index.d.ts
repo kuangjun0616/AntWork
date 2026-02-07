@@ -246,7 +246,7 @@ interface Window {
             url?: string;
             disabled?: boolean;
             description?: string;
-        }) => Promise<{ valid: boolean; errors: string[] }>;
+        }) => Promise<{ valid: boolean; errors: string[]; warnings?: string[] }>;
         testMcpServer: (config: {
             name: string;
             displayName?: string;
@@ -446,86 +446,6 @@ interface Window {
         getSessionHistory: (sessionId: string) => Promise<any>;
         recoverSession: (sessionId: string) => Promise<{ success: boolean; error?: string; sessionId?: string }>;
         deleteSession: (sessionId: string) => Promise<{ success: boolean; error?: string }>;
-        /** Memvid Memory 操作 */
-        memoryPutDocument: (input: {
-            title: string;
-            label?: string;
-            text: string;
-            metadata?: Record<string, any>;
-            uri?: string;
-            tags?: string[];
-        }) => Promise<{ success: boolean; error?: string; id?: string }>;
-        memoryPutDocuments: (inputs: Array<{
-            title: string;
-            label?: string;
-            text: string;
-            metadata?: Record<string, any>;
-            uri?: string;
-            tags?: string[];
-        }>) => Promise<{ success: boolean; error?: string; count?: number }>;
-        memoryFindDocuments: (query: string, options?: {
-            mode?: 'lex' | 'sem' | 'auto';
-            k?: number;
-        }) => Promise<{
-            success: boolean;
-            error?: string;
-            results?: {
-                hits: Array<{ id: string; score: number; doc: any }>;
-                query: string;
-                mode: string;
-            };
-        }>;
-        memoryAskQuestion: (question: string, options?: {
-            k?: number;
-            mode?: 'lex' | 'sem' | 'auto';
-            contextOnly?: boolean;
-        }) => Promise<{ success: boolean; error?: string; answer?: string; context?: string }>;
-        memoryGetStats: () => Promise<{
-            success: boolean;
-            error?: string;
-            stats?: {
-                frame_count: number;
-                size_bytes: number;
-                has_lex_index: boolean;
-                has_vec_index: boolean;
-            };
-        }>;
-        memoryGetTimeline: (options?: {
-            limit?: number;
-            since?: number;
-            reverse?: boolean;
-        }) => Promise<{ success: boolean; error?: string; entries?: any[] }>;
-        memoryGetDocument: (id: string) => Promise<{ success: boolean; error?: string; document?: any }>;
-        memoryUpdateDocument: (id: string, updates: {
-            title?: string;
-            text?: string;
-            label?: string;
-            tags?: string[];
-        }) => Promise<{ success: boolean; error?: string }>;
-        memoryDeleteDocument: (id: string) => Promise<{ success: boolean; error?: string }>;
-        memoryClear: () => Promise<{ success: boolean; error?: string }>;
-        /** Memory 配置操作 */
-        memoryGetConfig: () => Promise<{
-            success: boolean;
-            error?: string;
-            config?: {
-                enabled: boolean;
-                autoStore: boolean;
-                autoStoreCategories: string[];
-                searchMode: string;
-                defaultK: number;
-                availableTags?: string[];
-            };
-        }>;
-        memorySetConfig: (config: {
-            enabled?: boolean;
-            autoStore?: boolean;
-            autoStoreCategories?: string[];
-            searchMode?: string;
-            defaultK?: number;
-            availableTags?: string[];
-        }) => Promise<{ success: boolean; error?: string }>;
-        memoryImportFile: (filePath: string) => Promise<{ success: boolean; error?: string; count?: number }>;
         /** Rules 操作 */
         getRulesList: () => Promise<{
             success: boolean;
@@ -549,5 +469,28 @@ interface Window {
         saveClaudeConfig: (content: string) => Promise<{ success: boolean; error?: string }>;
         deleteClaudeConfig: () => Promise<{ success: boolean; error?: string }>;
         openClaudeDirectory: () => Promise<{ success: boolean; error?: string }>;
+        /** MCP 工具列表与开关 */
+        getMcpServerTools: (config: any) => Promise<Array<{ name: string; description?: string; inputSchema?: Record<string, unknown>; outputSchema?: Record<string, unknown> }>>;
+        toggleMcpServerEnabled: (name: string, enabled: boolean) => Promise<{ success: boolean; error?: string }>;
+        /** Skills 导入 */
+        importSkill: (sourcePath: string) => Promise<{ success: boolean; error?: string }>;
+        /** Jarvis 配置操作 */
+        saveJarvisDialog: () => Promise<string | null>;
+        openJarvisDialog: () => Promise<string | null>;
+        exportJarvisConfig: (metadata: any, outputPath: string) => Promise<{ success: boolean; error?: string }>;
+        previewJarvisConfig: (jarvisPath: string) => Promise<{ success: boolean; config?: any; error?: string }>;
+        importJarvisConfig: (jarvisPath: string, options: any) => Promise<{ success: boolean; imported?: any; skipped?: any; errors?: string[] }>;
+        /** 记忆操作 */
+        getMemoryKinds: () => Promise<Array<{ id: string; name: string; description?: string; color?: string; schema?: Record<string, unknown>; createdAt: number; updatedAt: number }>>;
+        getMemoryKind: (id: string) => Promise<{ id: string; name: string; description?: string; color?: string; schema?: Record<string, unknown>; createdAt: number; updatedAt: number } | null>;
+        createMemoryKind: (kind: { name: string; description?: string; color?: string; schema?: Record<string, unknown> }) => Promise<{ id: string; name: string; description?: string; color?: string; schema?: Record<string, unknown>; createdAt: number; updatedAt: number }>;
+        updateMemoryKind: (id: string, patch: any) => Promise<{ success: boolean; error?: string }>;
+        deleteMemoryKind: (id: string) => Promise<{ success: boolean; error?: string }>;
+        getMemoryEntries: (kindId?: string, options?: { includeDeleted?: boolean }) => Promise<Array<{ id: string; kindId: string; content: string; summary?: string; entities?: string[]; importance?: 'low' | 'medium' | 'high'; createdAt: number; updatedAt: number; deletedAt?: number }>>;
+        getMemoryEntry: (id: string) => Promise<{ id: string; kindId: string; content: string; summary?: string; entities?: string[]; importance?: 'low' | 'medium' | 'high'; createdAt: number; updatedAt: number; deletedAt?: number } | null>;
+        createMemoryEntry: (entry: { kindId: string; content: string; summary?: string; entities?: string[]; importance?: 'low' | 'medium' | 'high' }) => Promise<{ id: string; kindId: string; content: string; summary?: string; entities?: string[]; importance?: 'low' | 'medium' | 'high'; createdAt: number; updatedAt: number }>;
+        updateMemoryEntry: (id: string, patch: any) => Promise<{ success: boolean; error?: string }>;
+        deleteMemoryEntry: (id: string, soft?: boolean) => Promise<{ success: boolean; error?: string }>;
+        searchMemoryEntries: (params: { kindId?: string; query?: string; importance?: 'low' | 'medium' | 'high'; limit?: number }) => Promise<Array<{ id: string; kindId: string; content: string; summary?: string; entities?: string[]; importance?: 'low' | 'medium' | 'high'; createdAt: number; updatedAt: number; deletedAt?: number }>>;
     }
 }

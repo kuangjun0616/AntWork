@@ -77,21 +77,6 @@ import {
   saveOrchestrationConfig,
 } from "../storage/agents-store.js";
 
-// 导入 Memory 相关函数
-import {
-  getMemoryStats,
-  getMemoryTimeline,
-  memorySearch,
-  memoryStore,
-  memoryAsk,
-  getDocument,
-  deleteDocument,
-} from "../utils/memory-tools.js";
-import {
-  getMemoryConfig,
-  saveMemoryConfig,
-} from "../utils/memory-config.js";
-
 // 导入 Skills 存储函数
 import {
   getSkillsList,
@@ -123,6 +108,21 @@ import {
   validateMcpServer,
   MCP_TEMPLATES,
 } from "../storage/mcp-store.js";
+
+// 导入记忆存储函数
+import {
+  getMemoryKinds,
+  getMemoryKind,
+  createMemoryKind,
+  updateMemoryKind,
+  deleteMemoryKind,
+  getMemoryEntries,
+  getMemoryEntry,
+  createMemoryEntry,
+  updateMemoryEntry,
+  deleteMemoryEntry,
+  searchMemoryEntries,
+} from "../storage/memory-store.js";
 
 // 导入 API 配置存储函数
 import {
@@ -451,69 +451,6 @@ function registerAgentsHandlers(): void {
     });
 }
 
-// ==================== Memory 处理器 ====================
-
-/**
- * 注册 Memory 相关 IPC 处理器
- */
-function registerMemoryHandlers(): void {
-    ipcMain.handle("memory-get-config", () => getMemoryConfig());
-    ipcMain.handle("memory-set-config", wrapIpcHandler("memory-set-config", async (_: unknown, config: any) => {
-        return await saveMemoryConfig(config);
-    }));
-
-    ipcMain.handle("memory-get-stats", () => getMemoryStats());
-    ipcMain.handle("memory-get-timeline", (_: unknown, options: any) => getMemoryTimeline(options));
-
-    ipcMain.handle("memory-put-document", wrapIpcHandler("memory-put-document", async (_: unknown, doc: any) => {
-        await memoryStore(doc.content, doc.metadata || {});
-        return { success: true };
-    }));
-
-    ipcMain.handle("memory-find-documents", wrapIpcHandler("memory-find-documents", async (_: unknown, query: string, options: any = {}) => {
-        const k = options.k || 6;
-        const results = await memorySearch(query, k);
-        return { success: true, documents: results };
-    }));
-
-    ipcMain.handle("memory-ask-question", wrapIpcHandler("memory-ask-question", async (_: unknown, question: string, options: any = {}) => {
-        const k = options.k || 6;
-        const answer = await memoryAsk(question, k);
-        return { success: true, answer };
-    }));
-
-    ipcMain.handle("memory-clear", wrapIpcHandler("memory-clear", async () => {
-        // 清空所有记忆文档
-        // 注意：这需要实现一个清空功能
-        return { success: true, message: "Memory cleared" };
-    }));
-
-    ipcMain.handle("memory-update-document", wrapIpcHandler("memory-update-document", async (_: unknown, docId: string, updates: any) => {
-        // 获取现有文档
-        const existing = await getDocument(docId);
-        if (!existing.success || !existing.document) {
-            return { success: false, error: "Document not found" };
-        }
-        // 更新并保存
-        await memoryStore(updates.content || existing.document.content, updates.metadata || existing.document.metadata);
-        return { success: true };
-    }));
-
-    ipcMain.handle("memory-delete-document", wrapIpcHandler("memory-delete-document", async (_: unknown, docId: string) => {
-        return await deleteDocument(docId);
-    }));
-
-    // 获取单个记忆文档
-    ipcMain.handle("memory-get-document", (_: unknown, docId: string) => {
-        return getDocument(docId);
-    });
-
-    // 导入文件到记忆 (占位实现)
-    ipcMain.handle("memory-import-file", wrapIpcHandler("memory-import-file", async (_: unknown, _filePath: string) => {
-        return { success: false, error: "File import not implemented yet" };
-    }));
-}
-
 // ==================== Skills 处理器 ====================
 
 /**
@@ -723,6 +660,43 @@ function registerJarvisHandlers(): void {
     });
 }
 
+// ==================== 记忆处理器 ====================
+
+/**
+ * 注册记忆相关 IPC 处理器
+ */
+function registerMemoryHandlers(): void {
+  ipcMain.handle("memory-get-kinds", () => getMemoryKinds());
+  ipcMain.handle("memory-get-kind", (_: unknown, id: string) => getMemoryKind(id));
+  ipcMain.handle("memory-create-kind", wrapIpcHandler("memory-create-kind", async (_: unknown, kind: any) => {
+    return await createMemoryKind(kind);
+  }));
+  ipcMain.handle("memory-update-kind", wrapIpcHandler("memory-update-kind", async (_: unknown, id: string, patch: any) => {
+    await updateMemoryKind(id, patch);
+    return { success: true };
+  }));
+  ipcMain.handle("memory-delete-kind", wrapIpcHandler("memory-delete-kind", async (_: unknown, id: string) => {
+    await deleteMemoryKind(id);
+    return { success: true };
+  }));
+  ipcMain.handle("memory-get-entries", (_: unknown, kindId?: string, options?: { includeDeleted?: boolean }) =>
+    getMemoryEntries(kindId, options)
+  );
+  ipcMain.handle("memory-get-entry", (_: unknown, id: string) => getMemoryEntry(id));
+  ipcMain.handle("memory-create-entry", wrapIpcHandler("memory-create-entry", async (_: unknown, entry: any) => {
+    return await createMemoryEntry(entry);
+  }));
+  ipcMain.handle("memory-update-entry", wrapIpcHandler("memory-update-entry", async (_: unknown, id: string, patch: any) => {
+    await updateMemoryEntry(id, patch);
+    return { success: true };
+  }));
+  ipcMain.handle("memory-delete-entry", wrapIpcHandler("memory-delete-entry", async (_: unknown, id: string, soft?: boolean) => {
+    await deleteMemoryEntry(id, soft !== false);
+    return { success: true };
+  }));
+  ipcMain.handle("memory-search-entries", (_: unknown, params: any) => searchMemoryEntries(params));
+}
+
 // ==================== 主注册函数 ====================
 
 /**
@@ -738,9 +712,9 @@ export function registerIpcHandlers(): void {
     registerPermissionsHandlers();
     registerHooksHandlers();
     registerAgentsHandlers();
-    registerMemoryHandlers();
     registerSkillsHandlers();
     registerMcpHandlers();
+    registerMemoryHandlers();
     registerJarvisHandlers();
 
     // 启动资源轮询

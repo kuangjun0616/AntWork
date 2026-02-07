@@ -36,7 +36,10 @@ export default {
 		back: "Voltar",
 		sections: {
 			general: "Geral",
-			api: "Configurao de API",
+			api: "Configuração de API",
+			connection: "Conexão e modelo",
+			tools: "Ferramentas e extensões",
+			capabilities: "Capacidades",
 			features: "Recursos",
 			system: "Sistema",
 		},

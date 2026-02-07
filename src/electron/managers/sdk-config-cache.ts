@@ -23,8 +23,6 @@ export interface CachedConfig {
   sdkNative: SdkNativeConfig;
   /** MCP 服务器配置 */
   mcpServers: Record<string, McpServerConfig>;
-  /** Memory MCP 服务器（缓存，避免每次重新创建）*/
-  memoryMcpServer?: any;
   /** API 配置 */
   apiConfig: ApiConfig | null;
   /** 缓存时间戳 */
@@ -386,43 +384,6 @@ class SdkConfigCacheManager {
   }
 
   /**
-   * 获取或创建 Memory MCP 服务器（带缓存）
-   */
-  async getMemoryMcpServer(): Promise<any> {
-    const config = await this.getConfig();
-
-    // 如果已经缓存，直接返回
-    if (config.memoryMcpServer) {
-      return config.memoryMcpServer;
-    }
-
-    // 检查记忆功能是否启用
-    const { getMemoryToolConfig } = await import('../utils/memory-tools.js');
-    const memConfig = getMemoryToolConfig();
-
-    if (!memConfig.enabled) {
-      return null;
-    }
-
-    // 创建 Memory MCP 服务器并缓存
-    try {
-      const { createMemoryMcpServer } = await import('../utils/memory-mcp-server.js');
-      const memoryServer = await createMemoryMcpServer();
-
-      // 更新缓存
-      this.cache!.memoryMcpServer = memoryServer;
-      this.cache!.timestamp = Date.now();
-
-      log.info('[Config Cache] Memory MCP server created and cached');
-      return memoryServer;
-    } catch (error) {
-      log.error('[Config Cache] Failed to create Memory MCP server:', error);
-      return null;
-    }
-  }
-
-
-  /**
    * 添加配置变更监听器
    */
   addChangeListener(listener: ConfigChangeListener): void {
@@ -549,16 +510,6 @@ export async function getCachedApiConfig(): Promise<ApiConfig | null> {
   const manager = getConfigCacheManager();
   return await manager.getApiConfig();
 }
-
-/**
- * 获取缓存的 Memory MCP 服务器
- * 只创建一次并缓存，避免每次会话重新创建
- */
-export async function getCachedMemoryMcpServer(): Promise<any> {
-  const manager = getConfigCacheManager();
-  return await manager.getMemoryMcpServer();
-}
-
 
 /**
  * 添加配置变更监听器

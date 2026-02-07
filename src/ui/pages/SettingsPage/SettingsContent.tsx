@@ -9,6 +9,7 @@ import { AboutSection } from './sections/AboutSection';
 import { LanguageSection } from './sections/LanguageSection';
 import { ApiSection } from './sections/ApiSection';
 import { McpSection } from './sections/McpSection';
+import { MemorySection } from './sections/MemorySection';
 import { SkillsSection } from './sections/SkillsSection';
 import { JarvisSection } from './sections/JarvisSection';
 
@@ -48,6 +49,8 @@ export function SettingsContent({ className }: SettingsContentProps) {
         return <ApiSection />;
       case 'mcp':
         return <McpSection />;
+      case 'memory':
+        return <MemorySection />;
       case 'skills':
         return <SkillsSection />;
       case 'jarvis':
