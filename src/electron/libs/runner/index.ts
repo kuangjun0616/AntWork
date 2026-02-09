@@ -261,8 +261,8 @@ export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
         prompt: createConversationStream(inputQueue, sdkSessionId, enhancedPrompt),
         options: {
           cwd: session.cwd ?? DEFAULT_CWD,
-          // ❌ Qwen SDK 不支持 resume 参数，会话恢复功能已移除
-          // resume: resumeSessionId,
+          // ✅ 启用 resume 参数，支持会话恢复功能（SDK 0.1.5-preview.1+）
+          ...(resumeSessionId ? { resume: resumeSessionId } : {}),
           abortController,
           env: mergedEnv,
           // 阿里云不传递 CLI 路径，使用纯 HTTP API 模式

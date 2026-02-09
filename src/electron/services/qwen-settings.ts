@@ -222,7 +222,12 @@ export function buildEnvForConfig(config: ApiConfig): Record<string, string> {
   const qwenConfigDir = join(homedir(), '.qwen');
   baseEnv.QWEN_CONFIG_DIR = qwenConfigDir;
 
+  // 启用 FORK_MODE，让 SDK 在 Electron 环境下使用 spawn 替代 fork
+  // 参考: https://github.com/QwenLM/qwen-code/pull/1719
+  baseEnv.FORK_MODE = '1';
+
   log.info(`[qwen-settings] QWEN_CONFIG_DIR set to: ${qwenConfigDir}`);
+  log.info(`[qwen-settings] FORK_MODE enabled for Electron compatibility`);
 
   return baseEnv;
 }
