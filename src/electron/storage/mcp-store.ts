@@ -4,7 +4,7 @@
  * 按照 Qwen Code SDK 规范实现
  */
 
-import { promises as fs } from "fs";
+import { promises as fs, existsSync, readdirSync } from "fs";
 import { join, dirname } from "path";
 import { homedir } from "os";
 import { log } from "../logger.js";
@@ -12,6 +12,69 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
+
+/**
+ * 获取增强的 PATH 环境变量
+ * 在打包后的 Electron 应用中，需要手动添加常见的用户工具路径
+ * 解决 spawn ENOENT 问题
+ */
+function getEnhancedPath(): string {
+  const home = homedir();
+  const existingPath = process.env.PATH || '';
+  const additionalPaths: string[] = [];
+
+  // 1. 检测 nvm 安装的 Node.js 版本
+  const nvmDir = join(home, '.nvm', 'versions', 'node');
+  if (existsSync(nvmDir)) {
+    try {
+      const versions = readdirSync(nvmDir);
+      for (const version of versions) {
+        const binPath = join(nvmDir, version, 'bin');
+        if (existsSync(binPath) && !existingPath.includes(binPath)) {
+          additionalPaths.push(binPath);
+        }
+      }
+    } catch { /* ignore */ }
+  }
+
+  // 2. 常见的用户工具安装路径
+  const commonPaths = [
+    // Node.js 版本管理器
+    join(home, '.volta', 'bin'),
+    join(home, '.fnm', 'aliases', 'default', 'bin'),
+    
+    // 包管理器全局安装路径
+    join(home, '.npm-global', 'bin'),
+    join(home, '.yarn', 'bin'),
+    join(home, '.pnpm-global', 'bin'),
+    join(home, 'node_modules', '.bin'),
+    
+    // 自定义工具路径
+    join(home, '.utoo-proxy'),
+    join(home, '.local', 'bin'),
+    join(home, 'bin'),
+    
+    // 系统路径
+    '/usr/local/bin',
+    '/opt/homebrew/bin',  // macOS ARM Homebrew
+    '/opt/homebrew/sbin',
+  ];
+
+  for (const p of commonPaths) {
+    if (existsSync(p) && !existingPath.includes(p) && !additionalPaths.includes(p)) {
+      additionalPaths.push(p);
+    }
+  }
+
+  const enhancedPath = [...additionalPaths, existingPath].join(':');
+  
+  // 仅在开发环境或首次调用时记录日志
+  if (additionalPaths.length > 0) {
+    log.debug(`[mcp-store] Enhanced PATH with ${additionalPaths.length} additional paths`);
+  }
+
+  return enhancedPath;
+}
 
 /**
  * MCP 服务器配置接口
@@ -380,12 +443,13 @@ export interface McpToolInfo {
 function createTransport(config: McpServerConfig): any {
   // 优先根据字段判断，而不是 type
   if (config.command) {
-    // stdio 类型
+    // stdio 类型 - 使用增强的 PATH 解决打包后找不到命令的问题
     return new StdioClientTransport({
       command: config.command,
       args: config.args || [],
       env: {
         ...process.env,
+        PATH: getEnhancedPath(),
         ...(config.env || {}),
       } as Record<string, string>,
     });
