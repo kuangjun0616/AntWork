@@ -269,8 +269,8 @@ const AskUserQuestionCard = ({
 const UserMessageCard = ({ message }: { message: { type: "user_prompt"; prompt: string } }) => {
   return (
     <div className="flex justify-end mt-4">
-      <div className="max-w-[80%] rounded-2xl rounded-tr-sm bg-accent px-4 py-3 text-white">
-        <div className="prose prose-invert max-w-none">
+      <div className="max-w-[80%] rounded-2xl rounded-tr-sm bg-surface-tertiary px-4 py-3 text-ink-800">
+        <div className="prose max-w-none">
           <MDContent text={message.prompt} />
         </div>
       </div>
