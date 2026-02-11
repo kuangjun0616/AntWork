@@ -394,6 +394,8 @@ export interface ElectronAPI {
   deleteSession: (sessionId: string) => Promise<{ success: boolean; error?: string }>;
   /** Language Preference 操作 */
   setLanguagePreference: (language: string) => Promise<{ success: boolean; error?: string }>;
+  /** 选择附件（文件或文件夹） */
+  selectAttachment: () => Promise<{ type: 'file' | 'directory'; path: string; name: string } | null>;
 }
 
 declare global {

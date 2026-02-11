@@ -227,7 +227,10 @@ electron.contextBridge.exposeInMainWorld("electron", {
         invoke("memory-search-entries", params),
     // Language Preference 操作
     setLanguagePreference: (language: string) =>
-        invoke("language:set-preference", language)
+        invoke("language:set-preference", language),
+    // 附件选择操作
+    selectAttachment: () =>
+        invoke("select-attachment")
 })
 
 function ipcInvoke<Key extends keyof EventPayloadMapping>(key: Key, ...args: any[]): Promise<EventPayloadMapping[Key]> {

@@ -246,6 +246,45 @@ function registerConfigHandlers(): void {
         return result.filePaths[0];
     });
 
+    // 选择附件（文件或文件夹）
+    ipcMain.handle("select-attachment", async () => {
+        const mainWindow = getMainWindow();
+        if (!mainWindow) {
+            throw new Error("Main window not available");
+        }
+
+        const result = await dialog.showOpenDialog(mainWindow, {
+            properties: ['openFile', 'openDirectory', 'multiSelections'],
+            title: '选择文件或文件夹作为附件'
+        });
+
+        if (result.canceled || result.filePaths.length === 0) {
+            return null;
+        }
+
+        // 只返回第一个选择的项目
+        const selectedPath = result.filePaths[0];
+        const fs = await import('node:fs');
+        const stat = await fs.promises.stat(selectedPath);
+
+        const isDirectory = stat.isDirectory();
+        let type: 'directory' | 'image' | 'file';
+
+        if (isDirectory) {
+            type = 'directory';
+        } else {
+            const ext = selectedPath.split('.').pop()?.toLowerCase() || '';
+            const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'ico'];
+            type = imageExts.includes(ext) ? 'image' : 'file';
+        }
+
+        return {
+            type,
+            path: selectedPath,
+            name: selectedPath.split(/[/\\]/).pop() || selectedPath
+        };
+    });
+
     ipcMain.handle("test-api-connection", async (_: unknown, config: any) => {
         return await testApiConnection(config);
     });
