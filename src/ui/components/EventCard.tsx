@@ -190,7 +190,7 @@ const AssistantBlockCard = ({ title, text, showIndicator = false }: { title: str
 
 const ToolUseCard = ({ messageContent, showIndicator = false }: { messageContent: MessageContent; showIndicator?: boolean }) => {
   if (messageContent.type !== "tool_use") return null;
-  
+
   const toolStatus = useToolStatus(messageContent.id);
   const statusVariant = toolStatus === "error" ? "error" : "success";
   const isPending = !toolStatus || toolStatus === "pending";
@@ -220,7 +220,7 @@ const ToolUseCard = ({ messageContent, showIndicator = false }: { messageContent
           <span className="inline-flex items-center rounded-md text-accent py-0.5 text-sm font-medium shrink-0">{messageContent.name}</span>
           <span className="text-sm text-muted truncate">{getToolInfo()}</span>
         </div>
-      </div>
+        </div>
     </div>
   );
 };
@@ -269,7 +269,7 @@ const AskUserQuestionCard = ({
 const UserMessageCard = ({ message }: { message: { type: "user_prompt"; prompt: string } }) => {
   return (
     <div className="flex justify-end mt-4">
-      <div className="max-w-[80%] rounded-2xl rounded-tr-sm bg-surface-tertiary px-4 py-3 text-ink-800">
+      <div className="max-w-[80%] rounded-2xl rounded-tr-sm bg-surface-tertiary px-4 py-2 text-ink-800">
         <div className="prose max-w-none">
           <MDContent text={message.prompt} />
         </div>
@@ -368,16 +368,16 @@ export function MessageCard({
   if (sdkMessage.type === "user") {
     const contents = sdkMessage.message.content;
     if (Array.isArray(contents)) {
-      return (
+            return (
         <>
           {contents.map((content: any, idx: number) => {
             if (content.type === "tool_result") {
               return <ToolResult key={idx} messageContent={content} />;
-            }
-            return null;
-          })}
-        </>
-      );
+          }
+          return null;
+        })}
+      </>
+    );
     }
   }
 
